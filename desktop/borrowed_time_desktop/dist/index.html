@@ -359,16 +359,18 @@ vec3 shade(float sh){
   c = 1.0 - exp(-c*1.5);
   float g = clamp(v_glow,0.0,1.0);
   c = mix(c, v_col.rgb, g);
-  float hue = u_hue + u_huewave*sin((v_wp.x+v_wp.z)*0.06 + v_wp.y*0.15 + u_tm*1.5);
+  c = mix(c, c*0.4+u_tint*0.6, u_tintamt);
+  /* fog first, then the hue/saturation/brightness grade, so far ground grades exactly like the sky behind it
+     (grading after fog used to leave a bright "table edge" in the air during comedowns and trips) */
+  float f = clamp((length(v_wp-u_eye)-u_fogr.x)/(u_fogr.y-u_fogr.x),0.0,1.0)*(1.0-g*0.55);
+  c = mix(c,u_fog,f);
+  float hue = u_hue + u_huewave*(1.0-f)*sin((v_wp.x+v_wp.z)*0.06 + v_wp.y*0.15 + u_tm*1.5);
   if(abs(hue) > 0.0005 || abs(u_sat-1.0) > 0.001){
     float Y=dot(c,vec3(0.299,0.587,0.114)), I=dot(c,vec3(0.596,-0.274,-0.322)), Qc=dot(c,vec3(0.211,-0.523,0.312));
     float a=hue*6.2831853, s=sin(a), co=cos(a);
     float I2=(I*co-Qc*s)*u_sat, Q2=(I*s+Qc*co)*u_sat;
     c = vec3(Y+0.956*I2+0.621*Q2, Y-0.272*I2-0.647*Q2, Y-1.106*I2+1.703*Q2); }
-  c = mix(c, c*0.4+u_tint*0.6, u_tintamt);
-  c *= u_bright;
-  float f = clamp((length(v_wp-u_eye)-u_fogr.x)/(u_fogr.y-u_fogr.x),0.0,1.0)*(1.0-g*0.55);
-  return mix(c,u_fog,f); }
+  return c*u_bright; }
 `;
 const ATTR='in vec3 a_pos; in vec3 a_nrm; in vec3 i_pos; in vec4 i_rot; in vec3 i_scl; in vec4 i_col; in float i_glow;\n';
 const vary=kw=>['vec3 v_wp','vec3 v_n','vec4 v_col','float v_glow','vec4 v_ls'].map(x=>kw+' '+x+';').join(' ')+'\n';
@@ -888,6 +890,8 @@ function mods(){ const m={speed:1,jump:1,grav:1,world:1,drain:1,force:1,score:1,
   if(G.comedown>0&&!G.effects.length){ const c=Math.min(1,G.comedown); m.speed*=1-0.3*c; m.drain*=1+0.5*c; m.sat*=1-0.6*c; m.jump*=0.85; }
   { const FF=G.player&&FORMS[G.player.form]; if(FF){ m.speed*=FF.speed||1; m.jump*=FF.jump||1; m.grav*=FF.grav||1; m.force*=FF.force||1; m.drain*=FF.drain||1; } }
   if(G.cyber){ if(G.cyber.liver) m.drain*=0.85; if(G.cyber.kidney) m.drain*=1.1; if(G.cyber.tongue&&m.trip>0.3) m.score*=1.5; }
+  m.focusVig=m.focus;
+  if(m.all){ m.tint=[1,0.8,0.36]; m.tintAmt=Math.min(m.tintAmt,0.12); m.focusVig=m.focus*0.25; m.hue=Math.min(m.hue,0.3); } // the Doubloon reads gold, not JOINT-green
   m.shakes = !G.effects.length && G.life<8 && G.state==='play';
   if(m.shakes){ m.shake+=0.35+0.06*(8-G.life); m.tint=[1,0.25,0.3]; m.tintAmt+=0.1; }
   return m; }
@@ -2306,7 +2310,7 @@ function drawOverlay(){ ov.clearRect(0,0,VW,VH); if(!VP||G.attract) return; cons
   if(m.glitch&&P.glitchHold>0){ for(let i=0;i<8;i++){ const y=rand(0,VH), h=rand(3,18); ov.fillStyle=pick(['rgba(255,79,216,.18)','rgba(55,230,255,.18)','rgba(255,255,255,.1)']); ov.fillRect(rand(-30,0),y,VW+60,h); } }
   if(G.parade){ const a=0.16+0.08*Math.sin(G.t*5), gr=ov.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*0.4,VW/2,VH/2,Math.hypot(VW,VH)*0.6); gr.addColorStop(0,'rgba(255,200,80,0)'); gr.addColorStop(1,`rgba(255,196,64,${a})`); ov.fillStyle=gr; ov.fillRect(0,0,VW,VH); }
   if(G.player.foldT>0){ const k=foldK(G.player), gr=ov.createRadialGradient(VW/2,VH/2,Math.min(VW,VH)*(0.42-0.2*k),VW/2,VH/2,Math.hypot(VW,VH)*0.55); gr.addColorStop(0,'rgba(8,6,12,0)'); gr.addColorStop(1,`rgba(8,6,12,${0.55+0.35*k})`); ov.fillStyle=gr; ov.fillRect(0,0,VW,VH); }
-  if(m.focus>0.05){ const r0=Math.min(VW,VH)*0.16, r1=Math.hypot(VW,VH)*0.55, gr=ov.createRadialGradient(VW/2,VH/2,r0,VW/2,VH/2,r1); gr.addColorStop(0,'rgba(10,40,12,0)'); gr.addColorStop(1,`rgba(6,28,8,${0.82*m.focus})`); ov.fillStyle=gr; ov.fillRect(0,0,VW,VH);
+  if(m.focus>0.05){ const r0=Math.min(VW,VH)*0.16, r1=Math.hypot(VW,VH)*0.55, gr=ov.createRadialGradient(VW/2,VH/2,r0,VW/2,VH/2,r1); gr.addColorStop(0,'rgba(10,40,12,0)'); gr.addColorStop(1,`rgba(6,28,8,${0.82*m.focusVig})`); ov.fillStyle=gr; ov.fillRect(0,0,VW,VH);
     ov.strokeStyle=`rgba(170,255,170,${0.6*m.focus})`; ov.lineWidth=1.5; ov.beginPath(); ov.arc(VW/2,VH/2,9,0,TAU); ov.stroke();
     if(G.focusT){ const pr=project(VP,G.focusT.pos); if(pr){ ov.strokeStyle='rgba(140,255,150,.9)'; ov.lineWidth=2; ov.beginPath(); ov.arc(pr.x,pr.y,22,0,TAU); ov.stroke(); } } }
   if(m.object){ ov.fillStyle='rgba(30,30,90,0.12)'; ov.fillRect(0,0,VW,VH); }
@@ -2336,7 +2340,7 @@ function syncHUD(dt){ const g=G, tl=g.life, clk=$('clock'); setT('clock',tl<10?t
   else if(g.player.ragdoll) pm=IS_TOUCH?'Move or JUMP to get up':'Q, Space or move to get up';
   else { const i=grabCandidate(); if(i>=0) pm=(IS_TOUCH?'GRAB the ':'E: grab the ')+G.props[i].d.name; }
   setT('promptmsg',pm); $('prompt').classList.toggle('on',!!pm); setT('bGrab',near?'SLOTS':g.nearDoc?'DOC':g.player.held>=0?'DROP':'GRAB');
-  setS('hint','opacity',g.alive<22?'1':'0');
+  setS('hint','opacity',g.alive<22&&!(VW<1100&&$('effects').childElementCount)?'1':'0'); // never sit on top of the effect pills
   hudT-=dt; if(hudT>0) return; hudT=0.1; let h='';
   if(g.player.form){ const FF=FORMS[g.player.form]; h+=`<div class="fx" style="color:#ffb63c"><span class="dot"></span><span class="nm">${g.parade?'PARADE · '+FF.name+' · '+(g.parade.i+1)+'/'+PARADE.length:FF.name+' · '+Math.ceil(g.player.formT)+'s'}</span></div>`; }
   if(g.player.foldT>0) h+=`<div class="fx crash"><span class="dot"></span><span class="nm">LACED · FENT FOLD · ${Math.ceil(g.player.foldT)}s</span></div>`;

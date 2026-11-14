@@ -52,7 +52,9 @@ play for two minutes. Then read the code map below.
 | `screenshots/` | Current look (`whats_new.jpg` is an 8-shot collage) and earlier shots (title, creature zoo, party, slots on phone, wall art, salvia). |
 | `rust_prototype/` | `jitters.zip` plus its README. |
 
-**Tests need:** Python 3, `pip install playwright numpy`, then `playwright install chromium`. They launch
+**Tests need:** Python 3, `pip install playwright numpy`, then `playwright install chromium`. If a Chromium
+is already installed and the Playwright versions don't match, point the tests at it with
+`BT_CHROMIUM=/path/to/chrome`. They launch
 Chromium with `--use-angle=swiftshader --enable-unsafe-swiftshader` so WebGL works headless. They drive
 the engine directly: `update(1/60, inputObject)` in a loop, then `render()`.
 
@@ -297,9 +299,9 @@ approximate and drift with edits.
 4. Run `python tests/feat3.py` and `python tests/feat4.py`. Both should finish with `"errs": []`.
 5. Publish: with the Artifact tool, publish `game/index.html` with `url`
    `https://claude.ai/artifact/XgyMk7wJZrRtXTrLYhEusv`. Read the artifact first in a new chat.
-6. Copy `game/index.standalone.html` to `desktop/borrowed_time_desktop/dist/index.html` and to
-   `pwa/index.html`. The PWA copy also needs the manifest and service-worker lines; diff them.
-   Then bump `VERSION` in `pwa/sw.js`.
+6. Run `python tests/sync_builds.py`. It copies the standalone page to
+   `desktop/borrowed_time_desktop/dist/index.html`, rebuilds `pwa/index.html` with the manifest and
+   service-worker lines, and bumps `VERSION` in `pwa/sw.js`.
 
 **Artifact rules that matter here:**
 - No `<!doctype>`/`<html>`/`<head>`/`<body>`; `<title>` goes at the top.
@@ -353,9 +355,15 @@ approximate and drift with edits.
   before relying on it.
 - Fried voices can't be applied to TTS, which is a Web Speech limitation.
 - Dollas and implants reset every run. There is no meta-progression yet.
-- Cops can't reach a flying player, so flight is a strong escape. High altitude shows the edge of the
-  world; the ground plane ends about 240 m out.
-- The Doubloon parade is visually intense: JOINT's green tint swamps the gold crossfade.
+- Cops can't reach a flying player, so flight is a strong escape.
+- Fixed 14 Nov 2026:
+  - The "edge of the world" seen from high up was a shader-order bug: fog was mixed in after the
+    hue/saturation grade, so far ground stayed blue while the graded sky went grey or hue-shifted.
+    `FS_BODY` now applies tint, then fog, then the grade.
+  - The Doubloon parade now uses a gold tint, a quarter-strength JOINT vignette and a capped hue spin
+    (`m.all` block in `mods()`, `m.focusVig`).
+  - The controls hint hides on screens under 1100 px wide while effect pills are showing, so the two
+    no longer overlap.
 
 ## 7. Ideas already on the table
 
