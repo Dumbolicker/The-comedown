@@ -34,6 +34,35 @@ play for two minutes. Then read the code map below.
 
 ---
 
+## 0. Update, 14 Nov 2026: demolition, interiors, casino
+
+This update added the following. The plan and gap analysis are in `ROADMAP.md`, and the owner's working method is the OVERDRIVE skill in `.claude/skills/overdrive`.
+
+- **Demolition.**
+  - House walls are now breakable wood panels in two courses (≤1.5 m columns) with glass windows and two breakable roof halves. The mini-mart is brick with a glass storefront and a concrete roof. The casino has 6 glass entrance panes and 19 breakable slot machines. That's 1,508 panels in total.
+  - Damage is ½·m·v²/100 from players, horn charges, giants, ragdolls, flung NPCs, thrown props, explosions (`brkBlast`, 950 at the centre), slams and dragon fire.
+  - After a break, `brkStable` runs a 0-1 breadth-first search per building. Going up is free, and each sideways step costs 1, with at most 2 in a row (lintels and short spans). A roof falls when fewer than half the panels under it stand.
+- **Rapier 0.21.0** (`@dimforge/rapier3d-compat`, Rust → WebAssembly, Apache-2.0).
+  - It's fetched from jsdelivr at a pinned version, SHA-384-checked in `loadRapier` and imported from a blob URL. If blob imports aren't allowed, it falls back to importing the pinned URL directly.
+  - It simulates falling sections (`rubSlab`) and rubble (`rubChunk`). A section breaks up on contact forces above 5 g.
+  - Static colliders are added lazily around rubble (`rubEnsure`), and stepping is skipped while no rubble is live.
+  - If Rapier fails, rubble becomes `chunk` props in the old solver. `physTag` on the title screen says which engine is running.
+- **Interiors.** 24 walk-in houses with furniture, a wood floor, a rug and a ceiling light. The mini-mart has aisles, a cooler and a counter. `interiorAt` and `insideUpdate` cut away the roof of the building you're in: the roof is drawn only into the shadow pass (`SHO`), and the camera rises to a dollhouse view (`G.camIn`).
+- **The Lucky Liver Casino** replaces the plaza kiosk (`casino()` in `gen_plaza`).
+  - Inside: carpet, 19 machines (any one opens the slots, via `nearSlot`), a bar, a cashier cage, card tables, chandeliers and neon.
+  - 4 gamblers and a bouncer with `home` behaviour.
+  - Inside, the clock reads "??:??" until under 10 s.
+  - Smashing a machine spills 16 coins worth Ð6–14 each.
+  - A rooftop tri-vision billboard (`drawBillboard`) rotates 4 original ads, facing the trailer-park spawn.
+- **Rendering.**
+  - 8 nearest point lights in `FS_BODY` (`u_plp`/`u_plc`): street lamps at night, interior bulbs, neon, chandeliers.
+  - A textured-surface program (`TEXP`) that reuses `FS_BODY` lighting, for the atlas (ads and signs, painted in code by `paintAtlas`) and tiled carpet, wood and tile floors.
+- **New feats:** Wrecking Ball, Open Floor Plan, Beat the House (25 feats in total).
+- **Tests.**
+  - `tests/feat5.py` covers free-fall accuracy, charge, lintel, roof, blast, interior, casino and performance, with and without Rapier.
+  - `tests/vendor_rapier.py` fetches and verifies the pinned Rapier file.
+  - `tests/sync_builds.py --vendor` bundles it into the desktop build for offline play.
+
 ## 1. What's in this folder
 
 | Path | What it is |
@@ -142,7 +171,7 @@ the engine directly: `update(1/60, inputObject)` in a loop, then `render()`.
   Splats knock nearby people over ("HELLFIRE") and light propane.
 - Feats: Street Artist (80 strokes) and Special Delivery (hit a cop).
 
-### Slots ("Lucky Liver Slots", plaza kiosk, bets Ð10–250)
+### Slots ("Lucky Liver Slots", any machine in the Lucky Liver Casino, bets Ð10–250)
 - Base odds per spin: triple 1.7%, pair 6.1%, Cursed Doubloon 1 in 137,000.
 - Payouts: triple pays 10× the bet, a pair 2×, and three livers give +20 s.
 - **Pity:** after 19 dry spins the 20th is forced to pay a pair (70%) or three livers (30%). It never
@@ -216,7 +245,7 @@ Implants are bought with dollas, last the run and show as chrome on your body.
 - **Off.**
 - The title button or the V key cycles the modes. Saved as `bt_voice2`.
 
-### Feats (22)
+### Feats (25)
 Each gives bonus seconds:
 - Frequent Flyer, Bowling Night, Polypharmacy, Full Medicine Cabinet (all 9 stashes), Pyromaniac,
   People Person, Thin Blue Linebacker, Top of the World (water tower)
@@ -296,7 +325,7 @@ approximate and drift with edits.
 1. Edit `game/index.html`.
 2. Run `python tests/make_standalone.py`. It regenerates the standalone page that tests and desktop use.
 3. Run `node --check` on the extracted script, or just load the standalone page and watch the console.
-4. Run `python tests/feat3.py` and `python tests/feat4.py`. Both should finish with `"errs": []`.
+4. Run `python tests/feat3.py`, `python tests/feat4.py` and `python tests/feat5.py` (after `python tests/vendor_rapier.py`). All should finish with `"errs": []`.
 5. Publish: with the Artifact tool, publish `game/index.html` with `url`
    `https://claude.ai/artifact/XgyMk7wJZrRtXTrLYhEusv`. Read the artifact first in a new chat.
 6. Run `python tests/sync_builds.py`. It copies the standalone page to
