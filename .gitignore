@@ -1,2 +1,4 @@
 __pycache__/
 desktop/borrowed_time_desktop/src-tauri/target/
+.refcache/
+.claude/skills/overdrive/scripts/refpipe/target/

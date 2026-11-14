@@ -1,0 +1,15 @@
+[package]
+name = "refpipe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Reference-footage pipeline: licensed fetch, frames, contact sheets, motion scores, blob tracking and parabola fits for frame-by-frame physics study"
+
+# Deliberately no dependencies: the audit surface is this crate's own source.
+[dependencies]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
