@@ -192,6 +192,7 @@ body.paused #hint,body.paused #ov{visibility:hidden}
 @media (max-width:460px){.recgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.featl{grid-template-columns:1fr}.sr{flex-wrap:wrap}.sr .sc{max-width:100%;justify-content:flex-start}}
 .padfocus{outline:2px solid var(--cyan)!important;outline-offset:3px}
 body.calm #stars.seen i.on{animation:none;background:#5b8cff}
+.pbval{display:block;font:400 10px/1 var(--font-m);color:var(--dim);margin-top:4px}
 .daily{margin:18px auto 0;max-width:48ch;text-align:left;font:400 13px/1.65 var(--font-d);color:var(--dim)}
 .daily b{color:var(--amber)}
 #tut{position:fixed;left:50%;bottom:calc(46px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:9px 14px;font:600 13px/1.35 var(--font-d);color:var(--ink);max-width:min(560px,92vw);text-align:center;border-color:var(--toxic)}
@@ -206,7 +207,7 @@ body.calm #stars.seen i.on{animation:none;background:#5b8cff}
   <div id="topleft"><div id="clockwrap" class="panel"><button id="pauseBtn" type="button" aria-label="Pause" title="Pause (Esc)">II</button><span class="clabel" id="clockLbl">Time left</span><div id="clock">30.0</div>
     <div id="lifebar"><div id="lifefill"></div></div><div id="drain"></div></div></div>
   <div id="topright">
-    <div id="score" class="stat panel"><span class="clabel">Chaos</span><span class="statval" id="scoreval">0</span></div>
+    <div id="score" class="stat panel"><span class="clabel">Chaos</span><span class="statval" id="scoreval">0</span><span class="pbval" id="pbval"></span></div>
     <div id="dollas" class="stat panel"><span class="clabel">Dollas</span><span class="statval" id="dollasval">0</span></div>
     <div id="combo" class="stat panel"><span class="clabel">Combo</span><span class="statval" id="comboval">x1</span></div>
     <div id="stars"><i></i><i></i><i></i><i></i><i></i></div>
@@ -367,7 +368,7 @@ const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:J
 const REDUCE_MOTION=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 const QUALITY={ low:{scale:0.6,shadows:false,lights:2}, medium:{scale:0.8,shadows:true,lights:4}, high:{scale:1,shadows:true,lights:8} };
 const BIND_DEF={up:['w','arrowup'],down:['s','arrowdown'],left:['a','arrowleft'],right:['d','arrowright'],sprint:['shift'],jump:[' '],tackle:['f'],grab:['e'],flop:['q'],holler:['h'],poop:['p'],charge:['c'],voice:['v'],restart:['r']};
-const SET_DEF={quality:'auto',scale:1,shadows:true,lights:8,master:0.8,sfx:1,music:0.6,voices:1,sens:1,padSens:1,invertY:false,rumble:true,hints:true,
+const SET_DEF={quality:'auto',scale:1,shadows:true,lights:8,master:0.8,sfx:1,music:0.6,voices:1,sens:1,padSens:1,invertY:false,rumble:true,hints:true,breaks:true,
   flash:REDUCE_MOTION?'reduced':'full',shake:REDUCE_MOTION?0.25:1,warned:false};
 const SET=Object.assign({},SET_DEF,store.get('bt_settings',{}));
 SET.binds=Object.assign(JSON.parse(JSON.stringify(BIND_DEF)),SET.binds||{});
@@ -994,7 +995,7 @@ const LAYOUT=[['res','down','down','res'],['gas','plaza','park','down'],['res','
 const LOT_COL={res:C.grass,down:C.conc,gas:C.conc,plaza:C.conc,park:hex(0x4e8f3a),trailer:hex(0x8a8a4a),tower:hex(0x6b8f45),constr:C.dirt};
 function genWorld(){
   for(const k of BATCH_KEYS) STATIC[k].n=0; Object.assign(W,{solids:[],spots:[],rings:[],copSpawns:[],lamps:[],props:[],blocks:[],slots:null,tower:null,doc:null,docEnt:null,
-    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[],lobby:null});
+    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[],lobby:null,doors:[],doorKeys:new Set(),condemned:new Set()});
   BRK.length=0; BRK_BY.clear(); BLD=0; BRK_DIRTY=true;
   // ground + fields
   sdeco(0,-0.5,0,HALF+160,0.5,HALF+160,hex(0x6e7845)); sdeco(0,-0.49,0,HALF,0.5,HALF,C.asph);
@@ -1022,7 +1023,7 @@ function genWorld(){
   for(const [a,b,c,d] of [[-o-th,-o-th,o+th,-o],[-o-th,o,o+th,o+th],[-o-th,-o,-o,o],[o,-o,o+th,o]]){ solid(a,0,b,c,2.4,d,wcol); solid(a,2.4,b,c,60,d,wcol,false); }
   for(let k=0;k<70;k++){ const an=rand(0,TAU), d=rand(o+8,o+80), x=Math.cos(an)*d, z=Math.sin(an)*d; if(Math.abs(x)<o+5&&Math.abs(z)<o+5) continue; tree(x,z,false); }
   brkGraph(); W.glass=BRK.filter(b=>b.mat==='glass'); W.slotsB=BRK.filter(b=>b.kind==='slot');
-  gridBuild(); uploadStatic(); BRK_DIRTY=true; FIRE.list.length=0; NAV.built=false; if(RUB.ready) rubWorld();
+  condemn(); gridBuild(); uploadStatic(); BRK_DIRTY=true; FIRE.list.length=0; NAV.built=false; if(RUB.ready) rubWorld();
 }
 
 /* ---------------- props ---------------- */
@@ -1178,7 +1179,8 @@ function wallRun(axis,a0,a1,t0,t1,y0,y1,ops,mat,col,bld,course=2.1){ const cuts=
   for(const [u0,u1] of cols){ const um=(u0+u1)/2, op=ops.find(q=>um>q.u0&&um<q.u1), mid=Math.min(course,y1);
     if(op&&op.door){ box(u0,u1,Math.max(op.y1,y0),Math.max(op.y1,mid),mat,col); box(u0,u1,Math.max(op.y1,mid),y1,mat,col); }
     else if(op){ box(u0,u1,y0,op.y0,mat,col); pane(u0,u1,op.y0,op.y1); box(u0,u1,op.y1,Math.max(op.y1,mid),mat,col); box(u0,u1,Math.max(op.y1,mid),y1,mat,col); }
-    else { box(u0,u1,y0,mid,mat,col); box(u0,u1,mid,y1,mat,col); } } }
+    else { box(u0,u1,y0,mid,mat,col); box(u0,u1,mid,y1,mat,col); } }
+  for(const q of ops) if(q.door&&y0<0.05) addDoor(axis,q.u0,q.u1,t0,t1,q.y1,mat,bld); }
 // support graph: who rests on whom (vertical) and who is bonded side by side (lateral, same course)
 function brkGraph(){ const statics=W.solids.filter(s=>s.brk===undefined&&!s.hidden&&!s.ramp);
   for(const list of BRK_BY.values()) for(const b of list){ const s=b.s;
@@ -1199,7 +1201,7 @@ function brkCheck(bld){ const bad=brkStable(bld); if(!bad.length) return; noise(
 function killPanel(b){ b.alive=false; b.falling=false; b.s.gone=true; GRID_DIRTY=true; BRK_DIRTY=true; NAV.dirty=true;
   if(b.s.col&&RUB.world){ try{ RUB.byCol.delete(b.s.col.handle); RUB.world.removeCollider(b.s.col,true); }catch(e){} b.s.col=null; }
   const s=b.s; G.decals=G.decals.filter(d=>!(d.pos.x>s.x0-0.1&&d.pos.x<s.x1+0.1&&d.pos.y>s.y0-0.1&&d.pos.y<s.y1+0.1&&d.pos.z>s.z0-0.1&&d.pos.z<s.z1+0.1)); }
-function hitBrk(id,dmg,pt,dir){ const b=BRK[id]; if(!b||!b.alive||b.falling||!(dmg>0)) return false; b.hp-=dmg;
+function hitBrk(id,dmg,pt,dir){ if(BRK[id]&&BRK[id].invuln) return false; const b=BRK[id]; if(!b||!b.alive||b.falling||!(dmg>0)) return false; b.hp-=dmg;
   const c0=b.crack; b.crack=clamp(1-b.hp/b.hp0,0,1); if(b.crack-c0>0.05) BRK_DIRTY=true;
   if(b.hp>0){ if(dmg>b.hp0*0.15&&G.t-(b.fxT||-9)>0.12){ b.fxT=G.t; brkFX(b,pt||boxCenter(b.s),dir||V(0,-1,0),0.3); } return false; }
   breakPanel(b,pt||boxCenter(b.s),dir||V(0,-1,0),dmg); return true; }
@@ -1210,7 +1212,7 @@ function breakPanel(b,pt,dir,dmg){ killPanel(b); G.stats.demo=(G.stats.demo||0)+
   brkCheck(b.bld); }
 function detachPanel(b){ if(!b.alive) return; const c=boxCenter(b.s); killPanel(b); G.stats.demo=(G.stats.demo||0)+1;
   if(RUB.ready&&(!b.kind||CUSTOM_KINDS.has(b.kind))) rubSlab(b); else { if(b.kind==='wtank') tankSplashAt(V(c.x,0.5,c.z)); fracture(b,c,V(rand(-0.3,0.3),-1,rand(-0.3,0.3)),b.hp0*1.2); }
-  if(b.roof){ if(!G.attract){ addScore(800,c,'CAVE-IN'); award(F_ROOF); G.stats.roofs=(G.stats.roofs||0)+1; } G.shake+=0.6; noise('rumble',1); } else if(!G.attract) addScore(Math.round(b.M.pts*0.6),null,'');
+  if(b.roof){ if(!G.attract){ addScore(800,c,'CAVE-IN'); award(F_ROOF); G.stats.roofs=(G.stats.roofs||0)+1; G.slowT=Math.max(G.slowT||0,0.5); } G.shake+=0.6; noise('rumble',1); } else if(!G.attract) addScore(Math.round(b.M.pts*0.6),null,'');
   brkCheck(b.bld); }
 // irregular boxes filling the panel: a jittered grid across its two long axes (glass gets more, smaller shards)
 function fractureParts(b){ const s=b.s, M=b.M, glass=b.mat==='glass', parts=[];
@@ -1257,7 +1259,7 @@ function drawDemolition(B,T,v,night){ const ga=0.24+0.5*night, gcol=night>0.3?mi
     bpush(T.cube,c.x,c.y,c.z,QI,(s.x1-s.x0)/2,(s.y1-s.y0)/2,(s.z1-s.z0)/2,b.col===GLASS?gcol:b.col,ga,b.glow!==undefined?b.glow:-0.85); }
   for(const b of W.slotsB||NONE) if(b.alive) drawSlotMachine(B,b,v);
   for(const b of W.customB||NONE) if(b.alive&&!b.falling) drawCustomBrk(B,b,boxCenter(b.s),QI);
-  drawDrone(B);
+  drawDrone(B); drawDoors(B,T,v);
   for(const f of W.fixtures||NONE){ if(f.brk!==undefined&&!BRK[f.brk].alive) continue; ball(B,f.p,V(f.r,f.r*0.6,f.r),QI,f.c,1,1); }
   for(const r of RUB.chunks){ if(!r.t||vlen(vsub(r.t,v.pos))>90) continue; bpush(r.glass?T.cube:B.cube,r.t.x,r.t.y,r.t.z,r.q,r.h.x,r.h.y,r.h.z,r.color,r.glass?0.55:1,r.glass?0.2:0); }
   for(const r of RUB.slabs){ if(!r.t) continue; const b=r.b, s=b.s; if(CUSTOM_KINDS.has(b.kind)){ drawCustomBrk(B,b,r.t,r.q); continue; }
@@ -1292,7 +1294,7 @@ function rubWorld(){ const R=RUB.R; if(!R) return; if(RUB.world){ try{ RUB.eq.fr
   w.createCollider(R.ColliderDesc.cuboid(HALF+200,0.5,HALF+200).setTranslation(0,-0.5,0).setFriction(0.8));
   for(const s of W.solids){ s.col=null; s.rIn=false; } }
 // The town's ~1,700 static boxes are added to Rapier only around rubble (5×5 grid cells, ~40 m square), so each step stays cheap.
-function rubAddSolid(s){ if(s.rIn||s.gone) return; s.rIn=true; const R=RUB.R, cx=(s.x0+s.x1)/2, cy=(s.y0+s.y1)/2, cz=(s.z0+s.z1)/2;
+function rubAddSolid(s){ if(s.rIn||s.gone||s.door) return; s.rIn=true; const R=RUB.R, cx=(s.x0+s.x1)/2, cy=(s.y0+s.y1)/2, cz=(s.z0+s.z1)/2;
   const cd=s.ramp?R.ColliderDesc.convexHull(wedgeHull(s,cx,cy,cz)):R.ColliderDesc.cuboid(Math.max(0.01,(s.x1-s.x0)/2),Math.max(0.01,(s.y1-s.y0)/2),Math.max(0.01,(s.z1-s.z0)/2));
   if(!cd) return; cd.setTranslation(cx,cy,cz).setFriction(0.7); const c=RUB.world.createCollider(cd); if(s.brk!==undefined){ s.col=c; RUB.byCol.set(c.handle,{panel:s.brk}); } }
 function rubEnsure(x,z){ const g=GRID, ix=Math.floor((x-g.ox)/g.cell), iz=Math.floor((z-g.oz)/g.cell), key=ix*4096+iz; if(RUB.near.has(key)) return; RUB.near.add(key);
@@ -1341,7 +1343,7 @@ function rubStep(wdt){ if(!RUB.ready||!RUB.world||!(wdt>0)) return;
     if(!r.sl&&G.state==='play'){ const sp=Math.hypot(r.lv.x,r.lv.y,r.lv.z); if(sp>6){ const reach=(r.slab?1.2:0.45)+0.35;
       G.npcs.forEach((nn,ni)=>{ if(nn.alive&&npcUp(nn)&&nn.hitCd<=0&&Math.abs(nn.pos.x-r.t.x)<reach&&Math.abs(nn.pos.z-r.t.z)<reach&&r.t.y>nn.pos.y&&r.t.y<nn.pos.y+1.9) knockNpcG(ni,vadd(vmul(V(r.lv.x,0,r.lv.z),0.5),V(0,3,0)),true,false,'DEBRIS'); }); } } } }
 
-function tankSplashAt(c){
+function tankSplashAt(c){ G.slowT=Math.max(G.slowT||0,0.8);
   for(let k=0;k<6;k++) partsBurst(vadd(c,V(rand(-3,3),rand(0,2),rand(-3,3))),'debris',22,14,[0.62,0.8,0.95],0.16);
   sfx('splash',1,c); sfx('boom',0.8,c); G.shake+=1.4; addScore(2500,vadd(c,V(0,3,0)),'WATER DAMAGE'); award(F_WATER);
   G.npcs.forEach((n,i)=>{ if(n.alive&&npcUp(n)&&vlen(vsub(n.pos,c))<14) knockNpcG(i,vadd(vmul(vnorm(V(n.pos.x-c.x,0,n.pos.z-c.z)),9),V(0,5,0)),true,false,'WASHED AWAY'); });
@@ -1353,7 +1355,7 @@ function tankSplashAt(c){
 const NAV={n:0,ox:0,c:0.5,blk:null,built:false,dirty:false,next:0,searches:0}, NAVS={g:null,par:null,st:null,cl:null,cur:0};
 // 0.5 m cells, blocked when the cell centre lies inside a solid grown by 0.25 m: a 1.2 m doorway keeps a free lane, a 0.18 m wall never leaks
 function navBuild(){ const c=NAV.c, n=Math.ceil((2*HALF+40)/c), ox=-HALF-20, pad=0.25; NAV.n=n; NAV.ox=ox; if(!NAV.blk||NAV.blk.length!==n*n) NAV.blk=new Uint8Array(n*n); else NAV.blk.fill(0); const B=NAV.blk;
-  for(const s of W.solids){ if(s.gone||s.y0>1.6||s.y1<0.45||s.ramp) continue; const x0=Math.max(0,Math.ceil((s.x0-pad-ox)/c-0.5)), x1=Math.min(n-1,Math.floor((s.x1+pad-ox)/c-0.5)), z0=Math.max(0,Math.ceil((s.z0-pad-ox)/c-0.5)), z1=Math.min(n-1,Math.floor((s.z1+pad-ox)/c-0.5));
+  for(const s of W.solids){ if(s.gone||s.door||s.y0>1.6||s.y1<0.45||s.ramp) continue; const x0=Math.max(0,Math.ceil((s.x0-pad-ox)/c-0.5)), x1=Math.min(n-1,Math.floor((s.x1+pad-ox)/c-0.5)), z0=Math.max(0,Math.ceil((s.z0-pad-ox)/c-0.5)), z1=Math.min(n-1,Math.floor((s.z1+pad-ox)/c-0.5));
     for(let z=z0;z<=z1;z++){ const r=z*n; for(let x=x0;x<=x1;x++) B[r+x]=1; } }
   NAV.built=true; NAV.dirty=false; }
 const navIdx=(x,z)=>{ const n=NAV.n, ix=Math.floor((x-NAV.ox)/NAV.c), iz=Math.floor((z-NAV.ox)/NAV.c); return ix<0||iz<0||ix>=n||iz>=n?-1:iz*n+ix; };
@@ -1498,6 +1500,49 @@ function ragRigRead(){ for(const r of RIGS){ const tq=r.torso.rotation(), qi=qco
     const hip=v=>Math.atan2(-v.z,-v.y), sh=v=>-Math.asin(clamp(v.z,-1,1)), sz=v=>Math.atan2(v.x,-v.y), el=(a,b)=>Math.acos(clamp(vdot(a,b),-1,1));
     r.pose={hipL:hip(d[0]),knL:wrapA(hip(d[1])-hip(d[0])),hipR:hip(d[2]),knR:wrapA(hip(d[3])-hip(d[2])),shL:sh(d[4]),szL:sz(d[4]),elL:el(d[4],d[5]),shR:sh(d[6]),szR:sz(d[6]),elR:el(d[6],d[7]),bob:0}; } }
 
+/* ---------------- condemned buildings: demolition is limited to a few marked ones ---------------- */
+// The two houses nearest the trailer park, one more house, one trailer and the water tower can be wrecked; every other
+// panel is permanent (slot machines stay breakable). Each condemned building gets a sign with an orange X by its door.
+// ?wreck=all in the address turns the limit off (the older test suites use it).
+function condemn(){ const all=new URLSearchParams(location.search).get('wreck')==='all', C=W.condemned; C.clear();
+  const isHouse=it=>{ const L=BRK_BY.get(it.bld); return !!L&&it.cut&&L.some(b=>b.mat==='wood'&&!b.roof); }, isTrailer=it=>{ const L=BRK_BY.get(it.bld); return !!L&&L.some(b=>Math.abs(b.s.y1-0.36)<0.005&&b.s.y0<0.01); };
+  const sp=W.spawn||V(), dist=it=>Math.hypot((it.x0+it.x1)/2-sp.x,(it.z0+it.z1)/2-sp.z);
+  const houses=W.interiors.filter(isHouse).sort((a,b)=>dist(a)-dist(b)), trailers=W.interiors.filter(isTrailer);
+  for(const it of houses.slice(0,2)) C.add(it.bld); if(houses.length>2) C.add(pick(houses.slice(2)).bld); if(trailers.length) C.add(pick(trailers).bld);
+  for(const b of W.customB) if(b.kind==='wleg'||b.kind==='wtank') C.add(b.bld);
+  for(const b of BRK){ b.invuln=!all&&b.kind!=='slot'&&!C.has(b.bld); }
+  for(const bld of C){ const d=W.doors.find(o=>o.bld===bld); if(!d) continue; const ax=d.axis, cx=ax==='x'?(d.u0+d.u1)/2:d.tm, cz=ax==='x'?d.tm:(d.u0+d.u1)/2, it=W.interiors.find(q=>q.bld===bld);
+    const out=it?Math.sign(ax==='x'?cz-(it.z0+it.z1)/2:cx-(it.x0+it.x1)/2)||1:1, nx=ax==='x'?0:out, nz=ax==='x'?out:0, px=cx+nx*2.4+(ax==='x'?1.7:0), pz=cz+nz*2.4+(ax==='x'?0:1.7), board=hex(0xc9b48a), orange=hex(0xff6a1a);
+    sdeco(px,0.55,pz,0.04,0.55,0.04,hex(0x6b5a45)); sdeco(px,1.25,pz,ax==='x'?0.42:0.03,0.3,ax==='x'?0.03:0.42,board);
+    for(const sg of [1,-1]) sdeco(px+nx*0.035,1.25,pz+nz*0.035,ax==='x'?0.3:0.03,0.035,ax==='x'?0.03:0.3,orange,0.35,ax==='x'?qz(sg*0.62):qx(sg*0.62)); } }
+
+/* ---------------- doors: every doorway gets a door that swings (or slides) open as people come close ---------------- */
+// A thin solid fills a shut doorway; it disappears while the door is open. Paths treat doorways as open, people open
+// doors by walking up to them, and in a condemned building a charge or sprint kicks the door off its hinges.
+function addDoor(axis,u0,u1,t0,t1,y1,mat,bld){ const key=axis+'|'+u0.toFixed(2)+'|'+u1.toFixed(2)+'|'+t0.toFixed(2); if(W.doorKeys.has(key)) return; W.doorKeys.add(key);
+  const w=u1-u0, tm=(t0+t1)/2, glass=mat==='conc'||mat==='brick', h=Math.min(y1,2.12)-0.02, dbl=w>1.5;
+  const s2={x0:axis==='x'?u0:tm-0.05,z0:axis==='x'?tm-0.05:u0,x1:axis==='x'?u1:tm+0.05,z1:axis==='x'?tm+0.05:u1,y0:0,y1:h,ramp:0,launch:false,hidden:true,door:true}; W.solids.push(s2);
+  W.doors.push({axis,u0,u1,tm,h,glass,mat,bld,s:s2,open:0,hold:0,side:1,broken:false,leaves:dbl?[{hu:u0,len:w/2,sg:1},{hu:u1,len:w/2,sg:-1}]:[{hu:u0,len:w,sg:1}]}); }
+function doorCenter(d){ return d.axis==='x'?V((d.u0+d.u1)/2,0,d.tm):V(d.tm,0,(d.u0+d.u1)/2); }
+function doorsUpdate(dt){ const P=G.player, ps=Math.hypot(P.vel.x,P.vel.z);
+  for(const d of W.doors){ if(d.broken) continue; const c=doorCenter(d); let near=null, nd=1.9;
+    const chk=p=>{ const dd=Math.hypot(p.x-c.x,p.z-c.z); if(dd<nd&&p.y<d.h){ nd=dd; near=p; } }; chk(P.pos); for(const n of G.npcs) if(n.alive&&n.state!=='rag') chk(n.pos);
+    if(near){ if(d.open<0.08) d.side=Math.sign(d.axis==='x'?near.z-d.tm:near.x-d.tm)||1; d.hold=1.1; } else d.hold-=dt;
+    // kicked in: a charge or a sprint into a shut door of a condemned building
+    if(near===P.pos&&nd<1.0&&d.open<0.5&&(ps>8.5||P.charge>0)&&W.condemned.has(d.bld)&&G.state==='play'){ doorKick(d,P.vel); continue; }
+    const tgt=d.hold>0?1:0; d.open+=(tgt-d.open)*Math.min(1,dt*(tgt?6:3)); d.s.gone=d.open>0.12; } }
+function doorKick(d,v){ d.broken=true; d.s.gone=true; const c=doorCenter(d), sp=Math.max(6,Math.hypot(v.x,v.z)), dir=vnorm(V(v.x||0.01,0,v.z||0.01));
+  for(const l of d.leaves){ const along=d.axis==='x'?V(l.sg,0,0):V(0,0,l.sg), mid=vadd(V(d.axis==='x'?l.hu:d.tm,d.h/2,d.axis==='x'?d.tm:l.hu),vmul(along,l.len/2));
+    spawnChunk(mid,d.axis==='x'?V(l.len/2,d.h/2,0.03):V(0.03,d.h/2,l.len/2),QI,vadd(vmul(dir,sp*0.8),V(0,2,0)),V(rand(-3,3),rand(-2,2),rand(-3,3)),d.glass?'glass':'wood',d.glass?GLASS:hex(0x6b4a2e),d.glass); }
+  noise(d.glass?'shatter':'crack',0.9,c); sfx('bighit',0.6,c); G.shake+=0.25; addScore(150,vadd(c,V(0,1.8,0)),'DOOR KICKED'); G.stats.wrecked++; }
+function drawDoors(B,T,v){ for(const d of W.doors){ if(d.broken) continue; const c=doorCenter(d); if(Math.abs(c.x-v.pos.x)+Math.abs(c.z-v.pos.z)>90) continue;
+    const th=d.open*1.45, col=d.mat==='wood'?hex(0x7a5534):d.mat==='metal'?hex(0xc4c9cf):null;
+    for(const l of d.leaves){ const dir=d.axis==='x'?V(l.sg*Math.cos(th),0,-d.side*Math.sin(th)):V(-d.side*Math.sin(th),0,l.sg*Math.cos(th)), q=qyaw(Math.atan2(-dir.z,dir.x));
+      const hinge=d.axis==='x'?V(l.hu,0,d.tm):V(d.tm,0,l.hu), m=vadd(hinge,vmul(dir,l.len/2));
+      if(d.glass){ bpush(T.cube,m.x,d.h/2,m.z,q,l.len/2-0.03,d.h/2-0.04,0.02,GLASS,0.42,-0.85); const e=vadd(hinge,vmul(dir,l.len-0.03)); bpush(B.cube,e.x,d.h/2,e.z,q,0.03,d.h/2,0.03,[0.2,0.21,0.24],1,0);
+        const bar=vadd(hinge,vmul(dir,l.len*0.55)); bpush(B.cube,bar.x,1.05,bar.z,q,l.len*0.35,0.025,0.05,[0.75,0.76,0.78],1,0); }
+      else { bpush(B.cube,m.x,d.h/2,m.z,q,l.len/2-0.01,d.h/2,0.035,col,1,0); const k=vadd(hinge,vmul(dir,l.len-0.12)); bpush(B.sph,k.x,1.0,k.z,q,0.035,0.035,0.06,[0.85,0.7,0.3],1,0.1); } } } }
+
 /* ---------------- new breakables: custom-drawn kinds, trailers, fences ---------------- */
 const CUSTOM_KINDS=new Set(['wleg','wtank','canopy']);
 function customBrk(b,extra){ Object.assign(b,extra||{}); (W.customB||(W.customB=[])).push(b); return b; }
@@ -1527,7 +1572,7 @@ function splinterFence(i){ const o=G.props[i]; if(!o||!o.alive) return; o.alive=
 
 /* ---------------- fire: wood and roof panels catch, spread along the frame, and burn through ---------------- */
 const FIRE={list:[],max:48};
-function fireAt(id){ const b=BRK[id]; if(!b||!b.alive||b.burn>0||!(b.mat==='wood'||b.mat==='roof')||FIRE.list.length>=FIRE.max) return false;
+function fireAt(id){ const b=BRK[id]; if(!b||!b.alive||b.burn>0||!(b.mat==='wood'||b.mat==='roof')||FIRE.list.length>=FIRE.max||b.invuln) return false;
   b.burn=0.01; b.fuel=rand(10,15); b.flight={p:boxCenter(b.s),r:7,c:[1,0.55,0.2],k:1,flick:13}; W.lights.push(b.flight); FIRE.list.push(b); if(G&&!G.attract) G.stats.fires=(G.stats.fires||0)+1; return true; }
 function fireBlast(pos,r){ for(const b of BRK){ if(!b.alive||!(b.mat==='wood'||b.mat==='roof')) continue; const q=boxClosest(b.s,pos); if(vlen(vsub(q,pos))<r&&Math.random()<0.55) fireAt(b.id); } }
 function fireBrkUpdate(dt){ if(!FIRE.list.length) return; const P=G.player;
@@ -1890,7 +1935,7 @@ function newGame(attract){
 function spawnStash(){ const pp=G.player.pos; let best=null;
   for(let i=0;i<30;i++){ const s=pick(W.spots), d=Math.hypot(s.p.x-pp.x,s.p.z-pp.z); if(d<16||d>80) continue; if(s.high&&Math.random()>0.35) continue;
     if(G.stashes.some(o=>Math.hypot(o.pos.x-s.p.x,o.pos.z-s.p.z)<12)) continue; best=s.p; break; }
-  if(!best) best=pick(W.spots).p; G.stashes.push({sub:pick(SUBS),pos:{...best},life:60,seed:rand(0,10),laced:Math.random()<LACED_CHANCE}); }
+  if(!best) best=pick(W.spots).p; G.stashes.push({sub:pick(SUBS),pos:{...best},life:60,seed:rand(0,10),laced:Math.random()<LACED_CHANCE,golden:Math.random()<0.085}); }
 function toast(html,sub,col,dur){ if(G.attract) return; const box=document.getElementById('toasts'), d=document.createElement('div'); d.className='toast';
   if(col) d.style.borderColor=col; d.innerHTML=html+(sub?`<small>${sub}</small>`:''); box.appendChild(d);
   setTimeout(()=>{ d.style.transition='opacity .4s'; d.style.opacity='0'; setTimeout(()=>d.remove(),420); },(dur||1.8)*1000); while(box.children.length>4) box.firstChild.remove(); }
@@ -1924,7 +1969,7 @@ function knockNpcG(i,v,byPlayer,thrown,lbl){ const n=G.npcs[i]; if(n.hitCd>0) re
   if(n.kind==='cop'){ addScore(400,n.pos,'OFFICER DOWN'); heatAdd(1); award(F.COP); }
   else { if(up) G.stats.tackled++; addScore(lbl?320:thrown?250:150,n.pos,lbl||(thrown?'LAWN DARTS':'TACKLE')); if(!thrown&&Math.random()<0.3) playerSay(pick(TACKLE_LINES)); heatAdd(thrown?0.3:0.4); if(thrown) award(F.DARTS); if(G.stats.tackled>=15) award(F.PEOPLE); }
   sfx('bighit'); G.shake+=0.25; }
-function explode(pos){ const R=9; G.stats.booms++; brkBlast(pos,R,950); fireBlast(pos,4.2); if(G.drone&&vlen(vsub(G.drone.pos,pos))<8) droneDown(true);
+function explode(pos){ const R=9; G.stats.booms++; brkBlast(pos,R,950); fireBlast(pos,4.2); if(G.drone&&vlen(vsub(G.drone.pos,pos))<8) droneDown(true); for(const d of W.doors) if(!d.broken&&W.condemned.has(d.bld)&&vlen(vsub(doorCenter(d),pos))<4) doorKick(d,vsub(doorCenter(d),pos));
   G.props.forEach((p,i)=>{ if(!p.alive||p.held) return; const d=vsub(p.pos,pos), dist=vlen(d); if(dist>R||dist<0.01) return; const f=1-dist/R, dir=vnorm(vadd(vnorm(d),V(0,0.8,0)));
     if(p.anchored){ if(dist<4.5) burstHydrant(i,vflat(vnorm(d))); return; }
     p.asleep=false; p.still=0; p.vel=vadd(p.vel,vmul(dir,24*f/Math.sqrt(Math.max(0.6,p.mass)))); p.ang=vadd(p.ang,V(rand(-10,10)*f,rand(-10,10)*f,rand(-10,10)*f)); p.touched=0;
@@ -2050,9 +2095,9 @@ function beginDying(busted){ if(G.dying>0) return; G.dying=2.4; G.causeBusted=bu
 function updateStashes(dt){ for(const s of G.stashes) s.life-=dt; G.stashes=G.stashes.filter(s=>s.life>0); G.stashT-=dt;
   if(G.stashes.length<(G.cyber&&G.cyber.sniffer?6:5)&&G.stashT<=0){ spawnStash(); G.stashT=3; } if(G.dying>0) return;
   const pc=vadd(G.player.pos,V(0,PH*0.5,0));
-  const i=G.stashes.findIndex(s=>vlen(vsub(vadd(s.pos,V(0,0.85,0)),pc))<1.4+PR); if(i<0) return; const s=G.stashes.splice(i,1)[0]; pickup(s); }
+  const i=G.stashes.findIndex(s=>vlen(vsub(vadd(s.pos,V(0,0.85,0)),pc))<1.4+PR); if(i<0) return; const s=G.stashes.splice(i,1)[0]; if(s.golden&&!s.laced){ G.life=Math.min(Math.max(240,G.life),G.life+10); addScore(1000,vadd(s.pos,V(0,1.6,0)),'GOLDEN STASH +10s'); sfx('win',0.6); } pickup(s); }
 function pickup(st){ const s=st.sub, mult=useTol(s), gain=Math.max(3,Math.round(s.life*mult*cyberBoost(s))); G.life=Math.min(240,G.life+gain); G.comedown=0; addEffect(s);
-  G.history.push(s.rgb); if(G.history.length>4) G.history.shift(); startUse(s); playerSay(pick(PICKUP_LINES[s.id]),2.4,true); if(st.laced) G.player.foldPending=(USE_TIME[s.use]||0.8)+0.15; if(s.id==='salvia'){ if(!G.parade) becomeObject(); } else if(!G.parade&&Math.random()<0.42) transform(pick(Object.keys(FORMS).filter(k=>k!==G.player.form))); G.stats.doses++; G.tried[s.id]=true; partsBurst(vadd(st.pos,V(0,0.8,0)),'confetti',24,6,s.rgb,0.08); sfx('pickup');
+  G.history.push(s.rgb); if(G.history.length>4) G.history.shift(); startUse(s); playerSay(pick(PICKUP_LINES[s.id]),2.4,true); if(st.laced) G.player.foldPending=(USE_TIME[s.use]||0.8)+0.15; if(s.id==='salvia'){ if(!G.parade) becomeObject(); } else if(!G.parade&&Math.random()<0.15) transform(pick(Object.keys(FORMS).filter(k=>k!==G.player.form))); G.stats.doses++; G.tried[s.id]=true; partsBurst(vadd(st.pos,V(0,0.8,0)),'confetti',24,6,s.rgb,0.08); sfx('pickup');
   toast(`<b style="color:${s.css}">${s.name}</b> · ${s.tag} +${gain}s`, mult<0.95?`${s.blurb}. Tolerance: only ${Math.round(mult*100)}% as strong.`:s.blurb+'.', s.css, 2.6);
   pop(vadd(st.pos,V(0,1.2,0)),'+'+gain+'s',s.css); addScore(50,null,'');
   if(G.effects.length>=3){ toast('<b style="color:#ff4d64">OVERAMPED</b>','Three at once: the clock drains 1.6× faster','#ff4d64'); award(F.POLY); }
@@ -2143,7 +2188,7 @@ function transform(key){ const p=G.player, F=FORMS[key]; if(!F) return; p.form=k
 function untransform(){ const p=G.player; if(!p.form) return; partsBurst(vadd(p.pos,V(0,1,0)),'smoke',18,2.5,[0.88,0.84,0.96],0.28); p.form=''; p.cloth={}; p.pose=null;
   toast('<span style="color:var(--dim)">You turned back into yourself. Mostly.</span>'); }
 function formUpdate(dt){ const p=G.player; if(p.form&&!G.parade){ p.formT-=dt; if(p.formT<=0) untransform(); } }
-function fireUpdate(dt){ const p=G.player; fireBrkUpdate(dt); droneUpdate(dt); tutUpdate(dt); if((G.dailyT||0)<=G.t){ G.dailyT=G.t+1; dailyCheck(); } if(!(p.fireT>0)) return; p.fireT-=dt; fireBreath(p); const f=fwd(p.yaw), m=p.mouthW||vadd(p.pos,V(0,1.4,0));
+function fireUpdate(dt){ const p=G.player; fireBrkUpdate(dt); droneUpdate(dt); doorsUpdate(dt); engageUpdate(dt); tutUpdate(dt); if((G.dailyT||0)<=G.t){ G.dailyT=G.t+1; dailyCheck(); } if(!(p.fireT>0)) return; p.fireT-=dt; fireBreath(p); const f=fwd(p.yaw), m=p.mouthW||vadd(p.pos,V(0,1.4,0));
   for(let k=0;k<5;k++){ if(G.parts.length>640) G.parts.shift(); const sp=vnorm(vadd(f,V(rand(-0.22,0.22),rand(-0.15,0.12),rand(-0.22,0.22))));
     G.parts.push({pos:{...m},vel:vadd(vmul(sp,rand(11,16)),vmul(p.vel,0.6)),life:rand(0.35,0.6),max:0.6,size:rand(0.12,0.22),col:[1,rand(0.5,0.8),0.15],kind:'fire',rot:QI,spin:V()}); }
   const R=8, cosA=Math.cos(0.45), hit=p.fireHit||(p.fireHit=new Set());
@@ -3104,7 +3149,7 @@ function drawOverlay(){ ov.clearRect(0,0,VW,VH); if(!VP||G.attract) return; cons
   // stash labels and off-screen arrows
   for(const s of G.stashes){ const d=vlen(vsub(s.pos,G.player.pos)), pr=project(VP,vadd(s.pos,V(0,1.7,0)));
     const on=pr&&pr.x>0&&pr.x<VW&&pr.y>0&&pr.y<VH;
-    if(on&&d<26){ ov.font='700 13px "Space Grotesk",system-ui,sans-serif'; const lz=s.laced&&G.cyber&&G.cyber.strips; ov.fillStyle=lz?'#ff4d64':s.sub.css; ov.fillText((lz?'LACED · ':'')+(m.trip>0.3?FAKE[(Math.floor(G.t*1.5)+((s.seed*13)|0))%FAKE.length]:s.sub.name),pr.x,pr.y); ov.font='400 11px "Space Mono",monospace'; ov.fillStyle='rgba(243,238,252,.75)'; ov.fillText(s.sub.tag+' · '+Math.round(d)+'m',pr.x,pr.y+14); }
+    if(on&&d<26){ ov.font='700 13px "Space Grotesk",system-ui,sans-serif'; const lz=s.laced&&G.cyber&&G.cyber.strips; ov.fillStyle=lz?'#ff4d64':s.sub.css; ov.fillText((lz?'LACED · ':s.golden&&!s.laced?'GOLDEN · ':'')+(m.trip>0.3?FAKE[(Math.floor(G.t*1.5)+((s.seed*13)|0))%FAKE.length]:s.sub.name),pr.x,pr.y); ov.font='400 11px "Space Mono",monospace'; ov.fillStyle='rgba(243,238,252,.75)'; ov.fillText(s.sub.tag+' · '+Math.round(d)+'m',pr.x,pr.y+14); }
     else if(!on){ const pr2=project(VP,s.pos); let sx,sy; if(pr2){ sx=pr2.x-VW/2; sy=pr2.y-VH/2; } else { const rel=vsub(s.pos,v.pos), rt=rightOf(G.cam.yaw); sx=-vdot(rel,rt); sy=-1; if(Math.abs(sx)<1) sx=1; sy=-Math.abs(sx)*0.3; }
       const a=Math.atan2(sy,sx), mg=40, t=Math.min((VW/2-mg)/Math.max(1e-6,Math.abs(Math.cos(a))),(VH/2-mg)/Math.max(1e-6,Math.abs(Math.sin(a)))), ax=VW/2+Math.cos(a)*t, ay=VH/2+Math.sin(a)*t;
       const lz2=s.laced&&G.cyber&&G.cyber.strips; ov.save(); ov.translate(ax,ay); ov.rotate(a); ov.fillStyle=lz2?'#ff4d64':s.sub.css; ov.globalAlpha=0.92; ov.beginPath(); ov.moveTo(15,0); ov.lineTo(-8,-10); ov.lineTo(-3,0); ov.lineTo(-8,10); ov.closePath(); ov.fill(); ov.restore(); ov.globalAlpha=1;
@@ -3248,6 +3293,27 @@ const TUT=[['Move around',()=>G.tut.moved>4],['Jump, then press it again in the 
 let LAST_INP=null;
 function tutKeys(i){ const pad=LAST_INPUT==='pad', tch=LAST_INPUT==='touch';
   return [pad?'left stick':tch?'left thumb':kb('up')+kb('left')+kb('down')+kb('right'),pad?'A':tch?'JUMP':kb('jump'),pad?'X':tch?'TACKLE':'click or '+kb('tackle'),pad?'Y':tch?'GRAB':kb('grab'),pad?'X':tch?'TACKLE':'click or '+kb('tackle'),''][i]; }
+// --- engagement: every piece below is documented with its source in docs/ENGAGEMENT.md
+const MILES=[5,10,15,20,30,50], SESSION={t:0,nextBreak:3600};
+function engageUpdate(dt){ if(!G||G.attract||G.state!=='play') return;
+  // personal best: shown under the chaos score, celebrated once when you pass it (goal setting, goal gradient)
+  if((G.pbT||0)<=G.t){ G.pbT=G.t+0.5; const el=$('pbval'); if(el) el.textContent=PROF.best>0?(G.score>PROF.best?'new best!':'best '+PROF.best.toLocaleString()):''; }
+  if(!G.pbShown&&PROF.best>0&&G.score>PROF.best){ G.pbShown=true; toast('<b>NEW PERSONAL BEST</b>','Past your old record of '+PROF.best.toLocaleString()+' chaos','#ffd35a',2.6); sfx('feat'); G.slowT=Math.max(G.slowT||0,0.4); }
+  // chaos streak milestones: escalating feedback for competence (juice), with a beat of slow motion
+  if((G.combo||0)<2) G.mile=0; else for(const m of MILES) if(G.combo>=m&&(G.mile||0)<m){ G.mile=m; addScore(m*60,vadd(G.player.pos,V(0,PH+0.8,0)),'CHAOS STREAK ×'+m); sfx('win',0.45); if(m>=10) G.slowT=Math.max(G.slowT||0,0.35); }
+  // golden stashes sparkle so a lucky find is visible from across the street (variable reward in the core loop)
+  if(Math.random()<dt*6) for(const st of G.stashes) if(st.golden&&!st.laced&&Math.abs(st.pos.x-G.player.pos.x)+Math.abs(st.pos.z-G.player.pos.z)<45) partsBurst(vadd(st.pos,V(rand(-0.4,0.4),rand(0.6,1.6),rand(-0.4,0.4))),'confetti',1,1.5,[1,0.85,0.3],0.05);
+  // break reminder (on by default, Settings → Comfort): once an hour of play
+  SESSION.t+=dt; if(SET.breaks&&SESSION.t>SESSION.nextBreak){ SESSION.nextBreak+=3600; toast('<b>TIME CHECK</b>','You have been playing for '+Math.round(SESSION.t/3600)+' h. Good moment to stretch and drink some water.','#8fb4ff',5); } }
+// daily streak: a run on consecutive days grows a chrome bonus (Ð 50 per day, up to Ð 300); missing a day just restarts it
+function streakTick(){ const k=dayKey(), st=PROF.streak||{last:'',n:0}; if(st.last===k) return; const y=new Date(Date.now()-864e5), yk=y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0');
+  st.n=st.last===yk?st.n+1:1; st.last=k; PROF.streak=st; const bonus=Math.min(300,50*st.n); PROF.chrome=(PROF.chrome||0)+bonus; saveProfile();
+  setTimeout(()=>{ if(G&&!G.attract) toast('<b>DAY '+st.n+' STREAK</b>','+Ð '+bonus+' to the chrome bank'+(st.n<6?' · Ð '+Math.min(300,50*(st.n+1))+' if you play tomorrow':''),'#ffd35a',3.2); },6400); }
+// game over: the nearest unfinished goal, so the next run starts with a target (goal-gradient effect)
+function nextGoalText(){ const out=[]; if(PROF.best>0&&G.score<PROF.best) out.push(`${(PROF.best-G.score).toLocaleString()} chaos short of your best`);
+  let bestC=null, bestR=0; for(const c of dailyList()){ if(c.it.done) continue; let v=0; try{ v=c.d[3](); }catch(e){} const r=Math.min(1,v/c.n); if(r>bestR){ bestR=r; bestC=c; } }
+  if(bestC&&bestR>=0.4) out.push(`So close: ${Math.floor(bestR*100)}% of “${bestC.txt}”`);
+  const hidden=FEATS.filter(f=>!PROF.feats[f[0]]).length; if(hidden) out.push(`${hidden} secret feat${hidden>1?'s':''} still to find`); return out.join(' · '); }
 function tutUpdate(dt){ const T=G.tut; if(!T||G.attract||G.state!=='play') return; const P=G.player; T.moved+=Math.hypot(P.vel.x,P.vel.z)*dt; if(!P.grounded&&P.vel.y>2) T.jumped=true;
   if(LAST_INP&&LAST_INP.tackle){ if(P.held>=0) T.threw=true; else T.tackled=true; } if(G.props.some(o=>o.alive&&o.thrown>0)) T.threw=true;
   while(T.step<TUT.length&&TUT[T.step][1]()){ T.step++; if(T.step<TUT.length) sfx('pickup',0.5); }
@@ -3461,6 +3527,7 @@ function renderSettings(){ const tabs=$('setTabs'), body=$('setBody'); tabs.inne
   if(sTab==='comfort'){
     seg('Flashing','Reduced swaps the police strobe, glitch bars and pulsing vignettes for steady tints, and slows color cycling.',[['full','Full'],['reduced','Reduced']],()=>SET.flash,v=>SET.flash=v);
     rng('Camera shake and sway','Explosions, the shakes and the drunk sway.',0,1,0.05,()=>SET.shake,v=>SET.shake=v,pct);
+    seg('Break reminder','A short note after each hour of play.',onoff,()=>SET.breaks,v=>SET.breaks=v);
     const n=document.createElement('p'); n.className='chint'; n.style.marginTop='8px'; n.textContent='Your device asks for reduced motion: '+(REDUCE_MOTION?'yes, so flashing starts reduced.':'no.'); body.appendChild(n); }
   $('setNote').textContent=store.set('bt_probe',1)?'Saved on this device.':'This browser is blocking storage, so settings last only until you close the page.'; }
 function finishRebind(k){ const a=REBIND; REBIND=null; if(k==='escape'||!a){ renderSettings(); return; }
@@ -3469,14 +3536,14 @@ function finishRebind(k){ const a=REBIND; REBIND=null; if(k==='escape'||!a){ ren
 function openRecords(){ unlock(); const P=PROF, n=FEATS.filter(f=>P.feats[f[0]]).length, mm=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
   $('recStats').innerHTML=[['Runs',P.runs],['Chrome bank','Ð '+(P.chrome||0).toLocaleString()],['Best chaos',P.best.toLocaleString()],['Total chaos',P.chaos.toLocaleString()],['Longest run',mm(P.longest)],['Time played',mm(P.time)],['Things wrecked',P.wrecked.toLocaleString()],['Busts',P.busts],['Doses taken',P.doses],['Feats',n+' / '+FEATS.length]]
     .map(([k,v])=>`<div>${k}<span class="v">${v}</span></div>`).join('');
-  $('recFeats').innerHTML=FEATS.map(f=>`<div class="${P.feats[f[0]]?'on':'off'}"><b>${P.feats[f[0]]?'✓ ':''}${f[0]}</b> · ${f[1]}</div>`).join('');
+  $('recFeats').innerHTML=FEATS.map(f=>`<div class="${P.feats[f[0]]?'on':'off'}"><b>${P.feats[f[0]]?'✓ ':'🔒 '}${f[0]}</b> · ${P.feats[f[0]]?f[1]:'??? Earn it to see how'}</div>`).join('');
   $('records').hidden=false; padFocusFirst($('records')); }
 function closeRecords(){ $('records').hidden=true; padFocus(null); const t=uiTop(); if(t) padFocusFirst(t); }
 function showWarn(){ $('warn').hidden=false; padFocusFirst($('warn')); }
 function answerWarn(calm){ SET.warned=true; if(calm){ SET.flash='reduced'; SET.shake=Math.min(SET.shake,0.25); } setChanged(); $('warn').hidden=true; padFocus(null); padFocusFirst(uiTop()); }
 
 /* ---------------- flow ---------------- */
-function startGame(){ newGame(false); primeVoice(); chromePayout(); G.tut=PROF.tut?null:{step:0,moved:0,jumped:false,tackled:false,threw:false}; $('tut').hidden=!G.tut; $('hud').hidden=false; $('title').hidden=true; $('gameover').hidden=true; $('slots').hidden=true; $('doc').hidden=true; $('custom').hidden=true; for(const id of ['pause','settings','records','warn']) $(id).hidden=true; document.body.classList.remove('paused'); padFocus(null); if(IS_TOUCH) $('touch').classList.add('on');
+function startGame(){ newGame(false); primeVoice(); streakTick(); chromePayout(); G.tut=PROF.tut?null:{step:0,moved:0,jumped:false,tackled:false,threw:false}; $('tut').hidden=!G.tut; $('hud').hidden=false; $('title').hidden=true; $('gameover').hidden=true; $('slots').hidden=true; $('doc').hidden=true; $('custom').hidden=true; for(const id of ['pause','settings','records','warn']) $(id).hidden=true; document.body.classList.remove('paused'); padFocus(null); if(IS_TOUCH) $('touch').classList.add('on');
   $('hint').innerHTML=SET.hints?hintHTML():'';
   toast('<b>FIND YOUR NEXT FIX</b>','The clock is ticking. Follow the light beams.','#7cff9b',3); cameraUpdate(0.016); }
 function gameOver(){ G.state='over'; if(document.exitPointerLock&&locked) document.exitPointerLock();
@@ -3484,15 +3551,15 @@ function gameOver(){ G.state='over'; if(document.exitPointerLock&&locked) docume
   $('goKicker').textContent=G.causeBusted?'Busted for good':'The comedown wins';
   const best=PROF.best; recordRun(); try{ if(G.score>best) localStorage.setItem('bt_best',String(G.score)); }catch(e){}
   $('goBest').textContent=G.score>best&&best>0?'New personal best!':best>0?'Your best: '+best.toLocaleString()+' chaos':'';
-  $('goFeats').innerHTML=G.newFeats.length?'Feats: '+G.newFeats.map(i=>`<b>${FEATS[i][0]}</b>`).join(' · '):'No feats this run. Try the water tower.';
-  { const nf=FEATS.filter(f=>PROF.feats[f[0]]).length; $('goProg').textContent=`Feats unlocked: ${nf} of ${FEATS.length} · Runs: ${PROF.runs} · Best: ${PROF.best.toLocaleString()} chaos · Chrome bank +Ð ${(G.chromeDep||0).toLocaleString()} (now Ð ${(PROF.chrome||0).toLocaleString()})`; }
+  $('goFeats').innerHTML=G.newFeats.length?'Feats: '+G.newFeats.map(i=>`<b>${FEATS[i][0]}</b>`).join(' · '):'No feats this run. Every feat stays secret until you earn it.';
+  { const nf=FEATS.filter(f=>PROF.feats[f[0]]).length; $('goProg').textContent=`Feats found: ${nf} of ${FEATS.length} · Best: ${PROF.best.toLocaleString()} chaos · Chrome bank +Ð ${(G.chromeDep||0).toLocaleString()} (now Ð ${(PROF.chrome||0).toLocaleString()})`; { const ng=nextGoalText(); if(ng) $('goProg').textContent+=' · '+ng; } }
   $('gameover').hidden=false; $('touch').classList.remove('on'); $('prompt').classList.remove('on'); padFocusFirst($('gameover')); }
 (function(){ const lg=$('legend'); for(const s of SUBS){ const r=document.createElement('div'); r.className='row'; r.innerHTML=`<span class="sw" style="background:${s.css};box-shadow:0 0 7px ${s.css}"></span><span><b>${s.name}</b> · ${s.tag}. ${s.blurb}.</span>`; lg.appendChild(r); }
   const r=document.createElement('div'); r.className='row'; r.innerHTML=`<span class="sw" style="background:#ff4d64;box-shadow:0 0 7px #ff4d64"></span><span><b>THE SHAKES</b> · Withdrawal. Clock under 8s with nothing active: wobbly controls and heavy shake.</span>`; lg.appendChild(r);
-  { const r2=document.createElement('div'); r2.className='row'; r2.style.gridColumn='1 / -1'; r2.innerHTML='<span class="sw" style="background:#ffb63c;box-shadow:0 0 7px #ffb63c"></span><span><b>SHAPESHIFT</b> · Every dose has a 42% chance to turn you into a centaur, minotaur, dragon, sloth, raccoon, panda, mole rat, ferret, dog, cat, skinwalker, giant, angel or demon, each with its own powers.</span>'; lg.appendChild(r2); }
+
   { const r3=document.createElement('div'); r3.className='row'; r3.innerHTML='<span class="sw" style="background:#8a8296;box-shadow:0 0 7px #8a8296"></span><span><b>LACED</b> · About 1 in 12 stashes is cut with fent. You fold in half, over and over, for 10 seconds.</span>'; lg.appendChild(r3);
     const r4=document.createElement('div'); r4.className='row'; r4.innerHTML='<span class="sw" style="background:#37e6ff;box-shadow:0 0 7px #37e6ff"></span><span><b>RIPPERDOC</b> · Doc Suture\'s trailer by the spawn sells substance cyberware for dollas.</span>'; lg.appendChild(r4);
-    const r5=document.createElement('div'); r5.className='row'; r5.innerHTML='<span class="sw" style="background:#d9a441;box-shadow:0 0 7px #d9a441"></span><span><b>DEMOLITION</b> · Walls, windows and roofs break under tackles, horn charges, blasts and thrown cars. Knock out enough and the rest comes down.</span>'; lg.appendChild(r5);
+    const r5=document.createElement('div'); r5.className='row'; r5.innerHTML='<span class="sw" style="background:#d9a441;box-shadow:0 0 7px #d9a441"></span><span><b>DEMOLITION</b> · Look for the orange X: condemned buildings come down under tackles, charges, blasts and thrown cars. Knock out enough and the rest follows.</span>'; lg.appendChild(r5);
     const r6=document.createElement('div'); r6.className='row'; r6.innerHTML='<span class="sw" style="background:#ff4fd8;box-shadow:0 0 7px #ff4fd8"></span><span><b>LUCKY LIVER CASINO</b> · North of your trailer. Walk in, play any machine, or smash one open for the coins. No clocks inside.</span>'; lg.appendChild(r6); }
   $('ctrlsText').innerHTML=IS_TOUCH?'<b>Left thumb</b> move · <b>right thumb</b> look · buttons to tackle, jump, grab, flop, yell and poop. Landscape plays best.':'<b>WASD</b> move · <b>mouse</b> look · <b>Space</b> jump · <b>Click</b> tackle · <b>E</b> grab · <b>Q</b> flop · <b>H</b> yell · <b>P</b> poop · <b>C</b> horn charge · <b>V</b> voices · <b>R</b> restart'; })();
 $('startBtn').addEventListener('click',()=>{ unlock(); startGame(); });
@@ -3507,7 +3574,7 @@ addEventListener('gamepadconnected',()=>{ PAD.on=true; noteInput('pad'); padFocu
 
 /* ---------------- boot + loop ---------------- */
 let last=performance.now(), acc=0, frames=0;
-function frame(now){ let dt=(now-last)/1000; last=now; if(!(dt>0)) dt=0; dt=Math.min(dt,DEMO?0.25:0.1);
+function frame(now){ let dt=(now-last)/1000; last=now; if(!(dt>0)) dt=0; dt=Math.min(dt,DEMO?0.25:0.1); if(G&&G.slowT>0&&G.state==='play'){ G.slowT-=dt; dt*=0.45; }
   try{ const inp=gatherInput(dt); qualityGovernor(dt);
     if(G.state==='play'||G.state==='title'){ // fixed-ish substeps keep collisions solid on slow phones
       const steps=Math.max(1,Math.min(12,Math.ceil(dt/(1/45)))), sdt=dt/steps;

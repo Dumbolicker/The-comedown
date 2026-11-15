@@ -8,7 +8,7 @@ import asyncio, json, os, pathlib, sys
 from playwright.async_api import async_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-GAME_URI = (ROOT / 'game' / 'index.standalone.html').as_uri() + '?freeze=0.0001'
+GAME_URI = (ROOT / 'game' / 'index.standalone.html').as_uri() + '?freeze=0.0001&wreck=all'
 VENDOR = ROOT / '.refcache' / 'vendor' / 'rapier-0.21.0.mjs'
 
 JS = r"""

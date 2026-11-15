@@ -34,6 +34,27 @@ play for two minutes. Then read the code map below.
 
 ---
 
+## 0. Update, 15 Nov 2026 (later): condemned buildings, secret feats, engagement, doors
+
+- **Demolition is limited** to five condemned structures per town, each marked by a sign with an orange X:
+  - the two houses nearest the trailer park
+  - one other house
+  - one trailer
+  - the water tower
+
+  All other panels are permanent (slot machines stay breakable). Add `?wreck=all` to the address to make everything breakable; the older test suites use it.
+- **Feat requirements stay secret** until earned (Records shows `🔒 Name · ???`). The Steam achievements are flagged hidden.
+- **Creature chance** is now 15% per dose (was 42%). The title screen no longer mentions shapeshifting.
+- **Doors in every doorway:** 32 per town. Single doors swing open for whoever walks up and close behind them. Wider openings get double doors, glass in the lobby and the shop. A sprint or charge kicks a condemned building's door off its hinges.
+- **Engagement**, with sources and limits in `docs/ENGAGEMENT.md`:
+  - daily streak
+  - live personal best
+  - chaos-streak milestones with slow motion
+  - golden stashes (8.5%)
+  - closest-goal summary on game over
+  - hourly break reminder, on by default
+- **Tests:** `tests/feat10.py`.
+
 ## 0. Update, 15 Nov 2026 (M1–M5)
 
 - **Menus and safety:**
@@ -162,7 +183,7 @@ the engine directly: `update(1/60, inputObject)` in a loop, then `render()`.
   - Counters from the ripperdoc: Test Strip Optics (laced stashes glow red and get labeled) and
     Naloxone Gland (the fold lasts 3 s).
 
-### Shapeshifting (42% per dose, 25 s, not on salvia)
+### Shapeshifting (15% per dose, 25 s, not on salvia; not mentioned on the title screen)
 | Form | Body | Ability |
 | --- | --- | --- |
 | Centaur | horse plus human rider | fast, harder kicks |

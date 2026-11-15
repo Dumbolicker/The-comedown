@@ -10,9 +10,10 @@
 | Controllers | Gamepad API (standard mapping) in play and in every menu | `feat6`: stick moves 4 m in 0.75 s, Start pauses, B resumes |
 | Saving | Profile (runs, totals, feats, chrome bank, dailies) in local storage, mirrored to the desktop shell or Steam Cloud | `feat6`, `feat9` |
 | Physics | Props and furniture in Rapier: they stack and collide with rubble. Jointed ragdolls (ball hips and shoulders, hinged knees and elbows) | `feat7`: top crate rests 2 mm from the expected height; prop gravity 21.9 vs 22 m/s²; rubble free fall 9.81 m/s² |
-| Destruction | 1,950 breakable panels, including a water tower, gas canopy, six walk-in trailers and a lobby-tower storefront. Fences splinter. Fire spreads through wood | `feat5`, `feat7`: tank falls and splashes, canopy drops after 3 of 4 pillars |
+| Destruction | Limited to five condemned structures per town, each marked with an orange-X sign: three houses, one trailer and the water tower (288 of 1,991 panels). `?wreck=all` makes everything breakable. Fences splinter, fire spreads through wood, and doors in condemned buildings can be kicked in | `feat5`, `feat7`: tank falls and splashes, canopy drops after 3 of 4 pillars |
+| Doors | 32 doorways get doors: single, double, or glass in the lobby and shop. They open for whoever walks up and close behind | `feat10` |
 | AI | 0.5 m navigation grid with A*. Cops route around buildings; people leave buildings by the door. A police drone answers flying escapes | `feat8`: grid builds in about 1 ms; cop closes 19.5 m to 0.7 m around a house; resident exits in 0.62 s |
-| Depth | Chrome bank, six feat-locked outfit items, three daily challenges, first-run tutorial, 27 feats | `feat9` |
+| Depth | Chrome bank, six feat-locked outfit items, daily challenges and a daily streak, first-run tutorial, 27 secret feats (requirements hidden until earned), golden stashes, a live personal best, streak milestones with slow motion, and an hourly break reminder. Design and sources are in `docs/ENGAGEMENT.md` | `feat9`, `feat10` |
 | Sound | Procedural music (94 BPM, follows heat and the comedown), ambience (traffic, birds, crickets), distance falloff and panning | `feat9`: sounds at 60 m play at 14% |
 | Release | GitHub Pages workflow with link previews. Tauri shell with Steam achievements and Steam Cloud (`--features steam`), store-page draft. Unity 6 slice with a GameCI build | Desktop shell `cargo check` passes for both builds; `cargo test` passes; Unity scripts compile against Unity 6 libraries |
 

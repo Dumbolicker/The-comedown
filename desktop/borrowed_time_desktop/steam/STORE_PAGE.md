@@ -40,7 +40,7 @@ Store description note (shown to players): *"Cartoon satire with drug and alcoho
 
 `achievements.csv` lists all 27 feats with their API names, so the game and Steam agree. To get them in:
 
-1. Steamworks → App Admin → Stats & Achievements → Achievements: add each row, using **api_name** as the API Name.
+1. Steamworks → App Admin → Stats & Achievements → Achievements: add each row, using **api_name** as the API Name. Tick **Hidden** for every one (the `hidden` column), so players see a requirement only after they earn it, the same as in the game's Records screen.
 2. Upload a 256×256 unlocked and locked icon for each.
 3. Publish the stats schema.
 
