@@ -1,0 +1,28 @@
+api_name,display_name,description,game_points
+FEAT_FREQUENT_FLYER,Frequent Flyer,Stay airborne for 3 seconds,10
+FEAT_BOWLING_NIGHT,Bowling Night,Wreck 8 things within 4 seconds,10
+FEAT_POLYPHARMACY,Polypharmacy,Have 3 effects going at once,10
+FEAT_FULL_MEDICINE_CABINET,Full Medicine Cabinet,Try all 9 stashes in one run,30
+FEAT_PYROMANIAC,Pyromaniac,Blow up 3 propane tanks,15
+FEAT_PEOPLE_PERSON,People Person,Tackle 15 people,15
+FEAT_THIN_BLUE_LINEBACKER,Thin Blue Linebacker,Tackle a cop,10
+FEAT_TOP_OF_THE_WORLD,Top of the World,Stand on top of the water tower,20
+FEAT_LAWN_DARTS,Lawn Darts,Hit someone with a thrown object,10
+FEAT_HIGH_ROLLER,High Roller,Hit a jackpot at the slots,15
+FEAT_MARATHON,Marathon,Survive for 5 minutes,20
+FEAT_HANG_TIME,Hang Time,Flop 20 meters in one ragdoll,10
+FEAT_CAR_TROUBLE,Car Trouble,Set off 5 car alarms,10
+FEAT_HYDRO_THERAPY,Hydro Therapy,Burst a fire hydrant,5
+FEAT_ROOKIE_MISTAKE,Rookie Mistake,Get busted,5
+FEAT_GNOME_AWAY,Gnome Away,Throw a garden gnome 25 meters,10
+FEAT_BOUNCE_HOUSE,Bounce House,Bounce 5 times in a row on a trampoline,10
+FEAT_SHAPESHIFTER,Shapeshifter,Turn into 3 different creatures in one run,15
+FEAT_AGAINST_ALL_ODDS,Against All Odds,"Win the Cursed Doubloon (1 in 137,000)",60
+FEAT_STREET_ARTIST,Street Artist,Paint 80 strokes on walls,15
+FEAT_SPECIAL_DELIVERY,Special Delivery,Hit a cop with a thrown poop,10
+FEAT_CHROME_ADDICT,Chrome Addict,Install 3 implants at the ripperdoc,15
+FEAT_WRECKING_BALL,Wrecking Ball,"Break 25 walls, windows or machines",15
+FEAT_OPEN_FLOOR_PLAN,Open Floor Plan,Bring a roof down,20
+FEAT_BEAT_THE_HOUSE,Beat the House,Smash a slot machine open,10
+FEAT_WATER_DAMAGE,Water Damage,Bring the water tower down,30
+FEAT_DRONE_STRIKE,Drone Strike,Knock a police drone out of the sky,20

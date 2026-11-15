@@ -8,8 +8,14 @@ publish = false
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[features]
+default = []
+# Steam build: achievements and cloud saves through Steamworks (cargo build --release --features steam)
+steam = ["dep:steamworks"]
+
 [dependencies]
 tauri = { version = "2", features = [] }
+steamworks = { version = "=0.13.1", optional = true }
 
 [profile.release]
 codegen-units = 1

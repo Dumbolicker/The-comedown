@@ -34,6 +34,38 @@ play for two minutes. Then read the code map below.
 
 ---
 
+## 0. Update, 15 Nov 2026 (M1–M5)
+
+- **Menus and safety:**
+  - pause (Esc, the II button on the clock, controller Start)
+  - settings: quality presets with an auto-resolution governor, volume buses, rebindable keys, rumble
+  - first-launch photosensitivity warning, reduced-flashing mode and a shake slider
+- **Controllers:** the Gamepad API covers play and every menu.
+- **Saving:** the profile (records, feats, chrome bank, dailies) lives in `localStorage` (`bt_profile`, `bt_settings`).
+- **Names:** XANAX → BARS, HENNY → HOOCH. Internal ids are unchanged.
+- **Physics:**
+  - props and furniture move into Rapier, so they stack and collide with rubble
+  - jointed ragdolls
+  - fire spreads through wood
+  - water tower, gas canopy, walk-in trailers and fences are breakable
+- **World and AI:**
+  - 0.5 m navigation grid with A*: cops route around buildings, people leave by the door
+  - a police drone answers flying escapes
+  - a downtown lobby tower has stairs to the roof
+- **Depth:**
+  - chrome bank: 10% of a run's dollas in, up to Ð 250 out next run
+  - feat-locked outfit items
+  - three daily challenges
+  - a first-run tutorial
+  - procedural music and ambience
+  - distance falloff for sounds
+- **Release:**
+  - `.github/workflows/pages.yml` with link previews (`pwa/og.jpg`)
+  - Tauri shell with Steam achievements and Steam Cloud (`--features steam`)
+  - `desktop/borrowed_time_desktop/steam/` (achievements.csv, STORE_PAGE.md)
+  - Unity 6 slice in `unity/` with a GameCI workflow
+- **Tests:** after `python tests/make_standalone.py`, run `tests/feat6.py` (M1), `feat7.py` (M2, with and without Rapier), `feat8.py` (M3) and `feat9.py` (M4). Run `tests/unity_compile.sh` for the C#.
+
 ## 0. Update, 14 Nov 2026: demolition, interiors, casino
 
 This update added the following. The plan and gap analysis are in `ROADMAP.md`, and the owner's working method is the OVERDRIVE skill in `.claude/skills/overdrive`.

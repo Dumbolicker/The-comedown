@@ -2,8 +2,10 @@
 // Hides the console window on Windows release builds.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod platform;
+
 fn main() {
-    tauri::Builder::default()
+    platform::register(tauri::Builder::default())
         .run(tauri::generate_context!())
         .expect("Borrowed Time failed to start");
 }
