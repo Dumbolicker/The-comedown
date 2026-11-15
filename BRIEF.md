@@ -111,10 +111,10 @@ the engine directly: `update(1/60, inputObject)` in a loop, then `render()`.
 | Stash | Category | Effect (fx id) | Time | Duration | Use animation |
 | --- | --- | --- | --- | --- | --- |
 | COKE | Stimulant | FAST FORWARD (`FFWD`): you ×1.85 speed, world ×0.32, harder hits | +12s | 8s | sniff (looks like baking soda) |
-| XANAX | Depressant | JELLY LEGS (`JELLY`): bump things and you ragdoll-spiral, slower drain | +10s | 9s | pill with "XAN" imprint |
+| BARS | Depressant | JELLY LEGS (`JELLY`): bump things and you ragdoll-spiral, slower drain | +10s | 9s | pill with "ZZZ" imprint |
 | BLOTTER | Hallucinogen | KALEIDOSCOPE (`KALEI`): hue shift, wobble, fake labels | +11s | 10s | square tab placed in the mouth |
 | SALTS | Inhalant | BALLOON FLOAT (`FLOAT`): 0.2× gravity, bouncy, squeaky voice | +9s | 9s | bag poured into the mouth |
-| HENNY | Numbing | JUGGERNAUT (`JUGG`): plow through anything, no busts, drunk sway and stumbles | +10s | 7s | bottle you drink |
+| HOOCH | Numbing | JUGGERNAUT (`JUGG`): plow through anything, no busts, drunk sway and stumbles | +10s | 7s | bottle you drink |
 | BADDERALL | Energy-crash | GLITCH STUTTER (`GLITCH`): freeze, then snap ahead | +10s | 8s | capsule pill |
 | ECSTASY | Euphoric | MAGNET HANDS (`MAGNET`): pulsing town, rainbows, wandering unicorns | +11s | 9s | pill with "MDMA" imprint |
 | SALVIA | Dissociative | INANIMATE (`OBJECT`): you become a random object, frozen, world ×2.6, time-lapse sky | +13s | 15s | smoke |
@@ -195,8 +195,8 @@ Implants are bought with dollas, last the run and show as chrome on your body.
 | Implant | Slot | Price | Effect |
 | --- | --- | --- | --- |
 | Septum Turbine | nose | 400 | COKE +50% time, snorting takes half as long |
-| Iron Gullet | throat | 450 | SALTS and HENNY +50% time, pours and chugs twice as fast |
-| Pill Crusher | stomach | 600 | XANAX, BADDERALL, ECSTASY +50% time, effects last 30% longer |
+| Iron Gullet | throat | 450 | SALTS and HOOCH +50% time, pours and chugs twice as fast |
+| Pill Crusher | stomach | 600 | BARS, BADDERALL, ECSTASY +50% time, effects last 30% longer |
 | Tab Tongue | tongue | 300 | BLOTTER +50% time, tripping pays 1.5× chaos |
 | Iron Lungs | lungs | 450 | JOINT and SALVIA +50% time, salvia freeze halved |
 | Chrome Liver | liver | 750 | clock drains 15% slower |
@@ -268,10 +268,14 @@ Each gives bonus seconds:
 | C | horn charge |
 | V | voice mode |
 | R | restart |
-| Esc | closes slots, shop or customization |
+| Esc | pause; closes slots, shop, customization, settings |
+
+Every key can be rebound in **Settings → Controls**.
+
+**Controller (standard mapping):** left stick move, right stick look, A jump, X or RT tackle/throw, Y grab, B flop, LB holler, RB horn charge, LT or L3 sprint, D-pad ← poop, D-pad ↑↓ zoom, D-pad → voices, Start pause. In menus the D-pad or stick moves, A selects and B goes back.
 
 **Touch:** left thumb is a floating stick, right thumb looks. Buttons are TACKLE, JUMP (hold to fly),
-GRAB, FLOP, YELL, POOP and CHARGE (only when you have horns). Landscape plays best.
+GRAB, FLOP, YELL, POOP and CHARGE (only when you have horns). The **II** button on the clock pauses. Landscape plays best.
 
 `localStorage` keys: `bt_best`, `bt_voice` (legacy), `bt_voice2`, `bt_look`. Every access is wrapped
 in try/catch.
@@ -351,8 +355,8 @@ approximate and drift with edits.
 
 ## 5. Decisions and boundaries to keep
 
-- **Clean room.** The code and the primitive-built art are original. The title says "inspired by the
-  slapstick of Goat Simulator". Don't bring in Goat Simulator code, assets or names.
+- **Clean room.** The code and the primitive-built art are original. The title no longer names any other game (store-safe wording since the M1 update). Don't bring in
+  Goat Simulator code, assets or names.
 - **No third-party IP.** These were replaced with originals:
   - Fortnite pirate token → Cursed Doubloon
   - Cyberpunk ripperdoc → Doc Suture with original implant names (no Sandevistan, Mantis Blades and
@@ -370,8 +374,8 @@ approximate and drift with edits.
   - The laced/fent mechanic is a punishment.
   - Its counters (test strips, naloxone) are harm-reduction flavored.
   - Keep it non-instructional.
-- **Commercial release:** real brand-like names ("Xanax", "Henny") are a trademark risk on Steam. Swap
-  in parody names before selling. The desktop README covers this.
+- **Commercial release:** the brand-like names were swapped for parody names in the M1 update: XANAX → **BARS**
+  (pill imprint "ZZZ") and HENNY → **HOOCH**. Internal ids stay `xanax` and `henny` so saves and tests keep working.
 
 ---
 
