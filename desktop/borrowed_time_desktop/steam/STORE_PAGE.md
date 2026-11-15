@@ -32,7 +32,7 @@ Physics, Sandbox, Comedy, Destruction, Funny, Third Person, Open World, Ragdoll,
 | Some Nudity or Sexual Content | No |
 | Frequent Violence or Gore | No. Slapstick only: tackles and ragdolls, no blood or gore |
 | Adult Only Sexual Content | No |
-| General Mature Content | **Yes.** Drug and alcohol references in a cartoon-satire setting (made-up effects, parody names), plus simulated gambling with fake in-game currency that can't be bought or cashed out |
+| General Mature Content | **Yes.** Drug and alcohol references in a cartoon-satire setting (made-up effects), plus simulated gambling with fake in-game currency that can't be bought or cashed out |
 
 Store description note (shown to players): *"Cartoon satire with drug and alcohol references. Includes a slot machine played with fake in-game money; no real-money purchases."*
 

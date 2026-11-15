@@ -18,6 +18,17 @@ The references are well-known papers with their DOIs so you can look them up. I 
 | Habit and return visits | Repeating a behavior in the same context builds habit (Lally et al. 2010) | Daily streak: Ð 50 per consecutive day into the chrome bank, capped at Ð 300 from day 6 | `streakTick` |
 | Flow | People stay engaged when challenge matches skill (Csikszentmihalyi 1990) | The draining clock, heat levels and the drone ramp up pressure while you're doing well | existing loop |
 
+## Playability (what makes it feel good to play)
+
+| Technique | Source | In the game |
+| --- | --- | --- |
+| Aim assistance | Aim assists change hit rates and help weaker players most (Vicencio-Moreira, Mandryk & Gutwin, CHI 2014) | Tackles bend toward a person within 35°, throws within 19°. Can be turned off |
+| Hit-stop and screen shake | Brief freezes and shake make hits read as powerful (Nijman, "The Art of Screenshake", 2013) | A 55 ms near-freeze when you knock someone down |
+| Trauma-based shake | Shake scaled by trauma squared, driven by smooth noise rather than random jitter (Eiserloh, GDC 2016) | Camera shake rewritten that way: small bumps stay subtle, big blasts feel big, less nausea |
+| Forgiving input | Coyote time and jump buffering (Swink, *Game Feel*, 2009) | Already in the game: 0.13 s jump buffer plus coyote time |
+| Fair failure | Challenge has to match skill to stay in flow (Csikszentmihalyi 1990) | A mercy stash appears when you're under 8 s with none within 28 m, at most every 20 s |
+| Clear rules | Players have to be able to read a rule to master it | The orange-X signs, plus a "TOO SOLID" hint that explains how walls break |
+
 ## Lines we didn't cross
 
 - **No rigged near-misses in the slot machine.** Near-misses switch on win-related brain circuitry and make people want to keep gambling, even though they're losses (Clark et al. 2009). The reels stay honest. The visible pity prize (a guaranteed win within 20 spins) stays as it is.
@@ -30,6 +41,10 @@ The references are well-known papers with their DOIs so you can look them up. I 
 
 - Clark, L., Lawrence, A. J., Astley-Jones, F., & Gray, N. (2009). Gambling near-misses enhance motivation to gamble and recruit win-related brain circuitry. *Neuron*, 61(3), 481–490. https://doi.org/10.1016/j.neuron.2008.12.031
 - Csikszentmihalyi, M. (1990). *Flow: The Psychology of Optimal Experience*. Harper & Row.
+- Eiserloh, S. (2016). *Math for Game Programmers: Juicing Your Cameras With Math*. GDC.
+- Nijman, J. W. (2013). *The Art of Screenshake* (conference talk).
+- Swink, S. (2009). *Game Feel*. Morgan Kaufmann.
+- Vicencio-Moreira, R., Mandryk, R. L., & Gutwin, C. (2014). The effectiveness (or lack thereof) of aim-assist techniques in first-person shooter games. *CHI 2014*. https://doi.org/10.1145/2556288.2557308
 - Ferster, C. B., & Skinner, B. F. (1957). *Schedules of Reinforcement*. Appleton-Century-Crofts.
 - Jonasson, M., & Purho, P. (2012). *Juice it or lose it* (conference talk).
 - Kivetz, R., Urminsky, O., & Zheng, Y. (2006). The goal-gradient hypothesis resurrected. *Journal of Marketing Research*, 43(1), 39–58. https://doi.org/10.1509/jmkr.43.1.39

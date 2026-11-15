@@ -27,8 +27,8 @@ Unsigned apps trigger a SmartScreen warning ("More info", then "Run anyway"). Co
 The exe is a normal Windows build you can upload with SteamPipe once you have a Steamworks partner account
 and pay the Steam Direct fee for the app. Achievements and the Steam overlay are not wired up; that needs the
 Steamworks SDK (for example the `steamworks` crate), and the overlay may not draw over WebView2 windows.
-Steam also asks for a mature-content disclosure for drug and alcohol references. The brand-like names were
-already swapped for parody names (BARS and HOOCH), and the title screen no longer names another game.
+Steam also asks for a mature-content disclosure for drug and alcohol references. The game uses the names
+XANAX and HENNY at the owner's request. Brand-like names are a trademark risk, so revisit them before selling.
 
 ## Hardening before you ship
 

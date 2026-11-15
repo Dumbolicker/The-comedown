@@ -30,8 +30,8 @@ JS = r"""
     P.pos=vadd(c,vmul(side,12)); step(150); const shutAway=d.open, back=!d.s.gone;
     const npc=G.npcs.find(n=>n.alive&&n.kind!=='cop'); const np0={...npc.pos}; npc.pos=vadd(c,vmul(side,-1.0)); npc.state='idle'; step(20); const npcOpened=d.open>0.5; npc.pos=np0; step(150);
     P.pos=vadd(c,vmul(side,0.9)); P.vel=vmul(side,-11); doorsUpdate(1/60); const safeKick=d.broken;
-    const cd=W.doors.find(o=>W.condemned.has(o.bld)&&!o.broken); P.pos=vadd(doorCenter(cd),cd.axis==='x'?V(0,0,0.8):V(0.8,0,0)); P.vel=cd.axis==='x'?V(0,0,-11):V(-11,0,0); cd.open=0; doorsUpdate(1/60);
-    out.doors={count:doors,opensWhenNear:+openNear.toFixed(2),passableWhenOpen:gone,closesWhenAway:+shutAway.toFixed(2),solidWhenShut:back,npcOpens:npcOpened,safeDoorNotKicked:!safeKick,condemnedDoorKicked:cd.broken};
+    transform('dragon'); const cd=W.doors.find(o=>W.condemned.has(o.bld)&&!o.broken); P.pos=vadd(doorCenter(cd),cd.axis==='x'?V(0,0,0.8):V(0.8,0,0)); P.vel=cd.axis==='x'?V(0,0,-11):V(-11,0,0); cd.open=0; doorsUpdate(1/60);
+    untransform(); out.doors={count:doors,opensWhenNear:+openNear.toFixed(2),passableWhenOpen:gone,closesWhenAway:+shutAway.toFixed(2),solidWhenShut:back,npcOpens:npcOpened,safeDoorNotKicked:!safeKick,condemnedDoorKicked:cd.broken};
     // ---- engagement
     const ydate=new Date(Date.now()-864e5), yk=ydate.getFullYear()+'-'+String(ydate.getMonth()+1).padStart(2,'0')+'-'+String(ydate.getDate()).padStart(2,'0');
     PROF.streak={last:yk,n:2}; const ch0=PROF.chrome||0; startGame(); G.life=900; out.streak={n:PROF.streak.n,bonusToBank:(PROF.chrome+(G.chromePay||0))-ch0};

@@ -192,6 +192,7 @@ body.paused #hint,body.paused #ov{visibility:hidden}
 @media (max-width:460px){.recgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.featl{grid-template-columns:1fr}.sr{flex-wrap:wrap}.sr .sc{max-width:100%;justify-content:flex-start}}
 .padfocus{outline:2px solid var(--cyan)!important;outline-offset:3px}
 body.calm #stars.seen i.on{animation:none;background:#5b8cff}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(8,6,14,.34) 100%)}
 .pbval{display:block;font:400 10px/1 var(--font-m);color:var(--dim);margin-top:4px}
 .daily{margin:18px auto 0;max-width:48ch;text-align:left;font:400 13px/1.65 var(--font-d);color:var(--dim)}
 .daily b{color:var(--amber)}
@@ -201,6 +202,7 @@ body.calm #stars.seen i.on{animation:none;background:#5b8cff}
 </style>
 
 <canvas id="gl"></canvas>
+<div id="vig" aria-hidden="true"></div>
 <canvas id="ov"></canvas>
 
 <div id="hud" aria-hidden="true" hidden>
@@ -368,7 +370,7 @@ const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:J
 const REDUCE_MOTION=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 const QUALITY={ low:{scale:0.6,shadows:false,lights:2}, medium:{scale:0.8,shadows:true,lights:4}, high:{scale:1,shadows:true,lights:8} };
 const BIND_DEF={up:['w','arrowup'],down:['s','arrowdown'],left:['a','arrowleft'],right:['d','arrowright'],sprint:['shift'],jump:[' '],tackle:['f'],grab:['e'],flop:['q'],holler:['h'],poop:['p'],charge:['c'],voice:['v'],restart:['r']};
-const SET_DEF={quality:'auto',scale:1,shadows:true,lights:8,master:0.8,sfx:1,music:0.6,voices:1,sens:1,padSens:1,invertY:false,rumble:true,hints:true,breaks:true,
+const SET_DEF={quality:'auto',scale:1,shadows:true,lights:8,master:0.8,sfx:1,music:0.6,voices:1,sens:1,padSens:1,invertY:false,rumble:true,hints:true,breaks:true,assist:true,
   flash:REDUCE_MOTION?'reduced':'full',shake:REDUCE_MOTION?0.25:1,warned:false};
 const SET=Object.assign({},SET_DEF,store.get('bt_settings',{}));
 SET.binds=Object.assign(JSON.parse(JSON.stringify(BIND_DEF)),SET.binds||{});
@@ -455,16 +457,17 @@ float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
 vec3 shade(float sh, vec3 base){
   vec3 n = normalize(v_n); vec3 V = normalize(u_eye - v_wp);
   float ndl = max(dot(n,u_light),0.0);
-  float ao = mix(1.0, mix(0.6,1.0,smoothstep(0.0,1.1,v_wp.y)), 1.0-abs(n.y));            /* contact darkening where walls meet the ground */
+  float ao = mix(1.0, mix(0.52,1.0,smoothstep(0.0,1.35,v_wp.y)), 1.0-abs(n.y));            /* contact darkening where walls meet the ground */
   float grain = 0.91 + 0.09*vnoise(v_wp.xz*0.6 + vec2(v_wp.y*0.35)) + 0.05*(vnoise(v_wp.xz*4.0+vec2(v_wp.y*3.0))-0.5);
-  vec3 hemi = mix(u_amb*0.5, u_amb, 0.5+0.5*n.y);
+  vec3 hemi = mix(u_amb*vec3(0.6,0.63,0.82), u_amb*vec3(1.04,1.02,1.1), 0.5+0.5*n.y)*1.1;   /* cool, lighter shadow side */
   vec3 pl = vec3(0.0);   /* nearby lamps, interior bulbs and neon: smooth quadratic falloff to zero at the radius */
   for(int i=0;i<8;i++){ vec4 P=u_plp[i]; if(P.w<=0.0) continue; vec3 d=P.xyz-v_wp; float dl=length(d); float a=clamp(1.0-dl/P.w,0.0,1.0); a*=a;
     pl += u_plc[i].rgb*a*(0.3+0.7*max(dot(n,d/max(dl,0.001)),0.0)); }
-  vec3 c = base*grain*(hemi*ao + u_sun*ndl*sh + pl);
+  vec3 c = base*grain*(hemi*ao + u_sun*vec3(1.06,1.0,0.9)*ndl*sh + pl);   /* warm key light */
   c += u_sun*pow(max(dot(n, normalize(u_light+V)),0.0), 48.0)*0.1*sh;                     /* soft sheen */
   c += u_fog*pow(1.0-max(dot(n,V),0.0), 3.0)*0.12;                                         /* rim light */
   c = 1.0 - exp(-c*1.5);
+  c = mix(vec3(dot(c,vec3(0.299,0.587,0.114))), c, 1.1); c = mix(c, c*c*(3.0-2.0*c), 0.2);   /* +10% saturation, gentle S-curve */
   float g = clamp(v_glow,0.0,1.0);
   c = mix(c, base, g);
   c = mix(c, c*0.4+u_tint*0.6, u_tintamt);
@@ -1100,7 +1103,7 @@ function propStep(dt,grav,evs){ const P=G.props, n=P.length;
     for(let k=0;k<cnt;k++){ const s=cnt===1?0:k-1, c={x:p.pos.x+f.dx*f.h*s,y:p.pos.y,z:p.pos.z+f.dz*f.h*s}, bx=c.x, bz=c.z;
       const nrm=pushOut(c,f.r,p.pos.y-ext,p.pos.y+ext,0.25);
       if(nrm){ p.pos.x+=c.x-bx; p.pos.z+=c.z-bz; const n3=V(nrm.x,0,nrm.z), vn=vdot(p.vel,n3);
-        if(vn<0){ const sb=W.solids[nrm.i]; if(sb&&sb.brk!==undefined&&vn<-5&&p.k!=='coin'&&hitBrk(sb.brk,0.5*p.mass*14*vn*vn/100,V(c.x,p.pos.y,c.z),vmul(n3,-1))){ p.vel=vmul(p.vel,0.7); continue; }
+        if(vn<0){ const sb=W.solids[nrm.i]; if(sb&&sb.brk!==undefined&&vn<-5&&p.k!=='coin'&&(canWreck()||BRK[sb.brk].kind==='slot')&&hitBrk(sb.brk,0.5*p.mass*14*vn*vn/100,V(c.x,p.pos.y,c.z),vmul(n3,-1))){ p.vel=vmul(p.vel,0.7); continue; }
           if(vn<-4) evs.push({t:'impact',i,s:-vn,n:n3}); p.vel=vsub(p.vel,vmul(n3,vn*(1+d.b))); p.ang=vadd(p.ang,vmul(vcross(n3,V(0,1,0)),vn*0.4)); } } }
     const e=vdot(p.vel,p.vel)+vdot(p.ang,p.ang)*0.05;
     if(p.grounded&&e<0.05){ p.still+=dt; if(p.still>0.6){ p.asleep=true; p.vel=V(); p.ang=V(); } } else p.still=0;
@@ -1245,6 +1248,7 @@ function brkFX(b,pt,dir,k){ const M=b.M, gl_=b.mat==='glass';
   else noise(gl_?'shatter':'crack',0.35); }
 // whatever hits a panel delivers kinetic energy: ½·m·v², divided by 100 to get damage points
 function bodyHitsPanel(id,speed,n3,charging){ const p=G.player, FF=FORMS[p.form], sz=FF?FF.size:1, m=G.mods;
+  if(BRK[id]&&BRK[id].kind!=='slot'&&!canWreck()){ if(speed>5) wallHint(); return false; }   // walls shrug off ordinary tackles
   const mass=75*sz*sz*Math.max(1,m.force)*(p.horn?2:1)*(charging?1.3:1), b=BRK[id]; if(!b) return false;
   return hitBrk(id,0.5*mass*speed*speed/100,vsub(vadd(p.pos,V(0,PH*0.5,0)),vmul(n3,PR)),vmul(n3,-1)); }
 function brkBlast(pos,R,power){ for(const b of BRK){ if(!b.alive||b.falling) continue; const s=b.s; if(s.x1<pos.x-R||s.x0>pos.x+R||s.z1<pos.z-R||s.z0>pos.z+R) continue;
@@ -1461,7 +1465,7 @@ function propSyncIn(){ if(!usePropRapier()) return false; const R=RUB.R, T=R.Rig
 function propHits(list){ const seen=new Set(), hitP=new Set();
   for(const [i,y] of list){ const p=G.props[i]; if(!p||!p.alive||p.held) continue; const sp=p._pv||0; if(sp<3) continue;
     if(!seen.has(i)&&(p._impT||0)<=G.t){ seen.add(i); p._impT=G.t+0.12; G.evs.push({t:'impact',i,s:sp,n:vmul(p._pd,-1)}); }
-    if(y&&y.panel!==undefined&&sp>5&&p.k!=='coin'&&!hitP.has(i)){ const b=BRK[y.panel]; if(b&&b.alive){ hitP.add(i); hitBrk(y.panel,0.5*p.mass*14*sp*sp/100,V(p.pos.x,p.pos.y,p.pos.z),p._pd); } } } }
+    if(y&&y.panel!==undefined&&sp>5&&p.k!=='coin'&&!hitP.has(i)&&(canWreck()||(BRK[y.panel]&&BRK[y.panel].kind==='slot'))){ const b=BRK[y.panel]; if(b&&b.alive){ hitP.add(i); hitBrk(y.panel,0.5*p.mass*14*sp*sp/100,V(p.pos.x,p.pos.y,p.pos.z),p._pd); } } } }
 function propSyncOut(){ if(!usePropRapier()) return;
   for(const p of G.props){ if(!p.rb||!p.alive||p.held||p.anchored) continue; const b=p.rb; let sl=b.isSleeping();
     if(!sl||!p.asleep){ const t=b.translation(), q=b.rotation(), lv=b.linvel(), av=b.angvel();
@@ -1500,11 +1504,19 @@ function ragRigRead(){ for(const r of RIGS){ const tq=r.torso.rotation(), qi=qco
     const hip=v=>Math.atan2(-v.z,-v.y), sh=v=>-Math.asin(clamp(v.z,-1,1)), sz=v=>Math.atan2(v.x,-v.y), el=(a,b)=>Math.acos(clamp(vdot(a,b),-1,1));
     r.pose={hipL:hip(d[0]),knL:wrapA(hip(d[1])-hip(d[0])),hipR:hip(d[2]),knR:wrapA(hip(d[3])-hip(d[2])),shL:sh(d[4]),szL:sz(d[4]),elL:el(d[4],d[5]),shR:sh(d[6]),szR:sz(d[6]),elR:el(d[6],d[7]),bob:0}; } }
 
+/* ---------------- what can break a wall ---------------- */
+// Explosions (propane tanks and other blasts), HENNY's juggernaut, or being a dragon. Fire and falling rubble follow
+// from those. Running, tackles, horn charges and thrown junk just bounce off. ?wreck=all switches the rule off.
+const WRECK_ALL=new URLSearchParams(location.search).get('wreck')==='all';
+function canWreck(){ return WRECK_ALL||!!(G&&G.mods&&G.mods.jugg)||(G&&G.player&&G.player.form==='dragon'); }
+function wallHint(){ if(!G||G.attract||(G.wallHintT||0)>G.t) return; G.wallHintT=G.t+14; pop(vadd(G.player.pos,V(0,PH+0.4,0)),'THUD','#c9d1d9');
+  toast('<b>TOO SOLID</b>','Walls only give way to explosions, a HENNY juggernaut, or a dragon','#c9d1d9',3.2); }
+
 /* ---------------- condemned buildings: demolition is limited to a few marked ones ---------------- */
 // The two houses nearest the trailer park, one more house, one trailer and the water tower can be wrecked; every other
 // panel is permanent (slot machines stay breakable). Each condemned building gets a sign with an orange X by its door.
 // ?wreck=all in the address turns the limit off (the older test suites use it).
-function condemn(){ const all=new URLSearchParams(location.search).get('wreck')==='all', C=W.condemned; C.clear();
+function condemn(){ const all=WRECK_ALL, C=W.condemned; C.clear();
   const isHouse=it=>{ const L=BRK_BY.get(it.bld); return !!L&&it.cut&&L.some(b=>b.mat==='wood'&&!b.roof); }, isTrailer=it=>{ const L=BRK_BY.get(it.bld); return !!L&&L.some(b=>Math.abs(b.s.y1-0.36)<0.005&&b.s.y0<0.01); };
   const sp=W.spawn||V(), dist=it=>Math.hypot((it.x0+it.x1)/2-sp.x,(it.z0+it.z1)/2-sp.z);
   const houses=W.interiors.filter(isHouse).sort((a,b)=>dist(a)-dist(b)), trailers=W.interiors.filter(isTrailer);
@@ -1529,7 +1541,7 @@ function doorsUpdate(dt){ const P=G.player, ps=Math.hypot(P.vel.x,P.vel.z);
     const chk=p=>{ const dd=Math.hypot(p.x-c.x,p.z-c.z); if(dd<nd&&p.y<d.h){ nd=dd; near=p; } }; chk(P.pos); for(const n of G.npcs) if(n.alive&&n.state!=='rag') chk(n.pos);
     if(near){ if(d.open<0.08) d.side=Math.sign(d.axis==='x'?near.z-d.tm:near.x-d.tm)||1; d.hold=1.1; } else d.hold-=dt;
     // kicked in: a charge or a sprint into a shut door of a condemned building
-    if(near===P.pos&&nd<1.0&&d.open<0.5&&(ps>8.5||P.charge>0)&&W.condemned.has(d.bld)&&G.state==='play'){ doorKick(d,P.vel); continue; }
+    if(near===P.pos&&nd<1.0&&d.open<0.5&&(ps>8.5||P.charge>0)&&canWreck()&&W.condemned.has(d.bld)&&G.state==='play'){ doorKick(d,P.vel); continue; }
     const tgt=d.hold>0?1:0; d.open+=(tgt-d.open)*Math.min(1,dt*(tgt?6:3)); d.s.gone=d.open>0.12; } }
 function doorKick(d,v){ d.broken=true; d.s.gone=true; const c=doorCenter(d), sp=Math.max(6,Math.hypot(v.x,v.z)), dir=vnorm(V(v.x||0.01,0,v.z||0.01));
   for(const l of d.leaves){ const along=d.axis==='x'?V(l.sg,0,0):V(0,0,l.sg), mid=vadd(V(d.axis==='x'?l.hu:d.tm,d.h/2,d.axis==='x'?d.tm:l.hu),vmul(along,l.len/2));
@@ -1697,10 +1709,10 @@ function drawMarquee(B){ const ph=Math.floor((G?G.t:0)*7); W.marquee.forEach((p,
 /* ---------------- substances + effects ---------------- */
 const SUBS=[
   {id:'coke',     name:'COKE',      cat:'Stimulant',    fx:'FFWD',  color:0xf2f7ff, life:12, dur:8,  use:'sniff', tag:'FAST FORWARD',  blurb:'You sprint, the world crawls, hits launch twice as hard'},
-  {id:'xanax',    name:'BARS',     cat:'Depressant',   fx:'JELLY', color:0xffd84a, life:10, dur:9,  use:'pill',  tag:'JELLY LEGS',    blurb:'Floppy limbs. Bump anything and you ragdoll-spiral'},
+  {id:'xanax',    name:'XANAX',     cat:'Depressant',   fx:'JELLY', color:0xffd84a, life:10, dur:9,  use:'pill',  tag:'JELLY LEGS',    blurb:'Floppy limbs. Bump anything and you ragdoll-spiral'},
   {id:'blotter',  name:'BLOTTER',   cat:'Hallucinogen', fx:'KALEI', color:0xb46bff, life:11, dur:10, use:'tab',   tag:'KALEIDOSCOPE',  blurb:'Colors melt, the street wobbles, labels lie'},
   {id:'salts',    name:'SALTS',     cat:'Inhalant',     fx:'FLOAT', color:0x5ad1ff, life:9,  dur:9,  use:'pour',  tag:'BALLOON FLOAT', blurb:'Light as air, bouncy landings, squeaky voice'},
-  {id:'henny',    name:'HOOCH',     cat:'Numbing',      fx:'JUGG',  color:0xe0902f, life:10, dur:7,  use:'drink', tag:'JUGGERNAUT',    blurb:'No knockback, no busts, plow through anything. The screen sways and you stumble'},
+  {id:'henny',    name:'HENNY',     cat:'Numbing',      fx:'JUGG',  color:0xe0902f, life:10, dur:7,  use:'drink', tag:'JUGGERNAUT',    blurb:'No knockback, no busts, plow through anything. The screen sways and you stumble'},
   {id:'badderall',name:'BADDERALL', cat:'Energy-crash', fx:'GLITCH',color:0x3cffb4, life:10, dur:8,  use:'pill',  tag:'GLITCH STUTTER',blurb:'You freeze mid-step, then snap ahead'},
   {id:'ecstasy',  name:'ECSTASY',   cat:'Euphoric',     fx:'MAGNET',color:0xff5fcf, life:11, dur:9,  use:'pill',  tag:'MAGNET HANDS',  blurb:'Everything yanks toward you, the town pulses, rainbows and unicorns show up'},
   {id:'salvia',   name:'SALVIA',    cat:'Dissociative', fx:'OBJECT',color:0x8f97ff, life:13, dur:15, use:'smoke', tag:'INANIMATE',     blurb:'You turn into a random object. You cannot move for 15 seconds while the world races past'},
@@ -1769,7 +1781,7 @@ function npcWalk(n,wish,speed,dt,grav){ const k=smooth(8,dt); n.vel.x+=(wish.x*s
   const hs=Math.hypot(n.vel.x,n.vel.z); if(hs>0.3) n.yaw=angDamp(n.yaw,Math.atan2(n.vel.x,n.vel.z),10,dt); n.phase+=hs*dt*2.2; if(n.pos.y<-20) n.alive=false; }
 function npcRag(n,dt,grav){ const py=n.pos.y; n.vel.y-=22*grav*dt; n.pos=vadd(n.pos,vmul(n.vel,dt)); n.rot=qnorm(qmul(qscaled(vmul(n.ang,dt)),n.rot));
   const nrm=pushOut(n.pos,0.4,n.pos.y,n.pos.y+0.9,0.2); if(nrm){ const n3=V(nrm.x,0,nrm.z), vn=vdot(n.vel,n3); if(vn<0){ const sb=W.solids[nrm.i];
-    if(sb&&sb.brk!==undefined&&vn<-7&&hitBrk(sb.brk,0.5*75*vn*vn/100,vadd(n.pos,V(0,0.4,0)),vmul(n3,-1))) n.vel=vmul(n.vel,0.75); else n.vel=vsub(n.vel,vmul(n3,vn*1.4)); } }
+    if(sb&&sb.brk!==undefined&&vn<-7&&(canWreck()||BRK[sb.brk].kind==='slot')&&hitBrk(sb.brk,0.5*75*vn*vn/100,vadd(n.pos,V(0,0.4,0)),vmul(n3,-1))) n.vel=vmul(n.vel,0.75); else n.vel=vsub(n.vel,vmul(n3,vn*1.4)); } }
   const gi=groundInfo(n.pos.x,n.pos.z,0.2,Math.max(n.pos.y,py)+0.3), g=gi.y;
   if(n.pos.y<=g){ n.pos.y=g; if(gi.bouncy&&n.vel.y<-2){ n.vel.y=Math.min(20,-n.vel.y*0.85+1); } else if(n.vel.y<-3){ n.vel.y=-n.vel.y*0.3; n.ang=vmul(n.ang,0.7); } else n.vel.y=0; const fr=Math.max(0,1-2.5*dt); n.vel.x*=fr; n.vel.z*=fr; n.ang=vmul(n.ang,Math.max(0,1-3*dt)); n.grounded=true; } else n.grounded=false;
   if(n.grounded&&vlen(n.vel)<0.7) n.still+=dt; else n.still=0;
@@ -1890,7 +1902,7 @@ function playerUpdate(p,inp,dt,m,stands,camYaw,evs){ if(dt<=0) return;
 function jellySpiral(p,kick,evs){ p.spiralT=1.2; startRagdoll(p,vadd(kick,V(0,4.5,0)),true); p.rang=vadd(p.rang,V(rand(-12,12),rand(8,14),rand(-12,12))); evs.push({t:'spiral'}); }
 function ragUpdate(p,inp,dt,m,stands,evs){ p.rt+=dt; const py=p.pos.y; p.vel.y=Math.max(-45,p.vel.y-22*m.grav*dt); p.pos=vadd(p.pos,vmul(p.vel,dt)); p.rrot=qnorm(qmul(qscaled(vmul(p.rang,dt)),p.rrot));
   const n=pushOut(p.pos,Math.max(0.2,PR*1.2),p.pos.y,p.pos.y+Math.max(0.3,PH*0.5),0.2); if(n){ const n3=V(n.x,0,n.z), vn=vdot(p.vel,n3); if(vn<0){ const sb=W.solids[n.i];
-      if(sb&&sb.brk!==undefined&&vn<-7&&hitBrk(sb.brk,0.5*75*vn*vn/100,vadd(p.pos,V(0,0.4,0)),vmul(n3,-1))) p.vel=vmul(p.vel,0.75);
+      if(sb&&sb.brk!==undefined&&vn<-7&&(canWreck()||BRK[sb.brk].kind==='slot')&&hitBrk(sb.brk,0.5*75*vn*vn/100,vadd(p.pos,V(0,0.4,0)),vmul(n3,-1))) p.vel=vmul(p.vel,0.75);
       else { p.vel=vsub(p.vel,vmul(n3,vn*1.4)); p.rang=vadd(p.rang,vmul(vcross(n3,V(0,1,0)),vn*0.6)); if(vn<-6) evs.push({t:'land',s:-vn,air:0}); } } }
   const rh=Math.max(0.3,PH*0.5), ce=ceiling(p.pos.x,p.pos.z,0.4,p.pos.y); if(p.pos.y+rh>ce&&p.vel.y>0){ p.pos.y=ce-rh; p.vel.y=-p.vel.y*0.3; }
   const gi=pGround(p.pos.x,p.pos.z,Math.max(p.pos.y,py)+0.3,stands), gy=gi.y;
@@ -1964,7 +1976,7 @@ function touchProp(i,speed){ const p=G.props[i]; p.touched=0; if(p.d.car&&speed>
 function alarm(i){ const p=G.props[i]; if(p.alarm>0) return; p.alarm=9; G.stats.alarms++; if(p.touched<5){ addScore(250,p.pos,'CAR ALARM'); heatAdd(0.2); } if(G.stats.alarms>=5) award(F.CAR); }
 function burstHydrant(i,dir){ const p=G.props[i]; p.anchored=false; p.asleep=false; p.vel=vadd(vmul(dir,9),V(0,7,0)); p.ang=V(5,0,3); p.touched=0;
   G.geysers.push({pos:V(p.pos.x,p.pos.y-0.4,p.pos.z),t:14}); addScore(250,p.pos,'GEYSER'); heatAdd(0.2); sfx('splash'); award(F.HYDRO); if(!p.knocked){ p.knocked=true; G.stats.wrecked++; } }
-function knockNpcG(i,v,byPlayer,thrown,lbl){ const n=G.npcs[i]; if(n.hitCd>0) return; const up=npcUp(n); knockNpc(n,v); if(n.kind==='cop') say(n,pick(COPHIT),2);
+function knockNpcG(i,v,byPlayer,thrown,lbl){ const n=G.npcs[i]; if(n.hitCd>0) return; if(byPlayer&&!thrown) G.hitStop=Math.max(G.hitStop||0,0.055); const up=npcUp(n); knockNpc(n,v); if(n.kind==='cop') say(n,pick(COPHIT),2);
   if(!byPlayer&&!thrown) return;
   if(n.kind==='cop'){ addScore(400,n.pos,'OFFICER DOWN'); heatAdd(1); award(F.COP); }
   else { if(up) G.stats.tackled++; addScore(lbl?320:thrown?250:150,n.pos,lbl||(thrown?'LAWN DARTS':'TACKLE')); if(!thrown&&Math.random()<0.3) playerSay(pick(TACKLE_LINES)); heatAdd(thrown?0.3:0.4); if(thrown) award(F.DARTS); if(G.stats.tackled>=15) award(F.PEOPLE); }
@@ -1990,9 +2002,9 @@ function actions(inp){ const p=G.player; if(p.ragdoll||G.dying>0){ if(p.ragdoll)
   const FF=FORMS[p.form];
   if(inp.charge&&FF&&FF.horns&&p.held<0&&!(p.hornCd>0)&&!(p.windT>0)&&p.charge<=0){ p.windT=0.3; p.hornCd=2.4;
     p.hornDir=vnorm(vflat(focusDir()||((p.speed>1.5||Math.hypot(inp.mx,inp.my)>0.2)?fwd(p.yaw):fwd(G.cam.yaw)))); noise('snort',0.9); playerSay(pick(HORN_LINES),1.6,true); }
-  if(inp.tackle){ if(p.held>=0){ p.yaw=G.cam.yaw; throwHeld(focusAim(19)||aim); }
+  if(inp.tackle){ if(p.held>=0){ p.yaw=G.cam.yaw; throwHeld(focusAim(19)||assistThrow(19)||aim); }
     else if(FF&&FF.fire){ if(!(p.fireT>0)){ p.fireT=0.9; p.fireHit=new Set(); noise('pour',0.8); sfx('boom',0.35); heatAdd(0.25); } }
-    else if(p.chargeCd<=0){ const d=focusDir()||((p.speed>1.5||Math.hypot(inp.mx,inp.my)>0.2)?fwd(p.yaw):cf); p.charge=FF&&FF.force>2.4?0.45:0.3; p.chargeCd=G.mods.jugg?0.2:0.5; p.cdir=d; G.chargeHits=new Set(); sfx('whoosh');
+    else if(p.chargeCd<=0){ const d0=(p.speed>1.5||Math.hypot(inp.mx,inp.my)>0.2)?fwd(p.yaw):cf, at=SET.assist!==false?assistPick(d0,4.5,0.62):null, d=focusDir()||(at?vnorm(vflat(vsub(at.pos,p.pos))):d0); p.charge=FF&&FF.force>2.4?0.45:0.3; p.chargeCd=G.mods.jugg?0.2:0.5; p.cdir=d; G.chargeHits=new Set(); sfx('whoosh');
       if(FF&&FF.burn) partsBurst(vadd(vadd(p.pos,V(0,1,0)),vmul(d,0.6)),'fire',22,6,[1,0.6,0.15],0.22); } }
   if(inp.grab){ if(G.nearSlots){ openSlots(); return; } if(G.nearDoc&&p.held<0){ openDoc(); return; }
     if(p.held>=0){ dropHeld(vadd(p.vel,vmul(fwd(p.yaw),2))); sfx('grab'); }
@@ -2167,15 +2179,22 @@ const FORMS={
   angel:     {name:'ANGEL',     size:1,   r:0.34,h:1.8, cam:1.15,speed:1.1,jump:1.35,grav:0.45,holy:1,fly:1,climb:6.5,glide:2.6,pitch:1.4,rate:1,desc:'Hold jump to fly. Holy, floaty, glowing'},
   demon:     {name:'DEMON',     size:1.08,r:0.36,h:1.9, cam:1.15,speed:1.15,force:1.9,burn:1,fly:1,horns:1,climb:7.5,glide:4.5,pitch:0.45,rate:0.9,desc:'Hold jump to fly. Horn CHARGE, fiery tackles'},
 };
+Object.assign(FORMS,{
+  tiger: {name:'TIGER', quad:'tiger', size:1,r:0.42,h:1.15,cam:1.15,speed:1.75,jump:1.35,force:1.8,pitch:0.65,rate:1.05,desc:'Fast pounces and heavy hits'},
+  bear:  {name:'BEAR',  quad:'bear',  size:1,r:0.55,h:1.45,cam:1.3, speed:1.05,force:2.4,stomp:1,pitch:0.45,rate:0.85,desc:'Huge swipes. Landings shake the ground'},
+  pig:   {name:'PIG',   quad:'pig',   size:1,r:0.38,h:0.95,cam:0.95,speed:1.2, jump:0.9,bouncy:1,pitch:1.15,rate:1.2,desc:'Round, bouncy and weirdly fast'},
+  frog:  {name:'FROG',  quad:'frog',  size:1,r:0.3, h:0.6, cam:0.8, speed:1.05,jump:2.3,hops:1,feet:1,pitch:1.8,rate:1.35,desc:'Enormous jumps. Ribbit'},
+  rhino: {name:'RHINO', quad:'rhino', size:1,r:0.62,h:1.6, cam:1.4, speed:1.25,force:2.8,horns:1,pitch:0.4,rate:0.8,desc:'Horn CHARGE (C) bowls people over'},
+  llama: {name:'LLAMA', quad:'llama', size:1,r:0.4, h:1.9, cam:1.3, speed:1.3, jump:1.1,bark:1,pitch:1.25,rate:1.1,desc:'Yell to spit. People scatter'}});
 const TRASHY={trash:1,wheelie:1,bag:1,dumpster:1};
-const FORM_LINES={centaur:['Half man, half horse, all chaos!','Giddy up, me!','I have four legs and zero regrets!'],minotaur:['BULL MODE!','I see red. Everything is red.','Somebody find me a china shop!'],
+const FORM_LINES={tiger:['I am the apex predator now!','Grr. Purr. Grr.','Look at these stripes!'],bear:['BEAR HUG TIME!','I could eat a whole dumpster.','Hibernation is for quitters!'],pig:['Oink! I mean, hello!','Is that mud? I need it.','Bacon? Never heard of it.'],frog:['Ribbit, ribbit, RIBBIT!','My legs are springs!','Bugs look delicious now.'],rhino:['RAMMING SPEED!','My horn is my personality!','Out of the way, small things!'],llama:['Ptoo! Ptoo!','Do not test my spit.','Check out this neck.'],centaur:['Half man, half horse, all chaos!','Giddy up, me!','I have four legs and zero regrets!'],minotaur:['BULL MODE!','I see red. Everything is red.','Somebody find me a china shop!'],
   dragon:['I am a DRAGON! Rawr!','Stand back, I breathe fire now!','Who wants to get toasted?'],sloth:['Whyyy... is everything... so fast...','Hey... buddy... wait... up...','Slow... and... steady...'],
   raccoon:['Trash panda mode!','Dinner time! Where are the bins?','My hands are tiny and greedy!'],panda:['Bamboo me!','Roly poly coming through!','I am round and I am proud!'],
   molerat:['Why am I naked? Why am I a rat?','Nobody look at me!','These teeth are a lifestyle!'],ferret:['Dook dook dook!','Weasel war dance!','I am a noodle with legs!'],
   dog:['Woof! Who is a good boy? Me!','Squirrel! Where?','Bark! Bark bark!'],cat:['Meow. Bow before me.','Knock it off the table!','If I fits, I sits!'],
   skinwalker:['Let me in...','You should not have looked at me.','I know your name...'],giant:['Fee fi fo... uh... fum?','Everybody is so tiny!','Watch your step, tiny people!'],
   angel:['Hallelujah! I am holy now!','Bless this mess!','Look, a halo! Mine!'],demon:['Ooh, spicy!','Something wicked this way comes!','I am the reason your milk went sour!']};
-const FORM_NPC={centaur:['Is that a horse... guy?','Sir, you cannot ride yourself!'],minotaur:['BULL! Bull on the loose!','Somebody wave a red cape!'],
+const FORM_NPC={tiger:['TIGER! Everybody run!','Is that thing from the zoo?!'],bear:['BEAR! Play dead!','That bear is wearing sneakers!'],pig:['A pig is loose!','Why is that pig so fast?!'],frog:['That frog is HUGE!','Did that frog just jump a car?'],rhino:['A RHINO?! In town?!','Get off the sidewalk, it is charging!'],llama:['Do not make eye contact with the llama!','Ew, it spit on me!'],centaur:['Is that a horse... guy?','Sir, you cannot ride yourself!'],minotaur:['BULL! Bull on the loose!','Somebody wave a red cape!'],
   dragon:['DRAGON! DRAGON!','Call animal control! Or a knight!','My house is not fireproof!'],sloth:['Take your time, buddy.','Is it... moving?'],
   raccoon:['Get out of my trash!','That raccoon has a vibe.'],panda:['A panda?! In this economy?','Aww! No wait, it is charging!'],molerat:['Ew, what IS that?!','Is that a thumb with teeth?'],
   ferret:['Is that a weasel?','It is doing a little dance!'],dog:['Who is a good boy?','Somebody lost their dog!'],cat:['Here, kitty kitty!','Did that cat just knock over my bike?'],
@@ -2295,7 +2314,7 @@ function friedSay(text,who,pos,n){ if(!AC) return; const now=performance.now(), 
   const dur=friedSpeak(text,clamp(f0,45,520),clamp(rate,0.5,1.8),vol,pan); if(!isP) VOICE.busyUntil=now+dur*800; }
 /* ---------------- poop: squat, carry, throw, splat, paint walls ---------------- */
 const qconj=q=>Q(-q.x,-q.y,-q.z,q.w);
-const POOP_BROWN=hex(0x6b4423), POOP_SIZE={giant:2.3,minotaur:1.3,dragon:1.8,panda:1.4,centaur:1.5,demon:1.1,skinwalker:0.9,angel:1,dog:0.6,cat:0.35,raccoon:0.4,ferret:0.25,molerat:0.2,sloth:0.5};
+const POOP_BROWN=hex(0x6b4423), POOP_SIZE={tiger:0.8,bear:1.3,pig:0.7,frog:0.3,rhino:1.6,llama:0.9,giant:2.3,minotaur:1.3,dragon:1.8,panda:1.4,centaur:1.5,demon:1.1,skinwalker:0.9,angel:1,dog:0.6,cat:0.35,raccoon:0.4,ferret:0.25,molerat:0.2,sloth:0.5};
 const POOP_HIT=['EWWWW!','It is in my HAIR!','That is a biohazard!','I am going to need a shower. And therapy.','WHY IS IT WARM?!','My new shirt!'];
 const POOP_COP=['That is assault with a... what IS that?!','Dispatch, I need a hazmat team!','This is going in the report!'];
 const POOP_SEE=['Sir! SIR! Not on the sidewalk!','Is he... oh no. OH NO.','Avert your eyes, kids!','There are bathrooms, man!'];
@@ -2353,6 +2372,11 @@ function findFocus(){ const v=G.view; if(!v) return null; const cf=vnorm(vsub(v.
   G.props.forEach((o,i)=>{ if(o.alive&&!o.held&&!o.anchored&&o.mass<6) test(o.pos,'prop',i); });
   return best; }
 function focusDir(){ const t=G.focusT; if(!t) return null; const d=vflat(vsub(t.pos,G.player.pos)); return hlen(d)>0.5?vnorm(d):null; }
+// aim assist: a gentle pull toward the person you were clearly going for (a 35° cone for tackles, 19° for throws)
+function assistPick(dir,range,cone){ const p=G.player; let best=null, bs=-9; const cc=Math.cos(cone);
+  for(const n of G.npcs){ if(!n.alive||n.state==='rag') continue; const dx=n.pos.x-p.pos.x, dz=n.pos.z-p.pos.z, h=Math.hypot(dx,dz); if(h<0.5||h>range) continue;
+    const c=(dx*dir.x+dz*dir.z)/h; if(c<cc) continue; const sc=c*1.5-h/range; if(sc>bs){ bs=sc; best=n; } } return best; }
+function assistThrow(v){ if(SET.assist===false) return null; const t=assistPick(fwd(G.cam.yaw),18,0.33); if(!t) return null; const keep=G.focusT; G.focusT={pos:vadd(t.pos,V(0,1.1,0))}; const r=focusAim(v); G.focusT=keep; return r; }
 function focusAim(v){ const t=G.focusT; if(!t) return null; const p=G.player, d=vsub(t.pos,vadd(p.pos,V(0,PH*0.95,0))), h=hlen(d), g=22, disc=v**4-g*(g*h*h+2*d.y*v*v); if(disc<0||h<0.5) return null;
   const th=Math.atan((v*v-Math.sqrt(disc))/(g*h)), f=vmul(vflat(d),1/h); return vadd(vmul(f,Math.cos(th)),V(0,Math.sin(th),0)); }
 
@@ -2504,7 +2528,8 @@ function cameraUpdate(dt){ const p=G.player, cam=G.cam, m=G.mods;
   let d=lerp(cam.dist,Math.min(cam.dist,4.6),G.camIn)*(FORMS[p.form]?FORMS[p.form].cam:1); const hit=raycast(cam.focus,dir,d+0.3); if(hit>=0) d=Math.max(0.6,hit-0.35);
   cam.cur = d<cam.cur ? d : lerp(cam.cur,d,smooth(4,dt));
   const pos=vadd(cam.focus,vmul(dir,cam.cur)); const gy=groundAt(pos.x,pos.z,0.1,pos.y+0.5); if(pos.y<gy+0.25) pos.y=gy+0.25;
-  G.shake=Math.max(0,G.shake-dt*1.8); const s=Math.min(0.6,G.shake*0.22+m.shake*0.05)*SET.shake; if(s>0.002){ pos.x+=rand(-s,s); pos.y+=rand(-s,s); pos.z+=rand(-s,s); }
+  G.shake=Math.max(0,G.shake-dt*1.8); const tr=Math.min(1,G.shake*0.4+m.shake*0.09), s=0.62*tr*tr*SET.shake;   // trauma squared, smooth noise instead of random jitter
+  if(s>0.002){ const t=G.t*26; pos.x+=s*(Math.sin(t*1.13)+Math.sin(t*2.37+1.1))*0.5; pos.y+=s*(Math.sin(t*1.71+2.1)+Math.sin(t*2.91+0.3))*0.5; pos.z+=s*(Math.sin(t*1.29+4.2)+Math.sin(t*2.53+2.7))*0.5; }
   const dr=m.drunk*SET.shake; if(dr>0){ const r0=rightOf(cam.yaw), swy=Math.sin(G.t*0.9)*0.45*dr; pos.x+=r0.x*swy; pos.z+=r0.z*swy; pos.y+=Math.sin(G.t*1.7)*0.18*dr; }
   const roll=m.wobble*0.3*SET.shake*Math.sin(G.t*0.8)+dr*0.16*Math.sin(G.t*1.25), rt=rightOf(cam.yaw), up=vnorm(vadd(vmul(V(0,1,0),Math.cos(roll)),vmul(rt,Math.sin(roll))));
   cam.fov=lerp(cam.fov,clamp(1.05+m.fov+(p.speed>8?0.06:0)+dr*0.06*Math.sin(G.t*1.1),0.6,1.6),smooth(5,dt));
@@ -2766,8 +2791,8 @@ applyLook();
 /* ---------------- RIPPERDOC: Doc Suture's back-lot trailer clinic. Substance cyberware, paid in dollas, lasts the run ---------------- */
 const CYBER=[
   {id:'septum',  name:'SEPTUM TURBINE',   slot:'NOSE',    price:400, subs:['coke'], desc:'COKE gives +50% time and goes up your nose in half the time.'},
-  {id:'gullet',  name:'IRON GULLET',      slot:'THROAT',  price:450, subs:['salts','henny'], desc:'SALTS and HOOCH give +50% time. Pours and chugs go down twice as fast.'},
-  {id:'crusher', name:'PILL CRUSHER',     slot:'STOMACH', price:600, subs:['xanax','badderall','ecstasy'], desc:'BARS, BADDERALL and ECSTASY give +50% time, and their effects last 30% longer.'},
+  {id:'gullet',  name:'IRON GULLET',      slot:'THROAT',  price:450, subs:['salts','henny'], desc:'SALTS and HENNY give +50% time. Pours and chugs go down twice as fast.'},
+  {id:'crusher', name:'PILL CRUSHER',     slot:'STOMACH', price:600, subs:['xanax','badderall','ecstasy'], desc:'XANAX, BADDERALL and ECSTASY give +50% time, and their effects last 30% longer.'},
   {id:'tongue',  name:'TAB TONGUE',       slot:'TONGUE',  price:300, subs:['blotter'], desc:'BLOTTER gives +50% time, and tripping pays 1.5× chaos.'},
   {id:'lungs',   name:'IRON LUNGS',       slot:'LUNGS',   price:450, subs:['joint','salvia'], desc:'JOINT and SALVIA give +50% time. Salvia only freezes you half as long.'},
   {id:'liver',   name:'CHROME LIVER',     slot:'LIVER',   price:750, desc:'Your clock drains 15% slower, all the time.'},
@@ -3017,6 +3042,21 @@ const C2={GOLD:hex(0xd39a52),GOLD2:hex(0xe6c08a),GOLD3:hex(0xb87c3c),BLACK:[0.06
   PWHITE:hex(0xf2f0ea),PBLACK:hex(0x1c1b1d),SFUR:hex(0x8c7e66),SFUR2:hex(0x7a6e58),SFACE:hex(0xe2d6bc),SSTRIPE:hex(0x3a2a1c),SCLAW:hex(0xd8ccb0),
   MPINK:hex(0xe9a3a0),MPINK2:hex(0xf2b8b2),MWRINK:hex(0xc8807c),TOOTH:hex(0xf0dca0),DGREEN:hex(0x2f6a42),DGREEN2:hex(0x24563a),DBELLY:hex(0xc8b26c),DWING:hex(0x7a2a2a),DSPINE:hex(0x1e3a28),IVORY:hex(0xece2c8),
   BAY:hex(0x7a4628),BAY_DK:hex(0x2a1a12),HOOF:hex(0x2e2a26),HAIR_BK:hex(0x161212),UWHITE:hex(0xf7f4ff),UPINK:hex(0xf4c8d8),UGOLD:hex(0xffd35a),UHOOF:hex(0xc9b8a0)};
+// derive a creature from an existing body: scale every dimension, recolor by palette mapping, add head parts
+function qDerive(baseKey,k,cols,over,headAdd,extra){ const B=QSPEC[baseKey], S={...B}, rc=c=>{ for(const [f,t] of cols) if(c===f) return t; return c; };
+  for(const f of ['h','leg','legR','w','fz','bz','bob','bodyY','bw','bh','bl','neckY','neckZ0','neckZ','neckR','headY','headZ']) if(typeof B[f]==='number') S[f]=B[f]*k;
+  if(B.mouth) S.mouth=vmul(B.mouth,k); for(const f of ['body','chest','leg_col','foot','belly','neckCol']) if(B[f]) S[f]=rc(B[f]);
+  S.tail=B.tail?{...B.tail,len:B.tail.len*k,y:B.tail.y*k,z:B.tail.z*k,w:i=>B.tail.w(i)*k,col:rc(B.tail.col)}:null;
+  S.head=(out,R)=>{ const hp0=out.hp; out.hp=(m,l,h,q,c,g)=>hp0(m,vmul(l,k),vmul(h,k),q,rc(c),g); if(B.head) B.head(out,R); out.hp=hp0; if(headAdd) headAdd(out,R,k); };
+  S.extra=extra||null; return Object.assign(S,over||{}); }
+function addDerivedCreatures(){ const OR=[0.93,0.5,0.12], CR=[0.97,0.92,0.82], BL=[0.07,0.06,0.06], BR=[0.36,0.22,0.12], BR2=[0.5,0.33,0.19], BR3=[0.27,0.16,0.09], PK=[0.95,0.67,0.68], PK2=[0.98,0.8,0.78], PK3=[0.86,0.55,0.57],
+    GR=[0.42,0.7,0.26], GR2=[0.78,0.86,0.5], RH=[0.55,0.55,0.56], RH2=[0.66,0.65,0.64], LL=[0.93,0.88,0.78], LL2=[0.99,0.96,0.9], LL3=[0.72,0.6,0.46];
+  QSPEC.tiger=qDerive('cat',2.4,[[C2.TABBY,OR],[C2.CREAM,CR]],null,null,(out,R,bob)=>{ const S=QSPEC.tiger; for(let i=0;i<5;i++){ const z=-S.bl*0.75+i*S.bl*0.36; out.part('cube',V(0,S.h+bob+S.bodyY+S.bh*0.9,z),V(S.bw*0.96,0.014,0.026),null,BL); } });
+  QSPEC.bear=qDerive('dog',1.9,[[C2.GOLD,BR],[C2.GOLD2,BR2],[C2.GOLD3,BR3]],null,(out,R,k)=>{ for(const sd of [1,-1]) out.hp('sph',V(0.07*sd*k,0.09*k,-0.02*k),V(0.035*k,0.035*k,0.02*k),null,BR3); });
+  QSPEC.pig=qDerive('dog',1.15,[[C2.GOLD,PK],[C2.GOLD2,PK2],[C2.GOLD3,PK3],[C2.BLACK,[0.82,0.45,0.5]]],null,(out,R,k)=>{ out.hp('cyl',V(0,-0.012*k,0.2*k),V(0.045*k,0.02*k,0.045*k),qx(PI/2),PK3); for(const sd of [1,-1]) out.hp('sph',V(0.016*sd*k,-0.012*k,0.222*k),V(0.008*k,0.01*k,0.004*k),null,[0.45,0.2,0.24]); });
+  QSPEC.frog=qDerive('cat',1.7,[[C2.TABBY,GR],[C2.CREAM,GR2],[C2.PINK,[0.9,0.4,0.45]]],{tail:null},(out,R,k)=>{ for(const sd of [1,-1]){ out.hp('sph',V(0.04*sd*k,0.07*k,0.035*k),V(0.028*k,0.028*k,0.028*k),null,[0.96,0.95,0.85]); out.hp('sph',V(0.04*sd*k,0.074*k,0.06*k),V(0.012*k,0.014*k,0.006*k),null,BL); } });
+  QSPEC.rhino=qDerive('dog',2.05,[[C2.GOLD,RH],[C2.GOLD2,RH2],[C2.GOLD3,RH],[C2.PINK,RH2]],null,(out,R,k)=>{ out.hp('cone',V(0,0.02*k,0.2*k),V(0.03*k,0.07*k,0.03*k),qx(0.5),[0.85,0.82,0.74]); out.hp('cone',V(0,0.05*k,0.14*k),V(0.02*k,0.04*k,0.02*k),qx(0.35),[0.85,0.82,0.74]); });
+  QSPEC.llama=qDerive('dog',1.4,[[C2.GOLD,LL],[C2.GOLD2,LL2],[C2.GOLD3,LL3]],{headY:QSPEC.dog.headY*1.4+0.42,neckR:QSPEC.dog.neckR*1.25},(out,R,k)=>{ for(const sd of [1,-1]) out.hp('cone',V(0.05*sd*k,0.12*k,-0.02*k),V(0.02*k,0.05*k,0.015*k),null,LL3); }); }
 const QSPEC={
   dog:{h:0.4,leg:0.4,legR:0.056,w:0.11,fz:0.22,bz:-0.22,stride:0.55,knee:0.9,bob:0.03,bodyY:0.08,bw:0.16,bh:0.17,bl:0.32,body:C2.GOLD,chest:C2.GOLD2,leg_col:C2.GOLD,foot:C2.GOLD2,
     neckY:0.2,neckZ0:0.02,neckR:0.075,headY:0.36,headZ:0.14,headPitch:0.05,mouth:V(0,-0.04,0.2),
@@ -3095,6 +3135,7 @@ const QSPEC={
       for(let i=0;i<7;i++){ const t=i/6; out.part('cube',vadd(V(0,lerp(nb.y,hc.y,t),lerp(nb.z,hc.z,t)),V(0,0.09,-0.08)),V(0.035,0.075,0.05),qx(-0.7),RAINBOW[i],0.5); } },
     tail:{n:5,len:0.11,y:0.33,z:0.02,rest:V(0,-0.5,-0.8),w:i=>0.06-i*0.006,col:i=>RAINBOW[(i+1)%7],glow:0.5,phys:{stiff:10,wind:0.4,grav:0.7,damp:0.9}}},
 };
+addDerivedCreatures();
 
 /* ---------------- pickups: models, imprints ---------------- */
 const GLYPH={A:['010','101','111','101','101'],D:['110','101','101','101','110'],E:['111','100','110','100','111'],H:['101','101','111','101','101'],
@@ -3119,7 +3160,7 @@ function drawItem(B,T,id,c,q,sc,glow){ const t=G.t;
   else if(id==='xanax'){ const col=[0.97,0.88,0.45], dk=[0.72,0.6,0.22]; // scored bar
     P('cube',V(),V(0.25,0.035,0.075),null,col); P('cyl',V(0.25,0,0),V(0.075,0.035,0.075),null,col); P('cyl',V(-0.25,0,0),V(0.075,0.035,0.075),null,col);
     for(const x of [-0.125,0,0.125]) P('cube',V(x,-0.036,0),V(0.006,0.004,0.07),null,dk);
-    drawText(B,'ZZZ',at(V(0,0.036,0)),qmul(q,qx(-PI/2)),0.026*sc,dk,glow*0.3,0.004*sc); }
+    drawText(B,'XAN',at(V(0,0.036,0)),qmul(q,qx(-PI/2)),0.026*sc,dk,glow*0.3,0.004*sc); }
   else if(id==='blotter'){ P('cube',V(),V(0.2,0.004,0.2),null,[0.97,0.97,0.94]); // perforated tab with a printed grid
     for(let i=0;i<4;i++) for(let j=0;j<4;j++) P('cube',V(-0.15+i*0.1,0.005,-0.15+j*0.1),V(0.046,0.002,0.046),null,hsv((i+j)*0.11+t*0.25,0.75,1),Math.max(glow,0.25));
     for(const k of [-0.1,0,0.1]){ P('cube',V(k,0.0075,0),V(0.002,0.001,0.2),null,[0.6,0.6,0.62]); P('cube',V(0,0.0075,k),V(0.2,0.001,0.002),null,[0.6,0.6,0.62]); } }
@@ -3128,7 +3169,7 @@ function drawItem(B,T,id,c,q,sc,glow){ const t=G.t;
   else if(id==='henny'){ const glass=[0.62,0.32,0.09], gg=Math.max(glow,0.15); // generic amber flask, plain label
     P('cyl',V(0,-0.08,0),V(0.16,0.17,0.105),null,glass,gg); P('sph',V(0,0.09,0),V(0.16,0.075,0.105),null,glass,gg); P('cyl',V(0,0.2,0),V(0.045,0.08,0.045),null,glass,gg);
     P('cyl',V(0,0.3,0),V(0.052,0.035,0.052),null,[0.1,0.08,0.06]); P('cube',V(0,-0.06,0.104),V(0.125,0.075,0.004),null,[0.95,0.9,0.78]);
-    drawText(B,'HOOCH',at(V(0,-0.06,0.108)),q,0.0105*sc,[0.3,0.16,0.06],0,0.003*sc); }
+    drawText(B,'HENNY',at(V(0,-0.06,0.108)),q,0.0105*sc,[0.3,0.16,0.06],0,0.003*sc); }
   else if(id==='badderall'){ const a1=[0.24,0.95,0.7], a2=[0.96,0.96,0.96]; // two-tone capsule
     P('cyl',V(-0.07,0,0),V(0.085,0.07,0.085),RZ90,a1); P('sph',V(-0.14,0,0),V(0.085,0.085,0.085),null,a1); P('cyl',V(0.07,0,0),V(0.087,0.07,0.087),RZ90,a2); P('sph',V(0.14,0,0),V(0.087,0.087,0.087),null,a2); }
   else if(id==='joint'){ const pap=[0.95,0.94,0.9]; P('cyl',V(0.02,0,0),V(0.03,0.19,0.03),RZ90,pap); P('cyl',V(-0.17,0,0),V(0.036,0.05,0.036),RZ90,pap); P('cyl',V(0.21,0,0),V(0.027,0.03,0.027),RZ90,[0.8,0.66,0.45]);
@@ -3304,6 +3345,8 @@ function engageUpdate(dt){ if(!G||G.attract||G.state!=='play') return;
   // golden stashes sparkle so a lucky find is visible from across the street (variable reward in the core loop)
   if(Math.random()<dt*6) for(const st of G.stashes) if(st.golden&&!st.laced&&Math.abs(st.pos.x-G.player.pos.x)+Math.abs(st.pos.z-G.player.pos.z)<45) partsBurst(vadd(st.pos,V(rand(-0.4,0.4),rand(0.6,1.6),rand(-0.4,0.4))),'confetti',1,1.5,[1,0.85,0.3],0.05);
   // break reminder (on by default, Settings → Comfort): once an hour of play
+  // mercy stash: under 8 s with nothing within 28 m, one appears (at most every 20 s), so a run ends by choice, not bad luck
+  if(G.life<8&&(G.mercyT||0)<=G.t){ const pp=G.player.pos; G.mercyT=G.t+20; if(!G.stashes.some(st=>Math.hypot(st.pos.x-pp.x,st.pos.z-pp.z)<28)){ spawnStash(); G.stats.mercy=(G.stats.mercy||0)+1; } }
   SESSION.t+=dt; if(SET.breaks&&SESSION.t>SESSION.nextBreak){ SESSION.nextBreak+=3600; toast('<b>TIME CHECK</b>','You have been playing for '+Math.round(SESSION.t/3600)+' h. Good moment to stretch and drink some water.','#8fb4ff',5); } }
 // daily streak: a run on consecutive days grows a chrome bonus (Ð 50 per day, up to Ð 300); missing a day just restarts it
 function streakTick(){ const k=dayKey(), st=PROF.streak||{last:'',n:0}; if(st.last===k) return; const y=new Date(Date.now()-864e5), yk=y.getFullYear()+'-'+String(y.getMonth()+1).padStart(2,'0')+'-'+String(y.getDate()).padStart(2,'0');
@@ -3334,10 +3377,10 @@ function drawSym(x,s){ x.clearRect(0,0,92,112); x.fillStyle='#0d0b14'; x.fillRec
   switch(s.id){
     case 'liver': x.fillStyle=s.c; x.beginPath(); x.moveTo(30,40); x.bezierCurveTo(18,42,18,72,42,74); x.bezierCurveTo(72,80,76,44,58,40); x.bezierCurveTo(50,38,46,46,40,44); x.closePath(); x.fill(); break;
     case 'coke': x.fillStyle='rgba(220,232,255,.32)'; rr(29,26,34,48,4); x.fill(); x.fillStyle='#f6f6f2'; rr(31,44,30,28,3); x.fill(); x.fillStyle='#e6e8ec'; ell(40,46,9,4); ell(53,45,8,3.5); x.fillStyle='#d94848'; x.fillRect(29,26,34,4); break;
-    case 'xanax': x.fillStyle='#f2df7a'; rr(16,44,60,18,9); x.fill(); x.strokeStyle='rgba(150,125,40,.55)'; for(const X of [31,46,61]){ x.beginPath(); x.moveTo(X,45); x.lineTo(X,61); x.stroke(); } x.fillStyle='#7a6a1e'; x.font=mono(10); x.fillText('ZZZ',46,57); break;
+    case 'xanax': x.fillStyle='#f2df7a'; rr(16,44,60,18,9); x.fill(); x.strokeStyle='rgba(150,125,40,.55)'; for(const X of [31,46,61]){ x.beginPath(); x.moveTo(X,45); x.lineTo(X,61); x.stroke(); } x.fillStyle='#7a6a1e'; x.font=mono(10); x.fillText('XAN',46,57); break;
     case 'blotter': { const hs=(performance.now()/12)|0; for(let i=0;i<3;i++) for(let j=0;j<3;j++){ x.fillStyle=`hsl(${((i+j)*45+hs)%360},90%,62%)`; x.fillRect(28+i*12,30+j*12,11,11); } x.strokeStyle='rgba(255,255,255,.7)'; x.strokeRect(27.5,29.5,37,37); break; }
     case 'salts': x.fillStyle='#f2f2ee'; rr(28,24,36,50,5); x.fill(); x.fillStyle='#cfd0d4'; x.fillRect(28,24,36,5); x.fillStyle='#5ad1ff'; x.fillRect(28,44,36,15); x.fillStyle='#fff'; x.font=mono(9); x.fillText('SALTS',46,55); break;
-    case 'henny': x.fillStyle='#9a5216'; rr(29,40,34,38,10); x.fill(); x.fillRect(41,24,10,18); x.fillStyle='#1a120c'; x.fillRect(40,19,12,7); x.fillStyle='#efe4c8'; x.fillRect(32,52,28,14); x.fillStyle='#4a2a10'; x.font=mono(8); x.fillText('HOOCH',46,62); break;
+    case 'henny': x.fillStyle='#9a5216'; rr(29,40,34,38,10); x.fill(); x.fillRect(41,24,10,18); x.fillStyle='#1a120c'; x.fillRect(40,19,12,7); x.fillStyle='#efe4c8'; x.fillRect(32,52,28,14); x.fillStyle='#4a2a10'; x.font=mono(8); x.fillText('HENNY',46,62); break;
     case 'badderall': x.fillStyle='#3cffb4'; rr(17,43,32,20,10); x.fill(); x.fillStyle='#f4f4f4'; rr(43,43,32,20,10); x.fill(); x.fillStyle='#3cffb4'; x.fillRect(41,43,6,20); break;
     case 'ecstasy': x.fillStyle='#ff8ad8'; x.beginPath(); x.arc(46,52,21,0,TAU); x.fill(); x.fillStyle='#ffb0e6'; x.beginPath(); x.arc(46,52,17,0,TAU); x.fill(); x.fillStyle='#c0508f'; x.font=mono(10); x.fillText('MDMA',46,56); break;
     case 'joint': x.fillStyle='#f4f2ea'; x.beginPath(); x.moveTo(20,50); x.lineTo(70,45); x.lineTo(70,57); x.lineTo(20,54); x.closePath(); x.fill(); x.fillStyle='#c8a070'; x.fillRect(66,45,6,12); x.fillStyle='#ff7a2a'; x.beginPath(); x.arc(20,52,4,0,TAU); x.fill();
@@ -3519,6 +3562,7 @@ function renderSettings(){ const tabs=$('setTabs'), body=$('setBody'); tabs.inne
     rng('Controller look speed','',0.25,3,0.05,()=>SET.padSens,v=>SET.padSens=v,x);
     seg('Invert look up and down','',onoff,()=>SET.invertY,v=>SET.invertY=v);
     seg('Controller rumble','',onoff,()=>SET.rumble,v=>SET.rumble=v);
+    seg('Aim assist','A gentle pull toward the person you are tackling or throwing at.',onoff,()=>SET.assist!==false,v=>SET.assist=v);
     seg('Control hints','The line of controls at the bottom of the screen.',onoff,()=>SET.hints,v=>SET.hints=v);
     for(const [a,lab] of ACTIONS){ const c=row(lab,SET.binds[a].length>1?'Also: '+SET.binds[a].slice(1).map(keyName).join(', '):''), b=document.createElement('button'); b.type='button'; b.className='opt'+(REBIND===a?' wait':''); b.textContent=REBIND===a?'Press a key…':keyName(SET.binds[a][0]);
       b.onclick=()=>{ REBIND=a; renderSettings(); }; c.appendChild(b); }
@@ -3559,7 +3603,7 @@ function gameOver(){ G.state='over'; if(document.exitPointerLock&&locked) docume
 
   { const r3=document.createElement('div'); r3.className='row'; r3.innerHTML='<span class="sw" style="background:#8a8296;box-shadow:0 0 7px #8a8296"></span><span><b>LACED</b> · About 1 in 12 stashes is cut with fent. You fold in half, over and over, for 10 seconds.</span>'; lg.appendChild(r3);
     const r4=document.createElement('div'); r4.className='row'; r4.innerHTML='<span class="sw" style="background:#37e6ff;box-shadow:0 0 7px #37e6ff"></span><span><b>RIPPERDOC</b> · Doc Suture\'s trailer by the spawn sells substance cyberware for dollas.</span>'; lg.appendChild(r4);
-    const r5=document.createElement('div'); r5.className='row'; r5.innerHTML='<span class="sw" style="background:#d9a441;box-shadow:0 0 7px #d9a441"></span><span><b>DEMOLITION</b> · Look for the orange X: condemned buildings come down under tackles, charges, blasts and thrown cars. Knock out enough and the rest follows.</span>'; lg.appendChild(r5);
+    const r5=document.createElement('div'); r5.className='row'; r5.innerHTML='<span class="sw" style="background:#d9a441;box-shadow:0 0 7px #d9a441"></span><span><b>DEMOLITION</b> · Look for the orange X. Condemned buildings only come down to explosions, a HENNY juggernaut or a dragon. Knock out enough and the rest follows.</span>'; lg.appendChild(r5);
     const r6=document.createElement('div'); r6.className='row'; r6.innerHTML='<span class="sw" style="background:#ff4fd8;box-shadow:0 0 7px #ff4fd8"></span><span><b>LUCKY LIVER CASINO</b> · North of your trailer. Walk in, play any machine, or smash one open for the coins. No clocks inside.</span>'; lg.appendChild(r6); }
   $('ctrlsText').innerHTML=IS_TOUCH?'<b>Left thumb</b> move · <b>right thumb</b> look · buttons to tackle, jump, grab, flop, yell and poop. Landscape plays best.':'<b>WASD</b> move · <b>mouse</b> look · <b>Space</b> jump · <b>Click</b> tackle · <b>E</b> grab · <b>Q</b> flop · <b>H</b> yell · <b>P</b> poop · <b>C</b> horn charge · <b>V</b> voices · <b>R</b> restart'; })();
 $('startBtn').addEventListener('click',()=>{ unlock(); startGame(); });
@@ -3574,7 +3618,7 @@ addEventListener('gamepadconnected',()=>{ PAD.on=true; noteInput('pad'); padFocu
 
 /* ---------------- boot + loop ---------------- */
 let last=performance.now(), acc=0, frames=0;
-function frame(now){ let dt=(now-last)/1000; last=now; if(!(dt>0)) dt=0; dt=Math.min(dt,DEMO?0.25:0.1); if(G&&G.slowT>0&&G.state==='play'){ G.slowT-=dt; dt*=0.45; }
+function frame(now){ let dt=(now-last)/1000; last=now; if(!(dt>0)) dt=0; dt=Math.min(dt,DEMO?0.25:0.1); if(G&&G.hitStop>0&&G.state==='play'){ G.hitStop-=dt; dt*=0.06; } else if(G&&G.slowT>0&&G.state==='play'){ G.slowT-=dt; dt*=0.45; }
   try{ const inp=gatherInput(dt); qualityGovernor(dt);
     if(G.state==='play'||G.state==='title'){ // fixed-ish substeps keep collisions solid on slow phones
       const steps=Math.max(1,Math.min(12,Math.ceil(dt/(1/45)))), sdt=dt/steps;

@@ -116,7 +116,7 @@ async def main():
           for(let k=0;k<1000;k++) qualityGovernor(1/90); r.autoRecovered=QUAL.dyn===1;
           unlock(); r.buses=!!(SFXB&&VOXB&&MUSB); SET.master=0.5; applyAudio(); r.masterGain=+MASTER.gain.value.toFixed(3); SET.master=0.8; applyAudio();
           r.names=[SUB('xanax').name,SUB('henny').name]; const txt=document.body.innerText+' '+[...document.querySelectorAll('#legend .row,.disc,#implants')].map(e=>e.textContent).join(' ')+' '+CYBER.map(c=>c.desc).join(' ');
-          r.oldNamesVisible=/XANAX|HENNY|Goat Simulator/i.test(txt); r.idleUpdateMs=(()=>{ const t0=performance.now(); step(240,()=>I({my:1})); return +((performance.now()-t0)/240).toFixed(3); })(); return r; }""")
+          r.oldNamesVisible=/Goat Simulator/i.test(txt); r.idleUpdateMs=(()=>{ const t0=performance.now(); step(240,()=>I({my:1})); return +((performance.now()-t0)/240).toFixed(3); })(); return r; }""")
         out['errs'] = errs[:8]
         await b.close()
     print(json.dumps(out, indent=1))

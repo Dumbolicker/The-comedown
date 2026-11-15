@@ -34,6 +34,29 @@ play for two minutes. Then read the code map below.
 
 ---
 
+## 0. Update, 15 Nov 2026 (latest): wall rule, more creatures, playability, look
+
+- **Wall rule:** walls in condemned buildings only give way to:
+  - explosions (propane tanks)
+  - HENNY's juggernaut
+  - being a dragon
+
+  Tackles, horn charges, ragdolls and thrown junk bounce off, and a "TOO SOLID" hint explains the rule. Slot machines still smash, and `?wreck=all` switches the rule off for the older tests.
+- **Original names are back:** XANAX and HENNY.
+- **Six new creatures**, for 20 in total: tiger, bear, pig, frog, rhino and llama. They're built from existing bodies with `qDerive` (scale, recolor, extra head parts).
+- **Playability:**
+  - aim assist for tackles and throws (Settings → Controls)
+  - a 55 ms hit-stop when you knock someone down
+  - camera shake that scales with trauma squared and uses smooth noise
+  - a mercy stash when you're under 8 s with none nearby
+- **Look:**
+  - warm key light with cooler, lighter shadows
+  - stronger contact shadows where walls meet the ground
+  - +10% saturation and a gentle S-curve
+  - a soft vignette
+  - before/after comparison in `screenshots/b7/`
+- **Tests:** `tests/feat11.py`.
+
 ## 0. Update, 15 Nov 2026 (later): condemned buildings, secret feats, engagement, doors
 
 - **Demolition is limited** to five condemned structures per town, each marked by a sign with an orange X:
@@ -63,7 +86,7 @@ play for two minutes. Then read the code map below.
   - first-launch photosensitivity warning, reduced-flashing mode and a shake slider
 - **Controllers:** the Gamepad API covers play and every menu.
 - **Saving:** the profile (records, feats, chrome bank, dailies) lives in `localStorage` (`bt_profile`, `bt_settings`).
-- **Names:** XANAX → BARS, HENNY → HOOCH. Internal ids are unchanged.
+- **Names:** XANAX and HENNY were briefly BARS and HOOCH; the original names are back at the owner's request.
 - **Physics:**
   - props and furniture move into Rapier, so they stack and collide with rubble
   - jointed ragdolls
@@ -164,10 +187,10 @@ the engine directly: `update(1/60, inputObject)` in a loop, then `render()`.
 | Stash | Category | Effect (fx id) | Time | Duration | Use animation |
 | --- | --- | --- | --- | --- | --- |
 | COKE | Stimulant | FAST FORWARD (`FFWD`): you ×1.85 speed, world ×0.32, harder hits | +12s | 8s | sniff (looks like baking soda) |
-| BARS | Depressant | JELLY LEGS (`JELLY`): bump things and you ragdoll-spiral, slower drain | +10s | 9s | pill with "ZZZ" imprint |
+| XANAX | Depressant | JELLY LEGS (`JELLY`): bump things and you ragdoll-spiral, slower drain | +10s | 9s | pill with "XAN" imprint |
 | BLOTTER | Hallucinogen | KALEIDOSCOPE (`KALEI`): hue shift, wobble, fake labels | +11s | 10s | square tab placed in the mouth |
 | SALTS | Inhalant | BALLOON FLOAT (`FLOAT`): 0.2× gravity, bouncy, squeaky voice | +9s | 9s | bag poured into the mouth |
-| HOOCH | Numbing | JUGGERNAUT (`JUGG`): plow through anything, no busts, drunk sway and stumbles | +10s | 7s | bottle you drink |
+| HENNY | Numbing | JUGGERNAUT (`JUGG`): plow through anything, no busts, drunk sway and stumbles | +10s | 7s | bottle you drink |
 | BADDERALL | Energy-crash | GLITCH STUTTER (`GLITCH`): freeze, then snap ahead | +10s | 8s | capsule pill |
 | ECSTASY | Euphoric | MAGNET HANDS (`MAGNET`): pulsing town, rainbows, wandering unicorns | +11s | 9s | pill with "MDMA" imprint |
 | SALVIA | Dissociative | INANIMATE (`OBJECT`): you become a random object, frozen, world ×2.6, time-lapse sky | +13s | 15s | smoke |
@@ -248,8 +271,8 @@ Implants are bought with dollas, last the run and show as chrome on your body.
 | Implant | Slot | Price | Effect |
 | --- | --- | --- | --- |
 | Septum Turbine | nose | 400 | COKE +50% time, snorting takes half as long |
-| Iron Gullet | throat | 450 | SALTS and HOOCH +50% time, pours and chugs twice as fast |
-| Pill Crusher | stomach | 600 | BARS, BADDERALL, ECSTASY +50% time, effects last 30% longer |
+| Iron Gullet | throat | 450 | SALTS and HENNY +50% time, pours and chugs twice as fast |
+| Pill Crusher | stomach | 600 | XANAX, BADDERALL, ECSTASY +50% time, effects last 30% longer |
 | Tab Tongue | tongue | 300 | BLOTTER +50% time, tripping pays 1.5× chaos |
 | Iron Lungs | lungs | 450 | JOINT and SALVIA +50% time, salvia freeze halved |
 | Chrome Liver | liver | 750 | clock drains 15% slower |
@@ -427,8 +450,8 @@ approximate and drift with edits.
   - The laced/fent mechanic is a punishment.
   - Its counters (test strips, naloxone) are harm-reduction flavored.
   - Keep it non-instructional.
-- **Commercial release:** the brand-like names were swapped for parody names in the M1 update: XANAX → **BARS**
-  (pill imprint "ZZZ") and HENNY → **HOOCH**. Internal ids stay `xanax` and `henny` so saves and tests keep working.
+- **Commercial release:** the owner chose to keep the original names XANAX and HENNY. Brand-like names are a
+  trademark risk on Steam, so revisit this before selling.
 
 ---
 
