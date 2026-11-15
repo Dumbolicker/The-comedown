@@ -7,7 +7,7 @@ Each is the 1k diffuse map, scaled to 512×512 by `ffmpeg`.
 | --- | --- | --- | --- |
 | asphalt.jpg | asphalt_02 | Rob Tuytel | https://polyhaven.com/a/asphalt_02 |
 | concrete.jpg | concrete_floor_worn_001 | Dimitrios Savva, Rico Cilliers | https://polyhaven.com/a/concrete_floor_worn_001 |
-| grass.jpg | aerial_grass_rock | Rob Tuytel | https://polyhaven.com/a/aerial_grass_rock |
+| grass.jpg | Grass004 (ambientCG, CC0) | ambientCG | https://ambientcg.com/view?id=Grass004 |
 | brick.jpg | red_brick | Rob Tuytel | https://polyhaven.com/a/red_brick |
 | siding.jpg | WoodSiding009 (ambientCG, CC0) | ambientCG | https://ambientcg.com/view?id=WoodSiding009 |
 | roof.jpg | grey_roof_tiles_02 | Rob Tuytel | https://polyhaven.com/a/grey_roof_tiles_02 |
