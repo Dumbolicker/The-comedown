@@ -48,7 +48,7 @@ async def main():
         await page.route("**/*", lambda r: r.abort() if r.request.url.startswith("http") else r.continue_())
         if VENDOR.exists():
             await page.route("https://cdn.jsdelivr.net/**", lambda r: r.fulfill(path=str(VENDOR), content_type="text/javascript", headers={"access-control-allow-origin": "*"}))
-        await page.goto(GAME_URI, wait_until="domcontentloaded")
+        await page.goto(GAME_URI, wait_until="domcontentloaded", timeout=180000)
         for _ in range(60):
             if await page.evaluate("RUB.state") != 'loading': break
             await page.wait_for_timeout(250)

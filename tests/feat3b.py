@@ -32,6 +32,6 @@ async def main():
         ctx=await b.new_context(viewport={"width":960,"height":540}); page=await ctx.new_page(); errs=[]
         page.on("pageerror", lambda e: errs.append(str(e))); page.on("console", lambda m: errs.append('console:'+m.text) if m.type=='error' else None)
         await page.route("**/*", lambda r: r.abort() if r.request.url.startswith("http") else r.continue_())
-        await page.goto(GAME_URI, wait_until="domcontentloaded"); await page.wait_for_timeout(2500)
+        await page.goto(GAME_URI, wait_until="domcontentloaded", timeout=180000); await page.wait_for_timeout(2500)
         r=await page.evaluate(JS); print(json.dumps(r,indent=1)); print("pageerrors:",errs[:6]); await b.close()
 asyncio.run(main())

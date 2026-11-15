@@ -3,3 +3,6 @@ desktop/borrowed_time_desktop/src-tauri/target/
 .refcache/
 .claude/skills/overdrive/scripts/refpipe/target/
 desktop/borrowed_time_desktop/dist/vendor/
+
+# raw per-style renders from tests/shots_characters.py (the contact sheet in screenshots/b9 is kept)
+screenshots/characters/

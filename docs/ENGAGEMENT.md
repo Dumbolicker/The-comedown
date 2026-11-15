@@ -37,6 +37,16 @@ The references are well-known papers with their DOIs so you can look them up. I 
 - **No endless streak pressure.** The streak bonus stops growing at day 6.
 - **Break reminder.** On by default, under Settings → Comfort. After each hour of play you get one short "stretch and drink some water" note. The WHO lists gaming disorder in ICD-11 (6C51), and an honest nudge costs nothing.
 
+## Odd jobs (21 neighbors with a task)
+
+- **What:** people with a gold $ over their heads offer a job: knock over lawn ornaments, return a shopping cart, deliver a
+  parcel, tackle a man in a purple suit, climb the water tower, race three checkpoints, and so on. Press E (GRAB on touch) to
+  take one. One job at a time; the corner panel shows the task, progress, the pay and an arrow with the distance.
+- **Why it works:** a specific goal beats "do your best" (Locke & Latham, 2002); visible progress speeds people up as the
+  goal gets close (Kivetz, Urminsky & Zheng, 2006); the payout comes the moment the job is done.
+- **Guardrails:** jobs pay fake dollas only, plus 8 seconds on the clock. Only the parcel, the bounty and the race have time
+  limits, and failing one just ends the job. Repeats pay 60%, so nothing pushes you to grind.
+
 ## References
 
 - Clark, L., Lawrence, A. J., Astley-Jones, F., & Gray, N. (2009). Gambling near-misses enhance motivation to gamble and recruit win-related brain circuitry. *Neuron*, 61(3), 481–490. https://doi.org/10.1016/j.neuron.2008.12.031
