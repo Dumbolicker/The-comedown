@@ -26,8 +26,8 @@ Requested on 15 Nov 2026:
 
 - [x] Host access for the CC0 texture sites (new environment)
 - [x] Starter texture set in `assets/textures/`: asphalt, concrete, grass, brick, siding, roof, plaster, metal, pavers (Poly Haven, CC0)
-- [ ] R1 renderer: material id, texture array and triplanar shader
-- [ ] R1 assignment of materials across the town
+- [x] R1 renderer: material id packed into the instance glow, a 9-layer texture array, one fetch along the dominant axis
+- [x] R1 materials on ground, roads, lots, sidewalks, house siding, roofs, brick and plaster towers, trailers (before/after in `screenshots/b7/textures_before_after.jpg`)
 - [ ] R2 models
 - [ ] R3 map ×5
 - [ ] R4 events, people and items
