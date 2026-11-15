@@ -943,7 +943,7 @@ function house(sx0,sz0,sx1,sz1,frontNeg){
   let lx0,lx1,gx0=0,gx1=0; if(gar&&side<0){ gx0=hx0; gx1=hx0+gw; lx0=gx1; lx1=lx0+wL; } else { lx0=hx0; lx1=hx0+wL; gx0=lx1; gx1=lx1+gw; }
   const fz=lotF+inw*set, bzp=fz+inw*D, z0=Math.min(fz,bzp), z1=Math.max(fz,bzp), fT=frontNeg?z0:z1-t, bT=frontNeg?z1-t:z0, lc=(lx0+lx1)/2, zc=(z0+z1)/2;
   const wing=!!gar&&style==='colonial', gfz=wing?fz+inw*0.6:fz, gz0=wing?Math.min(gfz,bzp):z0, gz1=wing?Math.max(gfz,bzp):z1, gfT=frontNeg?gz0:gz1-t;
-  const WIN=(u,w,y0,y1)=>({u0:u-w/2,u1:u+w/2,y0,y1}), dw=1.1;
+  const WIN=(u,w,y0,y1)=>({u0:u-w/2,u1:u+w/2,y0,y1}), dw=1.2;   /* 1.2 m doorways: the 0.5 m nav grid needs a free cell through the padded jambs */
   const wx=(a0,a1,tz,ops,y0,y1,c)=>wallRun('x',a0,a1,tz,tz+t,y0,y1,ops,'wood',wall,bld,c), wz=(a0,a1,tx,ops,y0,y1,c)=>wallRun('z',a0,a1,tx,tx+t,y0,y1,ops,'wood',wall,bld,c);
   // front door and the windows around it, laid out the way each style does it
   const du=style==='colonial'?lc:style==='bungalow'?lx0+wL*R(0.26,0.34):gar?(side<0?lx0+0.95:lx1-0.95):lx0+wL*R(0.3,0.4);
