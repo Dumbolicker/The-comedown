@@ -808,8 +808,23 @@ function tower(x0,z0,x1,z1,h,col){ solid(x0,0,z0,x1,h,z1,col); windows(x0,0,z0,x
   sdeco((x0+x1)/2,h+0.02,(z0+z1)/2,(x1-x0)/2+0.1,0.18,(z1-z0)/2+0.1,tone(col,0.7));
   for(let k=0;k<1+randi(0,2);k++){ const x=rand(x0+2,x1-2), z=rand(z0+2,z1-2); solid(x-1,h,z-0.8,x+1,h+1.1,z+0.8,C.metal); }
   if(Math.random()<0.6){ const cx=(x0+x1)/2, cz=(z0+z1)/2; scyl(cx,h+3,cz,0.07,3,hex(0x6a6a6a)); sball(cx,h+6.1,cz,0.18,0.18,0.18,hex(0xff3030),1); } }
+// Lobby tower: a 4.2 m glass-fronted lobby (breakable concrete mullions and glass), a stair core in the middle with
+// switchback flights (rise 3 m over a 6 m run, about 27°), and an open top so the stairs come out on the roof.
+function lobbyTower(x0,z0,x1,z1,h,col){ const cx=(x0+x1)/2, cz=(z0+z1)/2, LH=4.2, t=0.3, bld=++BLD, nF=Math.ceil(h/3), rise=h/nF;
+  const sx0=cx-2.2, sx1=cx+2.2, sz0=cz-4.3, sz1=cz+4.3, zA=sz0+1.3, zB=sz1-1.3;
+  solid(x0,0,z0,x0+t,LH,z1,col); solid(x1-t,0,z0,x1,LH,z1,col);                                        // lobby side walls
+  const fronts=[]; for(let u=x0+t+0.4;u<x1-t-1.6;u+=2.6) fronts.push(Math.abs(u+1.1-cx)<1.4?{u0:cx-1.2,u1:cx+1.2,y0:0,y1:2.7,door:1}:{u0:u,u1:Math.min(u+2.2,x1-t-0.4),y0:0.15,y1:3.4});
+  wallRun('x',x0+t,x1-t,z0,z0+t,0,LH,fronts,'conc',tone(col,1.12),bld,9); wallRun('x',x0+t,x1-t,z1-t,z1,0,LH,fronts,'conc',tone(col,1.12),bld,9);
+  for(const [a0,a1,b0,b1] of [[x0,sx0,z0,z1],[sx1,x1,z0,z1],[sx0,sx1,z0,sz0],[sx0,sx1,sz1,z1]]) solid(a0,LH,b0,a1,h,b1,col);   // floors above, around the stair core
+  windows(x0,LH,z0,x1,h,z1,3.3,1.3,1.8,2.6,0.4,[true,true,true,true]); sdeco(cx,h+0.02,cz,(x1-x0)/2+0.1,0.18,(z1-z0)/2+0.1,tone(col,0.7));
+  for(let k=0;k<nF;k++){ const y0=k*rise, y1=y0+rise, left=k%2===0;                                         // flights alternate lanes and directions
+    if(left) rampS(sx0,y0,zA,cx,y1,zB,3,hex(0x8d9096)); else rampS(cx,y0,zA,sx1,y1,zB,4,hex(0x8d9096));
+    const lz0=left?zB:sz0, lz1=left?sz1:zA; solid(sx0,y1-0.22,lz0,sx1,y1,lz1,hex(0x7a7d84)); }
+  sdeco(cx,0.012,cz,(x1-x0)/2-t,0.01,(z1-z0)/2-t,hex(0xd9d2c4)); solid(cx-2,0,z0+2.0,cx+2,1.1,z0+2.8,hex(0x6b4a33)); sdeco(cx,1.13,z0+2.4,2.05,0.03,0.45,hex(0x2a2a30));
+  light(cx,LH-0.4,cz-5,11,[1,0.94,0.82]); light(cx,LH-0.4,cz+5,11,[1,0.94,0.82]); light(cx,h-1,cz,8,[0.9,0.95,1]);
+  W.interiors.push({x0:x0+t,z0:z0+t,x1:x1-t,z1:z1-t,y1:LH,bld,cut:0}); W.lobby={x0,z0,x1,z1,h,cx,cz,zA,zB,sx0,sx1,bld,nF,rise}; }
 function gen_down(l){ const f=()=>hex(pick([0x9c5a45,0xc9b79c,0x7d8a99,0x5a6b7d,0xb0a595,0x6e5a4e,0x8c9ca6])); const cx=(l.x0+l.x1)/2;
-  if(Math.random()<0.5){ tower(l.x0+0.5,l.z0+0.5,cx-2,l.z1-0.5,rand(12,24),f()); tower(cx+2,l.z0+0.5,l.x1-0.5,l.z1-0.5,rand(9,20),f());
+  if(Math.random()<0.5||!W.lobby){ if(!W.lobby) lobbyTower(l.x0+0.5,l.z0+0.5,cx-2,l.z1-0.5,rand(15,24),f()); else tower(l.x0+0.5,l.z0+0.5,cx-2,l.z1-0.5,rand(12,24),f()); tower(cx+2,l.z0+0.5,l.x1-0.5,l.z1-0.5,rand(9,20),f());
     prop('dumpster',cx,0,l.z0+5,PI/2); for(let k=0;k<4;k++) prop('bag',cx+rand(-0.9,0.9),0,l.z0+8+k*3,0); prop('crate',cx-1,0,l.z1-6,0.3); prop('barrel',cx+1,0,l.z1-4,0);
     spot(cx,0,l.z0+11); spot(cx,0,l.z1-2.5); }
   else { tower(l.x0+0.5,l.z0+0.5,cx+0.5,l.z1-0.5,rand(14,26),f()); const ah=7.5; solid(cx+0.5,0,l.z0+0.5,l.x1-0.5,ah,l.z1-8,f());
@@ -974,7 +989,7 @@ const LAYOUT=[['res','down','down','res'],['gas','plaza','park','down'],['res','
 const LOT_COL={res:C.grass,down:C.conc,gas:C.conc,plaza:C.conc,park:hex(0x4e8f3a),trailer:hex(0x8a8a4a),tower:hex(0x6b8f45),constr:C.dirt};
 function genWorld(){
   for(const k of BATCH_KEYS) STATIC[k].n=0; Object.assign(W,{solids:[],spots:[],rings:[],copSpawns:[],lamps:[],props:[],blocks:[],slots:null,tower:null,doc:null,docEnt:null,
-    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[]});
+    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[],lobby:null});
   BRK.length=0; BRK_BY.clear(); BLD=0; BRK_DIRTY=true;
   // ground + fields
   sdeco(0,-0.5,0,HALF+160,0.5,HALF+160,hex(0x6e7845)); sdeco(0,-0.49,0,HALF,0.5,HALF,C.asph);
@@ -1002,7 +1017,7 @@ function genWorld(){
   for(const [a,b,c,d] of [[-o-th,-o-th,o+th,-o],[-o-th,o,o+th,o+th],[-o-th,-o,-o,o],[o,-o,o+th,o]]){ solid(a,0,b,c,2.4,d,wcol); solid(a,2.4,b,c,60,d,wcol,false); }
   for(let k=0;k<70;k++){ const an=rand(0,TAU), d=rand(o+8,o+80), x=Math.cos(an)*d, z=Math.sin(an)*d; if(Math.abs(x)<o+5&&Math.abs(z)<o+5) continue; tree(x,z,false); }
   brkGraph(); W.glass=BRK.filter(b=>b.mat==='glass'); W.slotsB=BRK.filter(b=>b.kind==='slot');
-  gridBuild(); uploadStatic(); BRK_DIRTY=true; FIRE.list.length=0; if(RUB.ready) rubWorld();
+  gridBuild(); uploadStatic(); BRK_DIRTY=true; FIRE.list.length=0; NAV.built=false; if(RUB.ready) rubWorld();
 }
 
 /* ---------------- props ---------------- */
@@ -1176,7 +1191,7 @@ function brkStable(bld){ const list=BRK_BY.get(bld); if(!list) return []; const 
   return list.filter(b=>b.alive&&!b.falling&&!b.stable); }
 function brkCheck(bld){ const bad=brkStable(bld); if(!bad.length) return; noise('creak',0.9);
   for(const b of bad){ b.falling=true; G.collapse.push({id:b.id,t:G.t+(b.roof?rand(0.3,0.7):rand(0.05,0.35))}); if(Math.random()<0.4) partsBurst(boxCenter(b.s),'smoke',1,1.2,b.M.dust||[0.7,0.7,0.7],0.25); } }
-function killPanel(b){ b.alive=false; b.falling=false; b.s.gone=true; GRID_DIRTY=true; BRK_DIRTY=true;
+function killPanel(b){ b.alive=false; b.falling=false; b.s.gone=true; GRID_DIRTY=true; BRK_DIRTY=true; NAV.dirty=true;
   if(b.s.col&&RUB.world){ try{ RUB.byCol.delete(b.s.col.handle); RUB.world.removeCollider(b.s.col,true); }catch(e){} b.s.col=null; }
   const s=b.s; G.decals=G.decals.filter(d=>!(d.pos.x>s.x0-0.1&&d.pos.x<s.x1+0.1&&d.pos.y>s.y0-0.1&&d.pos.y<s.y1+0.1&&d.pos.z>s.z0-0.1&&d.pos.z<s.z1+0.1)); }
 function hitBrk(id,dmg,pt,dir){ const b=BRK[id]; if(!b||!b.alive||b.falling||!(dmg>0)) return false; b.hp-=dmg;
@@ -1237,6 +1252,7 @@ function drawDemolition(B,T,v,night){ const ga=0.24+0.5*night, gcol=night>0.3?mi
     bpush(T.cube,c.x,c.y,c.z,QI,(s.x1-s.x0)/2,(s.y1-s.y0)/2,(s.z1-s.z0)/2,b.col===GLASS?gcol:b.col,ga,b.glow!==undefined?b.glow:-0.85); }
   for(const b of W.slotsB||NONE) if(b.alive) drawSlotMachine(B,b,v);
   for(const b of W.customB||NONE) if(b.alive&&!b.falling) drawCustomBrk(B,b,boxCenter(b.s),QI);
+  drawDrone(B);
   for(const f of W.fixtures||NONE){ if(f.brk!==undefined&&!BRK[f.brk].alive) continue; ball(B,f.p,V(f.r,f.r*0.6,f.r),QI,f.c,1,1); }
   for(const r of RUB.chunks){ if(!r.t||vlen(vsub(r.t,v.pos))>90) continue; bpush(r.glass?T.cube:B.cube,r.t.x,r.t.y,r.t.z,r.q,r.h.x,r.h.y,r.h.z,r.color,r.glass?0.55:1,r.glass?0.2:0); }
   for(const r of RUB.slabs){ if(!r.t) continue; const b=r.b, s=b.s; if(CUSTOM_KINDS.has(b.kind)){ drawCustomBrk(B,b,r.t,r.q); continue; }
@@ -1325,6 +1341,75 @@ function tankSplashAt(c){
   sfx('splash'); sfx('boom',0.8); G.shake+=1.4; addScore(2500,vadd(c,V(0,3,0)),'WATER DAMAGE'); award(F_WATER);
   G.npcs.forEach((n,i)=>{ if(n.alive&&npcUp(n)&&vlen(vsub(n.pos,c))<14) knockNpcG(i,vadd(vmul(vnorm(V(n.pos.x-c.x,0,n.pos.z-c.z)),9),V(0,5,0)),true,false,'WASHED AWAY'); });
   const P=G.player; if(vlen(vsub(P.pos,c))<12&&!P.ragdoll) startRagdoll(P,vadd(vmul(vnorm(V(P.pos.x-c.x,0,P.pos.z-c.z)),8),V(0,5,0)),false); }
+
+/* ---------------- navigation: 1 m walkability grid and A* ---------------- */
+// Anything at body height (0.45–1.6 m) blocks a cell, padded by a body radius. Paths are searched with a node budget,
+// string-pulled to straight runs, cached per walker and refreshed every 1.2 s or when the goal moves.
+const NAV={n:0,ox:0,c:0.5,blk:null,built:false,dirty:false,next:0,searches:0}, NAVS={g:null,par:null,st:null,cl:null,cur:0};
+// 0.5 m cells, blocked when the cell centre lies inside a solid grown by 0.25 m: a 1.2 m doorway keeps a free lane, a 0.18 m wall never leaks
+function navBuild(){ const c=NAV.c, n=Math.ceil((2*HALF+40)/c), ox=-HALF-20, pad=0.25; NAV.n=n; NAV.ox=ox; if(!NAV.blk||NAV.blk.length!==n*n) NAV.blk=new Uint8Array(n*n); else NAV.blk.fill(0); const B=NAV.blk;
+  for(const s of W.solids){ if(s.gone||s.y0>1.6||s.y1<0.45||s.ramp) continue; const x0=Math.max(0,Math.ceil((s.x0-pad-ox)/c-0.5)), x1=Math.min(n-1,Math.floor((s.x1+pad-ox)/c-0.5)), z0=Math.max(0,Math.ceil((s.z0-pad-ox)/c-0.5)), z1=Math.min(n-1,Math.floor((s.z1+pad-ox)/c-0.5));
+    for(let z=z0;z<=z1;z++){ const r=z*n; for(let x=x0;x<=x1;x++) B[r+x]=1; } }
+  NAV.built=true; NAV.dirty=false; }
+const navIdx=(x,z)=>{ const n=NAV.n, ix=Math.floor((x-NAV.ox)/NAV.c), iz=Math.floor((z-NAV.ox)/NAV.c); return ix<0||iz<0||ix>=n||iz>=n?-1:iz*n+ix; };
+const navFree=i=>i>=0&&!NAV.blk[i];
+function navReady(){ if(!NAV.built||(NAV.dirty&&G.t>=NAV.next)){ navBuild(); NAV.next=G.t+0.5; } }
+function navClear(a,b){ navReady(); const d=Math.hypot(b.x-a.x,b.z-a.z), st=Math.max(1,Math.ceil(d/0.25)); for(let k=1;k<=st;k++){ const t=k/st; if(!navFree(navIdx(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t))) return false; } return true; }
+function navNear(i,r=6){ if(navFree(i)) return i; if(i<0) return -1; const n=NAV.n, x=i%n, z=(i/n)|0;
+  for(let rr=1;rr<=r;rr++) for(let dz=-rr;dz<=rr;dz++) for(let dx=-rr;dx<=rr;dx++){ if(Math.max(Math.abs(dx),Math.abs(dz))!==rr) continue; const xx=x+dx, zz=z+dz; if(xx>=0&&zz>=0&&xx<n&&zz<n&&!NAV.blk[zz*n+xx]) return zz*n+xx; } return -1; }
+function navPath(a,b,budget=2500){ navReady(); NAV.searches++; const n=NAV.n, s0=navNear(navIdx(a.x,a.z)), t0=navNear(navIdx(b.x,b.z)); if(s0<0||t0<0) return null; if(s0===t0) return [V(b.x,0,b.z)];
+  if(!NAVS.g||NAVS.g.length!==n*n){ NAVS.g=new Float32Array(n*n); NAVS.par=new Int32Array(n*n); NAVS.st=new Uint32Array(n*n); NAVS.cl=new Uint32Array(n*n); }
+  const g=NAVS.g, par=NAVS.par, st=NAVS.st, cl=NAVS.cl, cur=++NAVS.cur, tx=t0%n, tz=(t0/n)|0, B=NAV.blk;
+  const h=i=>{ const dx=Math.abs(i%n-tx), dz=Math.abs(((i/n)|0)-tz); return Math.max(dx,dz)+0.414*Math.min(dx,dz); };
+  const hp=[], push=(i,f)=>{ hp.push(f,i); let k=hp.length/2-1; while(k>0){ const p=(k-1)>>1; if(hp[2*p]<=hp[2*k]) break; const a1=hp[2*p], a2=hp[2*p+1]; hp[2*p]=hp[2*k]; hp[2*p+1]=hp[2*k+1]; hp[2*k]=a1; hp[2*k+1]=a2; k=p; } };
+  const pop=()=>{ const i=hp[1]; const lf=hp.pop(), lv=hp.pop(); if(hp.length){ hp[0]=lv; hp[1]=lf; let k=0; const m2=hp.length/2; for(;;){ const l=2*k+1, r=l+1; let m=k; if(l<m2&&hp[2*l]<hp[2*m]) m=l; if(r<m2&&hp[2*r]<hp[2*m]) m=r; if(m===k) break; const a1=hp[2*m], a2=hp[2*m+1]; hp[2*m]=hp[2*k]; hp[2*m+1]=hp[2*k+1]; hp[2*k]=a1; hp[2*k+1]=a2; k=m; } } return i; };
+  g[s0]=0; st[s0]=cur; par[s0]=-1; push(s0,h(s0)); let found=false, it=0, best=s0, bestH=h(s0);
+  while(hp.length&&it++<budget){ const i=pop(); if(cl[i]===cur) continue; cl[i]=cur; if(i===t0){ found=true; break; } const hi=h(i); if(hi<bestH){ bestH=hi; best=i; }
+    const x=i%n, z=(i/n)|0;
+    for(let dz=-1;dz<=1;dz++) for(let dx=-1;dx<=1;dx++){ if(!dx&&!dz) continue; const xx=x+dx, zz=z+dz; if(xx<0||zz<0||xx>=n||zz>=n) continue; const j=zz*n+xx; if(B[j]||cl[j]===cur) continue;
+      if(dx&&dz&&(B[z*n+xx]||B[zz*n+x])) continue;
+      const ng=g[i]+(dx&&dz?1.414:1); if(st[j]!==cur||ng<g[j]){ st[j]=cur; g[j]=ng; par[j]=i; push(j,ng+h(j)); } } }
+  const cells=[]; for(let e=found?t0:best;e>=0&&cells.length<5000;e=par[e]) cells.push(e); cells.reverse();
+  const C=NAV.c, pts=cells.map(i=>V(NAV.ox+((i%n)+0.5)*C,0,NAV.ox+(((i/n)|0)+0.5)*C)), out=[]; let k=0;
+  while(k<pts.length-1){ let j=k+1; while(j+1<pts.length&&navClear(pts[k],pts[j+1])) j++; out.push(pts[j]); k=j; }
+  if(found&&out.length) out[out.length-1]=V(b.x,0,b.z); if(!out.length) out.push(pts[0]||V(b.x,0,b.z)); return out; }
+// next point to steer at: straight at the goal when the way is clear, otherwise along a cached A* path
+function navNext(n,goal){ const p=n.pos; if((n.navLos||0)<=G.t){ n.navLos=G.t+0.25; n.navDirect=navClear(p,goal); } if(n.navDirect) return goal;
+  let nv=n.nav; if(!nv||G.t>nv.t||Math.hypot(nv.gx-goal.x,nv.gz-goal.z)>2.5){ if(NAV.frame===G.t&&NAV.budgetLeft<=0) return nv&&nv.path.length?nv.path[Math.min(nv.i,nv.path.length-1)]:goal;
+    if(NAV.frame!==G.t){ NAV.frame=G.t; NAV.budgetLeft=3; } NAV.budgetLeft--; nv=n.nav={path:navPath(p,goal)||[],i:0,t:G.t+1.2,gx:goal.x,gz:goal.z}; }
+  const P=nv.path; while(nv.i<P.length-1&&Math.hypot(P[nv.i].x-p.x,P[nv.i].z-p.z)<0.6) nv.i++; return P.length?P[nv.i]:goal; }
+// the way out of a building: breadth-first from its middle to the first free cell outside its walls
+function exitOf(it){ if(it.exit) return it.exit; navReady(); const n=NAV.n, C=NAV.c, s0=navNear(navIdx((it.x0+it.x1)/2,(it.z0+it.z1)/2),8); if(s0<0) return null;
+  const seen=new Set([s0]), q=[s0]; for(let qi=0;qi<q.length&&qi<20000;qi++){ const i=q[qi], x=i%n, z=(i/n)|0, wx=NAV.ox+(x+0.5)*C, wz=NAV.ox+(z+0.5)*C;
+    if(wx<it.x0-0.8||wx>it.x1+0.8||wz<it.z0-0.8||wz>it.z1+0.8){ const c=V((it.x0+it.x1)/2,0,(it.z0+it.z1)/2), d=vnorm(V(wx-c.x,0,wz-c.z)); it.exit=V(wx+d.x*2.5,0,wz+d.z*2.5); return it.exit; }
+    for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){ const j=(z+dz)*n+(x+dx); if(!seen.has(j)&&navFree(j)){ seen.add(j); q.push(j); } } }
+  return null; }
+
+/* ---------------- police drone: the answer to flying away from the cops ---------------- */
+// Airborne for 2.5 s with heat on you and a drone launches. It chases in 3D, zaps you out of the sky, keeps your heat
+// from cooling and radios your position so ground cops converge where you land. Tackle it, hit it or blast it to drop it.
+function droneUpdate(dt){ const P=G.player, gy=groundAt(P.pos.x,P.pos.z,0.1,P.pos.y+0.2), air=P.pos.y-gy>2.2&&!P.grounded;
+  G.airT=air?(G.airT||0)+dt:Math.max(0,(G.airT||0)-dt*2);
+  if(!G.drone&&G.heat>=1&&G.airT>2.5&&G.state==='play'&&!G.attract){ const a=G.cam.yaw+PI+rand(-0.6,0.6), at=vadd(P.pos,V(Math.sin(a)*24,10,Math.cos(a)*24));
+    G.drone={pos:at,vel:V(),yaw:0,cool:1.5,life:0,dead:false,spin:0,lt:{p:at,r:9,c:[0.6,0.5,1],k:1}}; W.lights.push(G.drone.lt); pop(vadd(P.pos,V(0,PH+0.6,0)),'POLICE DRONE INBOUND','#8fb4ff'); sfx('siren',0.5); }
+  const d=G.drone; if(!d) return; d.life+=dt; d.spin+=dt*60; d.lt.p=d.pos;
+  if(d.dead){ d.vel.y-=22*dt; d.pos=vadd(d.pos,vmul(d.vel,dt)); const g2=groundAt(d.pos.x,d.pos.z,0.1,d.pos.y+0.3); if(d.pos.y<g2+0.15){ d.pos.y=g2+0.15; d.vel=vmul(d.vel,0.3); } d.lt.k=0; if(d.life>4){ G.drone=null; } return; }
+  const tgt=vadd(P.pos,V(0,PH+1.0,0)), to=vsub(tgt,d.pos), dist=vlen(to), spd=dist>6?15:9;
+  d.vel=vadd(d.vel,vmul(vsub(vmul(to,spd/Math.max(dist,0.01)),d.vel),Math.min(1,dt*2.2))); d.pos=vadd(d.pos,vmul(d.vel,dt)); d.pos.y+=Math.sin(G.t*3)*0.01; d.yaw=Math.atan2(d.vel.x,d.vel.z);
+  d.cool-=dt; G.heat=Math.max(G.heat,1);
+  if(G.state==='play'&&(d.radioT||0)<=G.t){ d.radioT=G.t+0.5; const land=V(P.pos.x+P.vel.x*0.6,0,P.pos.z+P.vel.z*0.6); for(const n of G.npcs) if(n.alive&&n.kind==='cop'&&n.state==='chase'){ n.lastSeen={...land}; if(n.seeT>0.6) n.seeT=0.7; } }
+  if(dist<1.5&&d.cool<=0&&!P.ragdoll&&G.state==='play'){ d.cool=3; startRagdoll(P,vadd(vmul(vnorm(V(-to.x,0,-to.z)),3),V(0,-4,0)),true); G.life-=3; pop(vadd(P.pos,V(0,PH+0.5,0)),'ZAPPED BY A DRONE · -3s','#8fb4ff'); sfx('glitch'); G.shake+=0.4; }
+  const pspeed=Math.hypot(P.vel.x,P.vel.y,P.vel.z), hitByP=dist<1.7&&(pspeed>8||P.charge>0);
+  const hitByProp=G.props.some(o=>o.alive&&o.thrown>0&&vlen(vsub(o.pos,d.pos))<1.1);
+  if(hitByP||hitByProp||(G.airT<=0&&d.life>25)||G.heat<0.2) droneDown(hitByP||hitByProp); }
+function droneDown(scored){ const d=G.drone; if(!d||d.dead) return; d.dead=true; d.life=0; d.vel=vadd(d.vel,V(rand(-3,3),2,rand(-3,3))); partsBurst(d.pos,'spark',14,7,[0.7,0.8,1],0.05); sfx('bighit',0.6);
+  if(scored){ addScore(900,vadd(d.pos,V(0,0.6,0)),'DRONE DOWN'); award(F_DRONE); } }
+function drawDrone(B){ const d=G.drone; if(!d) return; const q=d.dead?qmul(qyaw(d.yaw),qx(1.1)):qyaw(d.yaw), W2=l=>vadd(d.pos,qrot(q,l)), dark=[0.12,0.13,0.16];
+  let p=W2(V(0,0,0)); bpush(B.cube,p.x,p.y,p.z,q,0.22,0.06,0.22,dark,1,0);
+  for(const [x,z] of [[0.36,0.36],[-0.36,0.36],[0.36,-0.36],[-0.36,-0.36]]){ p=W2(V(x*0.55,0,z*0.55)); bpush(B.cube,p.x,p.y,p.z,qmul(q,qyaw(PI/4)),0.2,0.02,0.02,dark,1,0);
+    p=W2(V(x,0.06,z)); bpush(B.cyl,p.x,p.y,p.z,qmul(q,qyaw(d.spin)),0.17,0.006,0.17,[0.75,0.78,0.82],0.55,0); }
+  const blink=CALM()?0.5:(Math.sin(G.t*9)>0?1:0), lc=blink>0.5?[1,0.15,0.15]:[0.2,0.35,1]; p=W2(V(0,-0.08,0)); bpush(B.sph,p.x,p.y,p.z,q,0.06,0.04,0.06,CALM()?[0.75,0.4,0.95]:lc,1,1);
+  if(!d.dead) d.lt.c=CALM()?[0.7,0.45,1]:lc; }
 
 /* ---------------- props and furniture in Rapier ---------------- */
 // With Rapier loaded, props get a body once they are near the player or rubble, or start moving, so they stack and
@@ -1660,10 +1745,11 @@ function npcUpdate(dt,grav,evs){ if(dt<=0) return; const P=G.player, pv=P.vel, p
     else if(n.state==='idle'){ if(dist<(n.home?3.2:9)) n.yaw=angDamp(n.yaw,Math.atan2(to.x,to.z),4,dt); else if(n.home) n.yaw=angDamp(n.yaw,n.home.yaw,3,dt);
       if(n.st>n.idleFor){ n.state=n.home?'home':'walk'; n.st=0; } }
     else if(n.state==='flee'){ const aw=vflat(vsub(n.pos,n.fleeFrom)), l=hlen(aw); wish=l>0.01?vmul(aw,1/l):V(1,0,0); speed=5*n.speedK;
+      const inB=interiorAt(n.pos), ex=inB&&exitOf(inB); if(ex){ const wp=navNext(n,ex), tv=vflat(vsub(wp,n.pos)), dl=hlen(tv); if(dl>0.2) wish=vmul(tv,1/dl); n.st=Math.min(n.st,3); }
       if(n.st>4.5){ n.st=0; if(n.home) n.state='home'; else { n.state='walk'; const [ri,wi]=nearestWp(n.pos); n.ring=ri; n.wp=wi; } } }
     else if(n.state==='home'){ const tv=vflat(vsub(n.home.p,n.pos)), d=hlen(tv); if(d<0.45||n.st>25){ if(d>=0.45) n.pos={...n.home.p}; n.state='idle'; n.st=0; n.idleFor=1e9; } else { wish=vmul(tv,1/d); speed=1.6*n.speedK; } }
     else if(n.state==='chase'){ if(FORMS[P.form]&&FORMS[P.form].fear&&dist<25){ n.state='leave'; n.st=0; say(n,pick(COP_SCARED),2.2); } n.losT-=dt; if(n.losT<=0){ n.losT=0.3; const sees=!G.mods.jugg&&!invis&&!(FORMS[P.form]&&FORMS[P.form].stealth)&&!G.mods.object&&dist<50&&(dist<5||losClear(vadd(n.pos,V(0,1.6,0)),vadd(P.pos,V(0,1,0)))); if(sees){ n.seeT=0; n.lastSeen={...P.pos}; } }
-      n.seeT+=dt; const goal=n.seeT<0.6?P.pos:n.lastSeen, tv=vflat(vsub(goal,n.pos)), d=hlen(tv); if(d>0.3) wish=vmul(tv,1/d); speed=n.seeT<0.6?7.2:4.5;
+      n.seeT+=dt; const goal=n.seeT<0.6?P.pos:n.lastSeen, wpt=navNext(n,goal), tv=vflat(vsub(wpt,n.pos)), d=hlen(tv); if(d>0.3) wish=vmul(tv,1/d); speed=n.seeT<0.6?7.2:4.5;
       if(n.seeT<0.6&&n.talkCd<=0){ say(n,pick(COPSAY),2); n.talkCd=rand(4,8); }
       if(n.seeT<0.6&&dist<1.3&&Math.abs(P.pos.y-n.pos.y)<1.6&&!P.ragdoll&&P.bust<=0&&G.state==='play') evs.push({t:'busted',i});
       if(n.seeT>9||G.heat<0.3){ n.state='leave'; n.st=0; say(n,pick(COPLEAVE),2.5); } }
@@ -1779,12 +1865,12 @@ const FEATS=[
   ['Car Trouble','Set off 5 car alarms',10],['Hydro Therapy','Burst a fire hydrant',5],['Rookie Mistake','Get busted',5],
   ['Gnome Away','Throw a garden gnome 25 meters',10],['Bounce House','Bounce 5 times in a row on a trampoline',10],
   ['Shapeshifter','Turn into 3 different creatures in one run',15],['Against All Odds','Win the Cursed Doubloon (1 in 137,000)',60],['Street Artist','Paint 80 strokes on walls',15],['Special Delivery','Hit a cop with a thrown poop',10],['Chrome Addict','Install 3 implants at the ripperdoc',15],
-  ['Wrecking Ball','Break 25 walls, windows or machines',15],['Open Floor Plan','Bring a roof down',20],['Beat the House','Smash a slot machine open',10],['Water Damage','Bring the water tower down',30]];
-const F_WATER=FEATS.length-1;
+  ['Wrecking Ball','Break 25 walls, windows or machines',15],['Open Floor Plan','Bring a roof down',20],['Beat the House','Smash a slot machine open',10],['Water Damage','Bring the water tower down',30],['Drone Strike','Knock a police drone out of the sky',20]];
+const F_WATER=FEATS.length-2, F_DRONE=FEATS.length-1;
 const F={FLYER:0,BOWL:1,POLY:2,CABINET:3,PYRO:4,PEOPLE:5,COP:6,TOP:7,DARTS:8,ROLLER:9,MARATHON:10,HANG:11,CAR:12,HYDRO:13,ROOKIE:14,GNOME:15,TRAMP:16,SHIFT:17,ODDS:18,ART:19,SPECIAL:20}; const F_SHIFT=17, F_ODDS=18, F_ART=19, F_SPECIAL=20, F_CHROME=21, F_WRECK=22, F_ROOF=23, F_SLOT=24;
 function newGame(attract){
   genWorld();
-  G={state:attract?'title':'play',attract,t:0,life:30,alive:0,score:0,dollas:0,combo:0,comboT:0,heat:0,heatPeak:0,seen:false,copT:0,stashT:0,
+  G={drone:null,airT:0,state:attract?'title':'play',attract,t:0,life:30,alive:0,score:0,dollas:0,combo:0,comboT:0,heat:0,heatPeak:0,seen:false,copT:0,stashT:0,
     props:W.props.map(makeProp),npcs:[],player:makePlayer(),effects:[],tol:{},tolDecay:{},comedown:0,stashes:[],parts:[],pops:[],geysers:[],
     cam:{yaw:W.spawnYaw,pitch:0.32,dist:6.5,cur:6.5,focus:vadd(W.spawn,V(0,1.5,0)),fov:1.05},view:null,shake:0,clock:17.6,dying:0,evs:[],
     knocks:[],stats:{tackled:0,wrecked:0,booms:0,alarms:0,busts:0,doses:0,air:0},feats:FEATS.map(()=>false),newFeats:[],tried:{},nextAdren:2500,
@@ -1832,7 +1918,7 @@ function knockNpcG(i,v,byPlayer,thrown,lbl){ const n=G.npcs[i]; if(n.hitCd>0) re
   if(n.kind==='cop'){ addScore(400,n.pos,'OFFICER DOWN'); heatAdd(1); award(F.COP); }
   else { if(up) G.stats.tackled++; addScore(lbl?320:thrown?250:150,n.pos,lbl||(thrown?'LAWN DARTS':'TACKLE')); if(!thrown&&Math.random()<0.3) playerSay(pick(TACKLE_LINES)); heatAdd(thrown?0.3:0.4); if(thrown) award(F.DARTS); if(G.stats.tackled>=15) award(F.PEOPLE); }
   sfx('bighit'); G.shake+=0.25; }
-function explode(pos){ const R=9; G.stats.booms++; brkBlast(pos,R,950); fireBlast(pos,4.2);
+function explode(pos){ const R=9; G.stats.booms++; brkBlast(pos,R,950); fireBlast(pos,4.2); if(G.drone&&vlen(vsub(G.drone.pos,pos))<8) droneDown(true);
   G.props.forEach((p,i)=>{ if(!p.alive||p.held) return; const d=vsub(p.pos,pos), dist=vlen(d); if(dist>R||dist<0.01) return; const f=1-dist/R, dir=vnorm(vadd(vnorm(d),V(0,0.8,0)));
     if(p.anchored){ if(dist<4.5) burstHydrant(i,vflat(vnorm(d))); return; }
     p.asleep=false; p.still=0; p.vel=vadd(p.vel,vmul(dir,24*f/Math.sqrt(Math.max(0.6,p.mass)))); p.ang=vadd(p.ang,V(rand(-10,10)*f,rand(-10,10)*f,rand(-10,10)*f)); p.touched=0;
@@ -1966,7 +2052,7 @@ function pickup(st){ const s=st.sub, mult=useTol(s), gain=Math.max(3,Math.round(
   if(G.effects.length>=3){ toast('<b style="color:#ff4d64">OVERAMPED</b>','Three at once: the clock drains 1.6× faster','#ff4d64'); award(F.POLY); }
   if(SUBS.every(x=>G.tried[x.id])) award(F.CABINET); }
 function updateHeat(dt){ let seen=false, active=0; for(const n of G.npcs){ if(n.kind!=='cop') continue; if(n.state!=='leave') active++; if(n.state==='chase'&&n.seeT<0.6) seen=true; }
-  G.seen=seen&&!G.mods.jugg&&!G.mods.object&&!(FORMS[G.player.form]&&FORMS[G.player.form].stealth); G.heat=Math.max(0,G.heat-(G.seen?0:0.08)*dt); G.heatPeak=Math.max(G.heatPeak,G.heat);
+  G.seen=seen&&!G.mods.jugg&&!G.mods.object&&!(FORMS[G.player.form]&&FORMS[G.player.form].stealth); G.heat=Math.max(0,G.heat-(G.seen||(G.airT||0)>0.5?0:0.08)*dt); G.heatPeak=Math.max(G.heatPeak,G.heat);
   if(G.heat<0.05) G.heatPeak=0; const want=G.heat>=1?Math.min(5,Math.floor(G.heat)):0; G.copT-=dt;
   if(active<want&&G.copT<=0){ spawnCop(); G.copT=2.2; } }
 function spawnCop(){ const pp=G.player.pos; let pos=null; for(let i=0;i<20;i++){ const c=pick(W.copSpawns), d=Math.hypot(c.x-pp.x,c.z-pp.z); if(d>28&&d<60){ pos=c; break; } }
@@ -2051,7 +2137,7 @@ function transform(key){ const p=G.player, F=FORMS[key]; if(!F) return; p.form=k
 function untransform(){ const p=G.player; if(!p.form) return; partsBurst(vadd(p.pos,V(0,1,0)),'smoke',18,2.5,[0.88,0.84,0.96],0.28); p.form=''; p.cloth={}; p.pose=null;
   toast('<span style="color:var(--dim)">You turned back into yourself. Mostly.</span>'); }
 function formUpdate(dt){ const p=G.player; if(p.form&&!G.parade){ p.formT-=dt; if(p.formT<=0) untransform(); } }
-function fireUpdate(dt){ const p=G.player; fireBrkUpdate(dt); if(!(p.fireT>0)) return; p.fireT-=dt; fireBreath(p); const f=fwd(p.yaw), m=p.mouthW||vadd(p.pos,V(0,1.4,0));
+function fireUpdate(dt){ const p=G.player; fireBrkUpdate(dt); droneUpdate(dt); if(!(p.fireT>0)) return; p.fireT-=dt; fireBreath(p); const f=fwd(p.yaw), m=p.mouthW||vadd(p.pos,V(0,1.4,0));
   for(let k=0;k<5;k++){ if(G.parts.length>640) G.parts.shift(); const sp=vnorm(vadd(f,V(rand(-0.22,0.22),rand(-0.15,0.12),rand(-0.22,0.22))));
     G.parts.push({pos:{...m},vel:vadd(vmul(sp,rand(11,16)),vmul(p.vel,0.6)),life:rand(0.35,0.6),max:0.6,size:rand(0.12,0.22),col:[1,rand(0.5,0.8),0.15],kind:'fire',rot:QI,spin:V()}); }
   const R=8, cosA=Math.cos(0.45), hit=p.fireHit||(p.fireHit=new Set());
