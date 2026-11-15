@@ -610,6 +610,8 @@ function lowSphere(){ const R=3, S=6, P=(i,j)=>{ const ph=PI*i/R, th=TAU*j/S+(i%
   for(let i=0;i<R;i++) for(let j=0;j<S;j++){ const a=P(i,j), b=P(i+1,j), c=P(i+1,j+1), d=P(i,j+1); t.push([a,b,c],[a,c,d]); } return flatMesh(t); }
 function lowCyl(top){ const S=6, t=[]; for(let k=0;k<S;k++){ const a0=TAU*k/S, a1=TAU*(k+1)/S, b0=[Math.cos(a0),-1,Math.sin(a0)], b1=[Math.cos(a1),-1,Math.sin(a1)], t0=[Math.cos(a0)*top,1,Math.sin(a0)*top], t1=[Math.cos(a1)*top,1,Math.sin(a1)*top];
     if(top>0.001) t.push([b0,t0,t1],[b0,t1,b1],[[0,1,0],t0,t1]); else t.push([b0,[0,1,0],b1]); t.push([[0,-1,0],b1,b0]); } return flatMesh(t); }
+// a grass blade: one upright triangle, lit with an upward normal so it shades like the lawn it grows from
+function bladeMesh(){ const v=[]; for(const p of [[-1,-1,0],[1,-1,0],[0,1,0]]) v.push(p[0],p[1],p[2],0,1,0); return meshFrom(v); }
 function arcMesh(S){ const v=[], r0=0.94, r1=1.0; for(let k=0;k<S;k++){ const a0=PI*k/S, a1=PI*(k+1)/S, p=(r,a)=>[Math.cos(a)*r,Math.sin(a)*r,0];
   const A=p(r0,a0), B=p(r1,a0), C=p(r1,a1), D=p(r0,a1); for(const q of [A,B,C,A,C,D]) v.push(q[0],q[1],q[2],0,0,1); } return meshFrom(v); }
 const SH={on:false,size:2048,half:42,fbo:null,tex:null}, DL={}; let DEPTHP=null;
@@ -653,7 +655,7 @@ function initGL(){
   }catch(err){ console.warn('textured surfaces off:',err.message); TEXP=null; }
   SKYP=program(SKY_VS,SKY_FS); SL.a_p=gl.getAttribLocation(SKYP,'a_p');
   for(const u of ['u_zen','u_hor','u_sunc','u_sund','u_cf','u_cr','u_cu','u_tan','u_time','u_night','u_hue','u_sat','u_bright']) SL[u]=gl.getUniformLocation(SKYP,u);
-  MESH.cube=cubeMesh(); MESH.sph=sphereMesh(8,12); MESH.cyl=cylMesh(12,1); MESH.cone=cylMesh(12,0); MESH.wedge=wedgeMesh(); MESH.arc=arcMesh(28); MESH.hip=hipMesh(); MESH.lsph=lowSphere(); MESH.lcyl=lowCyl(1); MESH.lcone=lowCyl(0);
+  MESH.cube=cubeMesh(); MESH.sph=sphereMesh(8,12); MESH.cyl=cylMesh(12,1); MESH.cone=cylMesh(12,0); MESH.wedge=wedgeMesh(); MESH.arc=arcMesh(28); MESH.hip=hipMesh(); MESH.lsph=lowSphere(); MESH.blade=bladeMesh(); MESH.sphl=sphereMesh(5,8); MESH.lcyl=lowCyl(1); MESH.lcone=lowCyl(0);
   VBO.sky=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,VBO.sky); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   for(const k of Object.keys(MESH)){ for(const pre of ['s_','d_','t_','b_','h_']) VBO[pre+k]=gl.createBuffer(); }
   VBO.tq=gl.createBuffer();
@@ -661,7 +663,7 @@ function initGL(){
   return true;
 }
 const mkBatch=()=>({data:new Float32Array(IF*512),n:0});
-const BATCH_KEYS=['cube','sph','cyl','cone','wedge','arc','hip','lsph','lcyl','lcone'];
+const BATCH_KEYS=['cube','sph','cyl','cone','wedge','arc','hip','lsph','lcyl','lcone','blade','sphl'];
 // BRKB: intact breakable panels (rebuilt only when something breaks). SHO: drawn into the shadow map only (the roof you're standing under).
 const STATIC={}, DYN={}, TRN={}, BRKB={}, SHO={}; for(const k of BATCH_KEYS){ STATIC[k]=mkBatch(); DYN[k]=mkBatch(); TRN[k]=mkBatch(); BRKB[k]=mkBatch(); SHO[k]=mkBatch(); }
 for(const S of [STATIC,DYN,TRN,BRKB,SHO]) for(const k of BATCH_KEYS){ S[k].key=k; S[k].set=S; }
@@ -764,6 +766,7 @@ function sdeco(x,y,z,hx,hy,hz,col,glow=0,q=QI){ if(y-hy<0.06&&hy<0.09&&hx*hz>0.2
   bpush(STATIC.cube,x,y,z,q,hx,hy,hz,col,1,glow); }
 function scyl(x,y,z,r,hh,col,glow=0,q=QI){ bpush(STATIC.cyl,x,y,z,q,r,hh,r,col,1,glow); }
 function sball(x,y,z,rx,ry,rz,col,glow=0){ bpush(STATIC.sph,x,y,z,QI,rx,ry,rz,col,1,glow); }
+function sleaf(x,y,z,rx,ry,rz,col){ bpush(STATIC.sphl,x,y,z,QI,rx,ry,rz,col,1,0); }   // foliage: 80-triangle sphere, the leaf texture hides the facets
 function spot(x,y,z,high=false){ W.spots.push({p:V(x,y,z),high}); }
 function prop(kind,x,y,z,yaw=0){ W.props.push({kind,x,y,z,yaw}); }
 function tramp(x,z){ const r=1.7, h=0.75; W.solids.push({x0:x-r*0.8,y0:0,z0:z-r*0.8,x1:x+r*0.8,y1:h,z1:z+r*0.8,ramp:0,launch:false,bouncy:true,hidden:false});
@@ -827,7 +830,7 @@ function grassAll(){ const dens=SET.quality==='low'?0:(SET.quality==='high'||(SE
     for(let i=0;i<n;i++){ const x=rand(x0,x1), z=rand(z0,z1); if(b.kind==='park'&&(Math.abs(x-(b.x0+b.x1)/2)<1.8||Math.abs(z-(b.z0+b.z1)/2)<1.8)) continue; if(pv.some(q=>x>q[0]-0.1&&x<q[2]+0.1&&z>q[1]-0.1&&z<q[3]+0.1)) continue; const cx=Math.floor((x-g.ox)/g.cell), cz=Math.floor((z-g.oz)/g.cell); let hit=false;
       for(const si of (g.cells[cz*g.n+cx]||NONE)){ const s=W.solids[si]; if(s.y0<0.3&&s.y1>0.05&&x>s.x0-0.15&&x<s.x1+0.15&&z>s.z0-0.15&&z<s.z1+0.15){ hit=true; break; } } if(hit) continue;
       const base=[rand(0.22,0.36),rand(0.42,0.62),rand(0.12,0.22)];
-      for(let k=0;k<2;k++){ const h=rand(0.09,0.19), q=qmul(qyaw(rand(0,TAU)),qx(rand(0.08,0.35))); bpush(STATIC.cone,x+rand(-0.06,0.06),h,z+rand(-0.06,0.06),q,rand(0.018,0.032),h,rand(0.006,0.012),tone(base,rand(0.85,1.15)),1,0); } } } }
+      for(let k=0;k<2;k++){ const h=rand(0.09,0.19), q=qmul(qyaw(rand(0,TAU)),qx(rand(0.08,0.35))); bpush(STATIC.blade,x+rand(-0.06,0.06),h,z+rand(-0.06,0.06),q,rand(0.02,0.034),h,0.01,tone(base,rand(0.85,1.15)),1,0); } } } }
 function tree(x,z,collide){ const h=rand(3.0,4.6), tr=rand(0.17,0.24); if(collide) solid(x-0.22,0,z-0.22,x+0.22,h,z+0.22,C.trunk,false);
   GMT=10; scyl(x,h*0.3,z,tr*1.25,h*0.3,C.trunk); scyl(x,h*0.78,z,tr*0.85,h*0.22,C.trunk); scyl(x,0.12,z,tr*1.7,0.12,tone(C.trunk,0.9));
   const tips=[], nb=3+randi(0,2);
@@ -835,7 +838,7 @@ function tree(x,z,collide){ const h=rand(3.0,4.6), tr=rand(0.17,0.24); if(collid
     bpush(STATIC.cyl,x+d.x*len/2,y0+d.y*len/2,z+d.z*len/2,qarc(V(0,1,0),d),tr*0.45,len/2,tr*0.45,C.trunk,1,0); tips.push(V(x+d.x*len,y0+d.y*len,z+d.z*len)); }
   tips.push(V(x,h+0.45,z)); GMT=11; const greens=[0x3f7a32,0x4c8a3a,0x356b2b,0x5a9440,0x2f5f27];
   for(const t of tips){ const nc=2+randi(0,2); for(let k=0;k<nc;k++){ const r=rand(0.55,1.05), py=t.y+rand(-0.25,0.45);
-      sball(t.x+rand(-0.5,0.5),py,t.z+rand(-0.5,0.5),r,r*0.82,r,tone(hex(pick(greens)),clamp(0.78+(py-h)*0.14,0.68,1.12))); } }
+      sleaf(t.x+rand(-0.5,0.5),py,t.z+rand(-0.5,0.5),r,r*0.82,r,tone(hex(pick(greens)),clamp(0.78+(py-h)*0.14,0.68,1.12))); } }
   GMT=0; }
 function windows(x0,y0,z0,x1,y1,z1,floorH,ww,wh,sp,lit,sides){ // sides: [-z,+z,-x,+x]
   for(let side=0;side<4;side++){ if(!sides[side]) continue;
@@ -1016,7 +1019,7 @@ function house(sx0,sz0,sx1,sz1,frontNeg){
   else pave(du,(walkFrom+lotF)/2,0.45,Math.abs(walkFrom-lotF)/2);
   prop('mailbox',drX!==null?drX+(drW/2+0.45)*(drX>du?-1:1):du+1.25,0,lotF+inw*0.45,frontNeg?PI:0);
   if(style!=='bungalow'&&ch(0.8)){ const bz=fz+out*0.55, xa=lx0+0.35, xb=lx1-0.35; sdeco((xa+xb)/2,0.012,bz,(xb-xa)/2,0.012,0.48,hex(0x3a2a1d)); noGrass(xa,fz,xb,fz+out*1.05); GMT=11;   // foundation shrubs in a mulch bed
-    for(let x=xa+0.3;x<xb-0.2;x+=R(0.85,1.25)){ if(Math.abs(x-du)<1.0) continue; const r=R(0.28,0.46); sball(x,r*0.7,bz+R(-0.1,0.1),r,r*0.8,r,tone(hcol('shrub'),R(0.88,1.1))); } GMT=0; }
+    for(let x=xa+0.3;x<xb-0.2;x+=R(0.85,1.25)){ if(Math.abs(x-du)<1.0) continue; const r=R(0.28,0.46); sleaf(x,r*0.7,bz+R(-0.1,0.1),r,r*0.8,r,tone(hcol('shrub'),R(0.88,1.1))); } GMT=0; }
   if(ch(0.55)){ const tx=drX!==null?(drX>lc?lx0+0.6:lx1-0.6):(ch(0.5)?lx0+0.6:lx1-0.6), tz=lotF+inw*R(1.4,1.9); if(Math.abs(tx-du)>1.4) tree(tx,tz,true); }
   const binX=gar?(side<0?gx0-0.5:gx1+0.5):(side<0?lx0-0.5:lx1+0.5), binZ=fz+inw*0.9;
   if(binX>sx0+0.35&&binX<sx1-0.35){ prop('wheelie',binX,0,binZ,0); if(ch(0.55)) prop('trash',binX,0,binZ+inw*0.85,0); }
@@ -1235,11 +1238,12 @@ function genWorld(){
     lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[],lobby:null,doors:[],doorKeys:new Set(),condemned:new Set(),trims:[],paved:[],houses:[]});
   BRK.length=0; BRK_BY.clear(); BLD=0; BRK_DIRTY=true;
   // ground + fields
-  GMT=3; sdeco(0,-0.5,0,HALF+160,0.5,HALF+160,hex(0x6e7845)); GMT=1; sdeco(0,-0.49,0,HALF,0.5,HALF,C.asph); GMT=0;
+  GMT=3; { const FW=160, fc=hex(0x6e7845); for(const [x,z,hx,hz] of [[0,-(HALF+FW/2),HALF+FW,FW/2],[0,HALF+FW/2,HALF+FW,FW/2],[-(HALF+FW/2),0,FW/2,HALF],[HALF+FW/2,0,FW/2,HALF]]) sdeco(x,-0.55,z,hx,0.5,hz,fc); }   /* fields around the town only: nothing under the road to fight it for depth */
+  GMT=1; sdeco(0,-0.5,0,HALF,0.5,HALF,C.asph); GMT=0;
   for(let bz=0;bz<NB;bz++) for(let bx=0;bx<NB;bx++){
     const x0=-HALF+ROAD+bx*(BLOCK+ROAD), z0=-HALF+ROAD+bz*(BLOCK+ROAD), x1=x0+BLOCK, z1=z0+BLOCK, kind=LAYOUT[bz][bx];
     W.blocks.push({x0,z0,x1,z1,kind});
-    GMT={res:3,park:3,trailer:3,tower:3,down:9,gas:9,plaza:9}[kind]||0; sdeco((x0+x1)/2,0.005,(z0+z1)/2,BLOCK/2,0.012,BLOCK/2,LOT_COL[kind]);
+    GMT={res:3,park:3,trailer:3,tower:3,down:9,gas:9,plaza:9}[kind]||0; sdeco((x0+x1)/2,0.011,(z0+z1)/2,BLOCK/2,0.012,BLOCK/2,LOT_COL[kind]);
     GMT=2; solid(x0,0,z0,x1,CURB,z0+WALK,C.walk); solid(x0,0,z1-WALK,x1,CURB,z1,C.walk); solid(x0,0,z0+WALK,x0+WALK,CURB,z1-WALK,C.walk); solid(x1-WALK,0,z0+WALK,x1,CURB,z1-WALK,C.walk); GMT=0;
     const m=WALK/2, cs=[V(x0+m,CURB,z0+m),V(x1-m,CURB,z0+m),V(x1-m,CURB,z1-m),V(x0+m,CURB,z1-m)], ring=[];
     for(let k=0;k<4;k++){ const a=cs[k], b=cs[(k+1)%4]; for(let s=0;s<4;s++) ring.push(V(lerp(a.x,b.x,s/4),CURB,lerp(a.z,b.z,s/4))); }
@@ -1403,7 +1407,7 @@ const MAT={ // dens in kg/m³ (wood/roof: effective density of framed constructi
   conc: {hp:420,dens:2400,fric:0.65,rest:0.08,cell:1.0, pts:300,heat:0.4, dust:[0.72,0.72,0.7], snd:'crumble',label:'CONCRETE'},
   glass:{hp:28, dens:2500,fric:0.45,rest:0.1, cell:0.45,pts:70, heat:0.15,dust:null,             snd:'glass',  label:'SHATTER'},
   metal:{hp:190,dens:900, fric:0.5, rest:0.22,cell:0.45,pts:300,heat:0.8, dust:[0.62,0.62,0.66],snd:'metal',  label:'TILT!'} };
-const GLASS=hex(0x9cc3d5), BRK=[], BRK_BY=new Map(); let BRK_DIRTY=true, GRID_DIRTY=false, BLD=0;
+const GLASS=hex(0x9cc3d5), BRK=[], BRK_BY=new Map(); let BRK_DIRTY=true, BRK_SOFT=false, BRK_LAST=-9, GRID_DIRTY=false, BLD=0;   // BRK_SOFT: only tints changed, so the rebuild can wait up to 0.12 s
 const CHUNK_CAP=IS_TOUCH?90:150;
 const boxCenter=s=>V((s.x0+s.x1)/2,(s.y0+s.y1)/2,(s.z0+s.z1)/2), boxClosest=(s,p)=>V(clamp(p.x,s.x0,s.x1),clamp(p.y,s.y0,s.y1),clamp(p.z,s.z0,s.z1));
 const ovl=(a0,a1,b0,b1)=>Math.min(a1,b1)-Math.max(a0,b0);
@@ -1456,7 +1460,7 @@ function killPanel(b){ b.alive=false; b.falling=false; b.s.gone=true; GRID_DIRTY
   if(b.s.col&&RUB.world){ try{ RUB.byCol.delete(b.s.col.handle); RUB.world.removeCollider(b.s.col,true); }catch(e){} b.s.col=null; }
   const s=b.s; G.decals=G.decals.filter(d=>!(d.pos.x>s.x0-0.1&&d.pos.x<s.x1+0.1&&d.pos.y>s.y0-0.1&&d.pos.y<s.y1+0.1&&d.pos.z>s.z0-0.1&&d.pos.z<s.z1+0.1)); }
 function hitBrk(id,dmg,pt,dir){ if(BRK[id]&&BRK[id].invuln) return false; const b=BRK[id]; if(!b||!b.alive||b.falling||!(dmg>0)) return false; b.hp-=dmg;
-  const c0=b.crack; b.crack=clamp(1-b.hp/b.hp0,0,1); if(b.crack-c0>0.05) BRK_DIRTY=true;
+  const c0=b.crack; b.crack=clamp(1-b.hp/b.hp0,0,1); if(b.crack-c0>0.05) BRK_SOFT=true;
   if(b.hp>0){ if(dmg>b.hp0*0.15&&G.t-(b.fxT||-9)>0.12){ b.fxT=G.t; brkFX(b,pt||boxCenter(b.s),dir||V(0,-1,0),0.3); } return false; }
   breakPanel(b,pt||boxCenter(b.s),dir||V(0,-1,0),dmg); return true; }
 function breakPanel(b,pt,dir,dmg){ killPanel(b); G.stats.demo=(G.stats.demo||0)+1; fracture(b,pt,dir,dmg); brkFX(b,pt,dir,1);
@@ -1476,7 +1480,7 @@ function fractureParts(b){ const s=b.s, M=b.M, glass=b.mat==='glass', parts=[];
     return parts; }
   const ex=[s.x1-s.x0,s.y1-s.y0,s.z1-s.z0], thin=ex[0]<=ex[2]?(ex[0]<=ex[1]?0:1):(ex[2]<=ex[1]?2:1), ax=[0,1,2].filter(a=>a!==thin), lo=[s.x0,s.y0,s.z0], hi=[s.x1,s.y1,s.z1];
   const cuts=(len,maxn)=>{ const n=clamp(Math.round(len/M.cell),1,maxn), c=[0]; for(let i=1;i<n;i++) c.push((i+rand(-0.28,0.28))/n); c.push(1); return c; };
-  const cu=cuts(ex[ax[0]],glass?5:4), cv=cuts(ex[ax[1]],4);
+  const cu=cuts(ex[ax[0]],3), cv=cuts(ex[ax[1]],2);   /* at most 6 pieces: the physics step grows with every body */
   for(let i=0;i<cu.length-1;i++) for(let j=0;j<cv.length-1;j++){ const mn=lo.slice(), mx=hi.slice();
     mn[ax[0]]=lo[ax[0]]+ex[ax[0]]*cu[i]; mx[ax[0]]=lo[ax[0]]+ex[ax[0]]*cu[i+1]; mn[ax[1]]=lo[ax[1]]+ex[ax[1]]*cv[j]; mx[ax[1]]=lo[ax[1]]+ex[ax[1]]*cv[j+1];
     parts.push([V((mn[0]+mx[0])/2,(mn[1]+mx[1])/2,(mn[2]+mx[2])/2),V(Math.max(0.012,(mx[0]-mn[0])/2-0.004),Math.max(0.012,(mx[1]-mn[1])/2-0.004),Math.max(0.012,(mx[2]-mn[2])/2-0.004))]); }
@@ -1575,7 +1579,7 @@ function cstColor(c,st){ let r=c[0], g=c[1], b=c[2];
   if(st.lift){ r+=(1-r)*st.lift; g+=(1-g)*st.lift; b+=(1-b)*st.lift; }
   if(st.post){ const p=st.post; r=Math.round(r*p)/p; g=Math.round(g*p)/p; b=Math.round(b*p)/p; }
   return [clamp(r,0,1),clamp(g,0,1),clamp(b,0,1)]; }
-const CS_REMAP={cube:{sph:'cube',cyl:'cube',cone:'cube',wedge:'cube',hip:'cube'},lowpoly:{sph:'lsph',cyl:'lcyl',cone:'lcone'},round:{cube:'sph'}};
+const CS_REMAP={cube:{sph:'cube',sphl:'cube',cyl:'cube',cone:'cube',wedge:'cube',hip:'cube'},lowpoly:{sph:'lsph',sphl:'lsph',cyl:'lcyl',cone:'lcone'},round:{cube:'sph'}};
 function cstPush(b,x,y,z,q,sx,sy,sz,c,a,g){ const st=CST, S=b.set, gm=GMT; let k=b.key;
   const rm=st.cube?CS_REMAP.cube:st.lowpoly?CS_REMAP.lowpoly:st.round?CS_REMAP.round:null;
   if(rm&&rm[k]){ const nk=rm[k]; if(k==='sph'&&nk==='cube'){ sx*=0.86; sy*=0.86; sz*=0.86; } else if(nk==='sph'){ sx*=1.12; sy*=1.12; sz*=1.12; } k=nk; }
@@ -1593,7 +1597,7 @@ function lookUniforms(U){ if(U.u_lk1===undefined){ const pg=U===L?PROG:TEXP; U.u
   gl.uniform4f(U.u_lk1,LOOK.post||0,LOOK.ink||0,LOOK.ht||0,LOOK.cell||6); gl.uniform4f(U.u_lk2,LOOK.warm||0,LOOK.grain||0,LOOK.inkTint||0,0); if(U.u_jit) gl.uniform1f(U.u_jit,LOOK.jit||0); }
 // a panel drawn as several shapes (shingle plane + clad gable, hip roof, round column); positions are relative to the panel's center
 function pushParts(T,b,c,q,k){ for(const p of b.parts){ const lp=q===QI?p[1]:qrot(q,p[1]); GMT=p[5]; bpush(T[p[0]],c.x+lp.x,c.y+lp.y,c.z+lp.z,q===QI?p[2]:qmul(q,p[2]),p[3].x,p[3].y,p[3].z,k<1?tone(p[4],k):p[4],1,0); } GMT=0; }
-function rebuildBrk(){ BRK_DIRTY=false; for(const k of BATCH_KEYS){ BRKB[k].n=0; SHO[k].n=0; } const cut=G?G.cutBld:0;
+function rebuildBrk(){ BRK_DIRTY=false; BRK_SOFT=false; BRK_LAST=performance.now(); for(const k of BATCH_KEYS){ BRKB[k].n=0; SHO[k].n=0; } const cut=G?G.cutBld:0;
   for(const b of BRK){ if(!b.alive||b.mat==='glass'||b.kind==='slot'||CUSTOM_KINDS.has(b.kind)) continue; const s=b.s, dst=((b.roof||b.hideIn)&&cut&&b.bld===cut)?SHO:BRKB, col=b.crack>0.05?tone(b.col,1-0.32*b.crack):b.col;
     if(b.parts){ pushParts(dst,b,boxCenter(s),QI,b.crack>0.05?1-0.32*b.crack:1); continue; }
     GMT=b.tex!==undefined?b.tex:(BRK_TEX[b.mat]||0);
@@ -1621,7 +1625,7 @@ function demoUpdate(dt,wdt){ if(G.collapse.length){ const due=G.collapse.filter(
 /* ---------------- Rapier: Rust rigid-body physics, compiled to WebAssembly ---------------- */
 const RAPIER_VER='0.21.0', RAPIER_URL='https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@'+RAPIER_VER+'/dist/rapier.mjs',
   RAPIER_SHA384='oPyJtSnZbl4qLdnQQ+3vWOQFLDFyMOcSgLr1xxtO2B2JUahMwj6wRA6I7pbueGxx';
-const RUB={R:null,ready:false,state:'loading',how:'',world:null,eq:null,chunks:[],slabs:[],byCol:new Map(),player:null,pc:null,pr:0,ph:0,cap:IS_TOUCH?150:320,steps:0};
+const RUB={R:null,ready:false,state:'loading',how:'',world:null,eq:null,chunks:[],slabs:[],byCol:new Map(),player:null,pc:null,pr:0,ph:0,cap:IS_TOUCH?90:160,steps:0};
 // fetch the pinned file, check its SHA-384, then import it from a blob URL. If the page may not import blobs, import the pinned URL directly.
 async function loadRapier(){ const url=window.BT_RAPIER_URL||RAPIER_URL; let mod=null;
   try{ const res=await fetch(url,{mode:'cors',credentials:'omit'}); if(!res.ok) throw new Error('HTTP '+res.status);
@@ -1655,8 +1659,8 @@ function rubPlayer(){ const R=RUB.R, w=RUB.world, p=G.player; if(!w||!p) return;
   const at={x:p.pos.x,y:p.pos.y+PH/2,z:p.pos.z}; if(RUB.teleport){ RUB.player.setTranslation(at,true); RUB.teleport=false; } else RUB.player.setNextKinematicTranslation(at); }
 function rubBody(c,q,v,av,cd,rec){ const R=RUB.R, w=RUB.world; rubEnsure(c.x,c.z);
   const bd=R.RigidBodyDesc.dynamic().setTranslation(c.x,c.y,c.z).setRotation(q).setLinvel(v.x,v.y,v.z).setAngvel(av).setLinearDamping(0).setAngularDamping(0.3); // no fake air drag: free fall stays exact
-  if(vlen(v)>12) bd.setCcdEnabled(true); const body=w.createRigidBody(bd), cl=w.createCollider(cd,body); rec.body=body; rec.cl=cl; rec.t=V(c.x,c.y,c.z); rec.q=q; rec.lv=v; RUB.byCol.set(cl.handle,rec); return rec; }
-function rubChunk(c,h,q,v,av,mat,col,glass){ const M=MAT[mat], cd=RUB.R.ColliderDesc.cuboid(h.x,h.y,h.z).setDensity(M.dens).setFriction(M.fric).setRestitution(M.rest);
+  if(vlen(v)>12&&(rec.slab||(rec.h&&rec.h.x*rec.h.y*rec.h.z>0.002))) bd.setCcdEnabled(true); const body=w.createRigidBody(bd), cl=w.createCollider(cd,body); rec.body=body; rec.cl=cl; rec.t=V(c.x,c.y,c.z); rec.q=q; rec.lv=v; RUB.byCol.set(cl.handle,rec); return rec; }
+function rubChunk(c,h,q,v,av,mat,col,glass){ const M=MAT[mat], cd=RUB.R.ColliderDesc.cuboid(h.x,h.y,h.z).setDensity(M.dens).setFriction(M.fric).setRestitution(M.rest); cd.setCollisionGroups((0x0008<<16)|0xFFF7);   /* chunks skip each other (they still hit the ground, walls, slabs, props and you): a pile of 200 no longer makes thousands of contacts */
   const rec={chunk:true,h:V(h.x,h.y,h.z),mat,glass,color:col,born:G.t}; rubBody(c,q,v,av,cd,rec); RUB.chunks.push(rec);
   while(RUB.chunks.length>RUB.cap){ const i=RUB.chunks.findIndex(r=>r.sl); rubRemove(RUB.chunks[i>=0?i:0]); } }
 function rubSlab(b){ const R=RUB.R, s=b.s, M=b.M, cx=(s.x0+s.x1)/2, cy=(s.y0+s.y1)/2, cz=(s.z0+s.z1)/2;
@@ -1941,7 +1945,7 @@ function fireBrkUpdate(dt){ if(!FIRE.list.length) return; const P=G.player;
   for(let i=FIRE.list.length-1;i>=0;i--){ const b=FIRE.list[i];
     if(!b.alive||b.fuel<=0){ if(b.alive) hitBrk(b.id,b.hp+1,boxCenter(b.s),V(0,-1,0)); b.burn=0; b.flight.k=0; FIRE.list.splice(i,1); continue; }
     b.burn=Math.min(1,b.burn+dt/2.5); b.fuel-=dt; const s=b.s, c=boxCenter(s), ck=Math.round(b.burn*4);
-    if(ck!==b._ck){ b._ck=ck; b.crack=Math.max(b.crack,0.62*b.burn); BRK_DIRTY=true; }                 // charring
+    if(ck!==b._ck){ b._ck=ck; b.crack=Math.max(b.crack,0.62*b.burn); BRK_SOFT=true; }                 // charring
     if(Math.random()<dt*16*b.burn) partsBurst(V(rand(s.x0,s.x1),rand(s.y0,s.y1),rand(s.z0,s.z1)),'fire',1,1.2,pick([[1,0.62,0.15],[1,0.42,0.1],[1,0.82,0.3]]),0.24);
     if(Math.random()<dt*3*b.burn) partsBurst(V(c.x,s.y1+0.2,c.z),'smoke',1,0.6,[0.24,0.22,0.21],0.5);
     if(b.burn>0.45){ b.hp-=dt*b.hp0*0.05; if(b.hp<=0){ hitBrk(b.id,1,c,V(0,-1,0)); continue; }
@@ -2914,7 +2918,7 @@ function skyAt(h){ h=((h%24)+24)%24; let i=0; while(i<SKYK.length-2&&SKYK[i+1][0
 function sunDir(h){ const a=(h-6.5)/12.5*PI, sd=vnorm(V(Math.cos(a)*0.85,Math.max(0.14,Math.sin(a)),0.38)), md=vnorm(V(-0.35,0.8,-0.45)), n=skyAt(h).night;
   return vnorm(vadd(vmul(sd,1-n),vmul(md,n))); }
 function render(){ if(!G.view) return; SH.on=!!SH.ok&&QUAL.shadows; const g=G, v=g.view, m=g.mods, sky=skyAt(g.clock), ld=sunDir(g.clock), night=sky.night;
-  resetBatches(); if(BRK_DIRTY) rebuildBrk();
+  resetBatches(); if(BRK_DIRTY||(BRK_SOFT&&performance.now()-BRK_LAST>120)) rebuildBrk();
   const asp=VW/Math.max(1,VH), fy=Math.min(1.65,Math.max(v.fovy,2*Math.atan(Math.tan(0.62)/asp))); const PM=perspective(fy,asp,0.15,600); if(v.lens){ PM[8]=-v.lens[0]; PM[9]=-v.lens[1]; } VP=m4mul(PM,lookAt(v.pos,v.target,v.up));
   const camF=vnorm(vsub(v.target,v.pos)), cullCos=Math.cos(Math.min(1.55,Math.atan(Math.tan(fy/2)*Math.sqrt(1+asp*asp))+0.15));
   const vis=(c,r)=>{ const d=vsub(c,v.pos), l=vlen(d); if(l-r>150) return false; if(l<r+1) return true; return vdot(d,camF)/l>=cullCos-Math.min(1,r/l)*1.2; };
@@ -2954,7 +2958,7 @@ function render(){ if(!G.view) return; SH.on=!!SH.ok&&QUAL.shadows; const g=G, v
     gl.bindFramebuffer(gl.FRAMEBUFFER,SH.fbo); gl.viewport(0,0,SH.size,SH.size); gl.clear(gl.DEPTH_BUFFER_BIT);
     gl.useProgram(DEPTHP); gl.uniformMatrix4fv(DL.u_lvp,false,LVP); gl.uniform3f(DL.u_cam,v.pos.x,v.pos.y,v.pos.z); gl.uniform1f(DL.u_time,G.t); gl.uniform1f(DL.u_wobble,m.wobble); gl.uniform1f(DL.u_pulse,m.pulse||0);
     gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.6,3.0); gl.disable(gl.BLEND);
-    for(const k of BATCH_KEYS) if(k!=='arc') drawInst(k,VBO['s_'+k],staticCounts[k]);
+    for(const k of BATCH_KEYS) if(k!=='arc'&&k!=='blade') drawInst(k,VBO['s_'+k],staticCounts[k]);   // grass casts no shadow: 2 passes → 1
     drawBatch(BRKB,'b_'); drawBatch(SHO,'h_'); drawBatch(DYN,'d_');
     gl.disable(gl.POLYGON_OFFSET_FILL); gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,glc.width,glc.height); }
   gl.clearColor(sky.hor[0],sky.hor[1],sky.hor[2],1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -3015,7 +3019,8 @@ function ik2(S,T,L1,L2,pole){ const d=vsub(T,S), dl=Math.max(1e-4,vlen(d)), D=Ma
 function drawHuman(B,R){ const o=R.o, q=R.q, s=R.s||1, a=R.a===undefined?1:R.a, g0=R.g||0, P=R.P, L=R.look, gw=(R.girth||1)*(CST.girth||1), ht=R.height||1, al=R.armLen||1;
   const C_=CST, HS=C_.head||1, LT=C_.limb||1, LL=C_.leg||1, HN=C_.hand||1, FZ=C_.flatZ||1;   // character style preview: head, limb, leg and hand scale; paper-flat figures
   const W=l=>vadd(o,qrot(q,vmul(FZ!==1?V(l.x,l.y,l.z*FZ):l,s)));
-  const part=(mesh,l,h,lq,col,g=g0)=>{ const w=W(l); bpush(B[mesh],w.x,w.y,w.z,lq?qmul(q,lq):q,h.x*s,h.y*s,h.z*s*(FZ!==1?0.3:1),col,a,g); };
+  const lod=!!(G&&G.view)&&Math.abs(o.x-G.view.pos.x)+Math.abs(o.z-G.view.pos.z)>16;   /* past 16 m round parts use the 80-triangle sphere */
+  const part=(mesh,l,h,lq,col,g=g0)=>{ const w=W(l); bpush(B[lod&&mesh==='sph'?'sphl':mesh],w.x,w.y,w.z,lq?qmul(q,lq):q,h.x*s,h.y*s,h.z*s*(FZ!==1?0.3:1),col,a,g); };
   const limb=(A,Bp,r0,r1,col,g=g0)=>{ const d=vsub(Bp,A), l=vlen(d)||1e-4; part('cyl',vmul(vadd(A,Bp),0.5),V((r0+r1)/2*LT,l/2,(r0+r1)/2*LT),qarc(V(0,1,0),vmul(d,1/l)),col,g); };
   const ball=(p,r,col,g=g0)=>part('sph',p,V(r*LT,r*LT,r*LT),null,col,g);
   const hipY=0.93*ht*LL+P.bob, out={W,part,limb,ball,s,q,o,feet:[],B};
@@ -3029,7 +3034,8 @@ function drawHuman(B,R){ const o=R.o, q=R.q, s=R.s||1, a=R.a===undefined?1:R.a, 
   part('cyl',T(V(0,0.21*ht,0)),V(0.185*gw,0.16*ht,0.125*gw),tq,L.top); part('sph',T(V(0,0.39*ht,0)),V(0.24*gw,0.115,0.145*gw),tq,L.top);
   if(L.chest) part('sph',T(V(0,0.3*ht,0.07*gw)),V(0.2*gw,0.11,0.08*gw),tq,L.chest);
   const hq=qmul(tq,qmul(qyaw(P.hy),qmul(qx(P.hp),qz(P.hr)))), hl=T(V(0,0.62*ht+0.03+(HS-1)*0.11,0.03)); out.hq=hq; out.hl=hl;
-  out.hp=(mesh,l,h,lq,col,g=g0)=>{ const k=faceK(mesh,l,h,o); if(k<=0) return; part(mesh,vadd(hl,qrot(hq,k===1&&HS===1?l:V(l.x*HS*(1+(k-1)*0.25),l.y*HS,l.z*HS+(k-1)*0.012))),k*HS===1?h:vmul(h,k*HS),lq?qmul(hq,lq):hq,col,g); };
+  const farFace=!!(G&&G.view)&&Math.abs(o.x-G.view.pos.x)+Math.abs(o.z-G.view.pos.z)>25;
+  out.hp=(mesh,l,h,lq,col,g=g0)=>{ if(farFace&&l.z>0.085&&h.x<0.036&&h.y<0.036&&h.z<0.036) return; const k=faceK(mesh,l,h,o); if(k<=0) return; part(mesh,vadd(hl,qrot(hq,k===1&&HS===1?l:V(l.x*HS*(1+(k-1)*0.25),l.y*HS,l.z*HS+(k-1)*0.012))),k*HS===1?h:vmul(h,k*HS),lq?qmul(hq,lq):hq,col,g); };
   out.mouth=vadd(hl,qrot(hq,V(0,-0.075*HS,0.15*HS))); out.nose=vadd(hl,qrot(hq,V(0,0,0.17*HS)));
   const arm=(sd,sh,sz,el,ik)=>{ const S=T(V(0.235*sd*gw,0.42*ht,0)); let E,Hd;
     if(ik) [E,Hd]=ik2(S,ik,0.3*ht*al,0.29*ht*al,V(0.8*sd,-1,-0.4));
