@@ -9,7 +9,7 @@ Each is the 1k diffuse map, scaled to 512×512 by `ffmpeg`.
 | concrete.jpg | concrete_floor_worn_001 | Dimitrios Savva, Rico Cilliers | https://polyhaven.com/a/concrete_floor_worn_001 |
 | grass.jpg | aerial_grass_rock | Rob Tuytel | https://polyhaven.com/a/aerial_grass_rock |
 | brick.jpg | red_brick | Rob Tuytel | https://polyhaven.com/a/red_brick |
-| siding.jpg | wood_planks_dirt | Rob Tuytel | https://polyhaven.com/a/wood_planks_dirt |
+| siding.jpg | WoodSiding009 (ambientCG, CC0) | ambientCG | https://ambientcg.com/view?id=WoodSiding009 |
 | roof.jpg | grey_roof_tiles_02 | Rob Tuytel | https://polyhaven.com/a/grey_roof_tiles_02 |
 | plaster.jpg | painted_plaster_wall | Amal Kumar | https://polyhaven.com/a/painted_plaster_wall |
 | metal.jpg | corrugated_iron | Jenelle van Heerden, Dimitrios Savva | https://polyhaven.com/a/corrugated_iron |
