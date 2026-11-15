@@ -1,0 +1,153 @@
+<title>Borrowed Time Look Book</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Inter:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a contact sheet of style "swatches" — each card is a tiny scene of the same street, re-rendered in that style. */
+:root{
+  --bg:#f3f1ec; --panel:#fffdf8; --ink:#1d1a22; --dim:#6b6573; --line:#ddd7cc; --accent:#d2442b; --ok:#2f7d4a; --sel:#1d1a22;
+  --f-display:'Bricolage Grotesque',system-ui,sans-serif; --f-body:'Inter',system-ui,sans-serif; --f-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#15131a; --panel:#1e1b24; --ink:#f1edf6; --dim:#a39cae; --line:#34303d; --accent:#ff7a5c; --ok:#6fd08f; --sel:#f1edf6; color-scheme:dark } }
+:root[data-theme="dark"]{ --bg:#15131a; --panel:#1e1b24; --ink:#f1edf6; --dim:#a39cae; --line:#34303d; --accent:#ff7a5c; --ok:#6fd08f; --sel:#f1edf6; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--f-body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:grid;gap:10px;margin-bottom:22px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font:800 clamp(30px,5vw,52px)/1.02 var(--f-display);margin:0;text-wrap:balance}
+.lede{max-width:68ch;color:var(--dim);margin:0}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 22px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:7px 13px;font:600 13px/1 var(--f-body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--sel);color:var(--bg);border-color:var(--sel)}
+.chip:focus-visible,.pick:focus-visible,.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card.chosen{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h2{font:800 20px/1.1 var(--f-display);margin:0}
+.no{font:500 12px var(--f-mono);color:var(--dim)}
+.rec{font:600 11px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:4px 8px;white-space:nowrap}
+.desc{margin:0;color:var(--dim);font-size:14px}
+.meters{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font:500 12px var(--f-mono);font-variant-numeric:tabular-nums}
+.meter{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.meter i{display:block;height:100%;background:var(--ink)}
+.changes{margin:0;padding-left:18px;font-size:13.5px}
+.pick{margin-top:auto;border:0;border-radius:10px;padding:11px 14px;font:600 14px var(--f-body);background:var(--sel);color:var(--bg);cursor:pointer}
+.card.chosen .pick{background:var(--accent);color:#fff}
+.tray{position:sticky;bottom:0;margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.tray code{font:500 13px var(--f-mono);background:var(--bg);padding:6px 8px;border-radius:6px;white-space:normal;word-break:break-word}
+.copy{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:9px 12px;font:600 13px var(--f-body);cursor:pointer}
+/* ---- the scene: one street, restyled per card ---- */
+.scene{position:relative;aspect-ratio:16/9;max-width:100%;overflow:hidden;background:linear-gradient(var(--sky1),var(--sky2) 62%,var(--gnd) 62%);filter:var(--flt,none)}
+.scene .sun{position:absolute;width:18%;aspect-ratio:1;border-radius:50%;left:70%;top:12%;background:var(--sun);box-shadow:0 0 40px var(--sun)}
+.scene .road{position:absolute;left:0;right:0;bottom:0;height:22%;background:var(--road)}
+.scene .road::after{content:"";position:absolute;left:4%;right:4%;top:46%;height:6%;background:repeating-linear-gradient(90deg,var(--line2) 0 9%,transparent 9% 16%)}
+.house{position:absolute;bottom:22%;width:30%;height:30%;background:var(--wall);border:var(--ol,0) solid var(--ink2);border-radius:var(--rad,0)}
+.house::before{content:"";position:absolute;left:-12%;right:-12%;bottom:100%;height:70%;background:var(--roof);clip-path:polygon(50% 0,100% 100%,0 100%);border-radius:var(--rad,0)}
+.house i{position:absolute;width:22%;height:30%;top:22%;background:var(--win);border:var(--ol,0) solid var(--ink2);border-radius:var(--rad,0)}
+.house i:nth-child(1){left:12%}.house i:nth-child(2){right:12%}.house b{position:absolute;left:41%;width:18%;height:52%;bottom:0;background:var(--door);border-radius:var(--rad,0)}
+.h1{left:8%}.h2{left:58%;height:36%}
+.tree{position:absolute;bottom:22%;left:44%;width:9%;height:44%}
+.tree::before{content:"";position:absolute;left:44%;bottom:0;width:12%;height:45%;background:var(--trunk)}
+.tree::after{content:"";position:absolute;left:0;right:0;top:0;height:70%;border-radius:var(--leafr,50%);background:var(--leaf);border:var(--ol,0) solid var(--ink2)}
+.fx{position:absolute;inset:0;pointer-events:none;background:var(--fx,none);mix-blend-mode:var(--blend,normal)}
+@media (prefers-reduced-motion:no-preference){ .card:hover .scene .sun{transform:translateY(-3px);transition:transform .3s} }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Borrowed Time · art direction</span>
+    <h1>Pick the look for the next build</h1>
+    <p class="lede">The same street in fifteen styles. Each card shows its realism, its cost on a mid-range phone, the build time I'd need, and what changes in the game. Pick one and copy the line at the bottom back to me. Every style keeps the game's own characters, town and humor. These are visual treatments, not copies of other games.</p>
+  </header>
+  <div class="bar" role="group" aria-label="Filter styles">
+    <button class="chip" data-f="all" aria-pressed="true" type="button">All 15</button>
+    <button class="chip" data-f="real" aria-pressed="false" type="button">Realistic</button>
+    <button class="chip" data-f="styl" aria-pressed="false" type="button">Stylized</button>
+    <button class="chip" data-f="retro" aria-pressed="false" type="button">Retro</button>
+    <button class="chip" data-f="cheap" aria-pressed="false" type="button">Easy on phones</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="tray" aria-live="polite">
+    <span id="choiceText">No style picked yet. Tap “Pick this style” on a card.</span>
+    <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><code id="choiceCode">—</code><button class="copy" id="copyBtn" type="button">Copy</button></span>
+  </div>
+</div>
+
+<script>
+// realism / phone cost / build time are 1-10 estimates for this engine (raw WebGL2 + Rapier), not promises
+const STYLES=[
+ {id:'photoreal',name:'Photoreal Suburbia',tags:['real'],rec:true,real:9,cost:7,weeks:'3–5 wk',desc:'Photo-scanned CC0 materials everywhere, realistic proportions, soft shadows and ambient occlusion. The direction the game is already heading.',
+  ch:['Normal and roughness maps on all photo textures','Screen-space ambient occlusion and bloom on High','Rounded, detailed people and cars','Leafy trees built from photo-textured clusters'],
+  v:{sky1:'#8fb6dd',sky2:'#dfe9ef',gnd:'#6f8a4a',road:'#3a3a3e',line2:'#e8d36a',wall:'#d9d2c3',roof:'#5a5f66',win:'#6f8fa8',door:'#6b4a2e',leaf:'radial-gradient(circle at 35% 35%,#6f9b4a,#2f5a25)',trunk:'#5b4330',sun:'#fff3c4',ink2:'#000',flt:'contrast(1.05) saturate(1.05)'}},
+ {id:'cinematic',name:'Cinematic Realism',tags:['real'],real:8,cost:8,weeks:'4–6 wk',desc:'Photoreal, graded like a film: golden-hour light, deep shadows, light haze, lens flare on neon at night.',
+  ch:['Everything in Photoreal, plus a film color grade','Bloom, light shafts and wet roads after rain','Night scenes lit by lamps, neon and cop lights'],
+  v:{sky1:'#f2a65a',sky2:'#f7d9a8',gnd:'#4e5a33',road:'#26262a',line2:'#d8b44a',wall:'#c8a98a',roof:'#3c3236',win:'#ffcf7a',door:'#3b2a1e',leaf:'radial-gradient(circle at 35% 35%,#7a8a3a,#2c3a18)',trunk:'#3d2c20',sun:'#ffe2a0',ink2:'#000',flt:'contrast(1.15) saturate(1.1) sepia(.12)',fx:'linear-gradient(180deg,rgba(255,180,90,.18),rgba(0,0,0,.25))'}},
+ {id:'stylreal',name:'Painted Realism',tags:['real','styl'],real:7,cost:5,weeks:'3–4 wk',desc:'Real proportions and light, but with hand-painted textures and simplified detail. Reads as real at a glance without the uncanny bits.',
+  ch:['Photo textures repainted (softer, cleaner)','Gentle outlines on characters only','Warm sky gradients and soft shadows'],
+  v:{sky1:'#9ec8e8',sky2:'#f1ead7',gnd:'#7ea056',road:'#4a4a52',line2:'#f0d878',wall:'#efe0c8',roof:'#a5533b',win:'#88b4cf',door:'#7a4a2a',leaf:'radial-gradient(circle at 35% 35%,#8bc06a,#3e7a35)',trunk:'#6a4a32',sun:'#fff6d6',ink2:'#000',flt:'saturate(1.12)'}},
+ {id:'diorama',name:'Toy Diorama',tags:['styl','cheap'],real:5,cost:4,weeks:'2–3 wk',desc:'The town as a tabletop model: tilt-shift blur, glossy plastic and painted wood, miniature cars.',
+  ch:['Tilt-shift depth of field','Glossy plastic and painted-wood materials','Camera pulled up a little, like looking at a model'],
+  v:{sky1:'#bfe3ff',sky2:'#f6fbff',gnd:'#8fcf6a',road:'#5f6470',line2:'#fff',wall:'#ffe9c9',roof:'#e2553f',win:'#9fd7ff',door:'#c47a3a',leaf:'radial-gradient(circle at 35% 30%,#a7e07a,#4a9a3a)',trunk:'#8a5a3a',sun:'#fff',ink2:'#000',rad:'6px',flt:'saturate(1.25) contrast(1.05)',fx:'linear-gradient(180deg,rgba(255,255,255,.35),transparent 30%,transparent 70%,rgba(255,255,255,.35))'}},
+ {id:'comic',name:'Ink & Halftone Comic',tags:['styl','cheap'],real:3,cost:3,weeks:'2–3 wk',desc:'Bold black outlines, flat cel shading and halftone dots in the shadows. Big onomatopoeia on hits.',
+  ch:['Edge outline pass and cel-shaded light','Halftone dots in the shadows','Comic panel freeze-frames on big moments'],
+  v:{sky1:'#7fd3ff',sky2:'#c9f0ff',gnd:'#7fd05a',road:'#4a4a52',line2:'#ffe14a',wall:'#ffd9a8',roof:'#e94b3c',win:'#5ec8ff',door:'#7a3b1e',leaf:'#3fbf4a',trunk:'#7a4a2a',sun:'#ffe14a',ink2:'#111',ol:'3px',fx:'radial-gradient(circle,rgba(0,0,0,.18) 1px,transparent 1.6px) 0 0/7px 7px',blend:'multiply'}},
+ {id:'clay',name:'Claymation',tags:['styl'],real:4,cost:5,weeks:'3–4 wk',desc:'Everything rounded and squishy, with thumbprint texture and a slightly stop-motion feel.',
+  ch:['Rounded meshes with a fingerprint normal map','Animation stepped to 12 fps for that stop-motion look','Soft, warm studio lighting'],
+  v:{sky1:'#f6c9a8',sky2:'#fbe8d6',gnd:'#a8c47a',road:'#7a6f6a',line2:'#fff2c8',wall:'#f1c8a0',roof:'#c45a4a',win:'#9ac0d0',door:'#8a5a3a',leaf:'radial-gradient(circle at 35% 35%,#b7d97a,#6a9a4a)',trunk:'#8a5a3a',sun:'#fff0d0',ink2:'#000',rad:'18px',leafr:'45%',flt:'saturate(.95) contrast(.95)'}},
+ {id:'lowpoly',name:'Clean Low-Poly',tags:['styl','cheap'],real:3,cost:2,weeks:'1–2 wk',desc:'Crisp faceted shapes, flat colors and soft gradient skies. Tidy and fast everywhere.',
+  ch:['Faceted shading with soft gradients','Simplified textures','Lowest cost on phones'],
+  v:{sky1:'#a8d8f0',sky2:'#f2f7fa',gnd:'#8cc084',road:'#56607a',line2:'#fff',wall:'#f4efe6',roof:'#6a7fd0',win:'#bfe0f7',door:'#9a7a5a',leaf:'conic-gradient(#7fbf6a 0 25%,#5fa050 0 50%,#8fd07a 0 75%,#4f9046 0)',trunk:'#7a5a40',sun:'#fff',ink2:'#000',leafr:'0'}},
+ {id:'neon',name:'Neon Comedown',tags:['styl'],real:5,cost:6,weeks:'2–3 wk',desc:'Always late night. Wet streets, neon signs, sodium lamps and fog. Leans hard into the game\'s mood.',
+  ch:['Night-only lighting with wet, reflective roads','Neon and bloom; strobes respect reduced flashing','Fog layers and puddle reflections'],
+  v:{sky1:'#1a1033',sky2:'#3a1d5c',gnd:'#1c1830',road:'#141220',line2:'#ff4fd8',wall:'#2c2440',roof:'#1a1428',win:'#ffcf5a',door:'#37e6ff',leaf:'radial-gradient(circle,#2a6a4a,#0f2a20)',trunk:'#2a2030',sun:'#ff4fd8',ink2:'#000',flt:'saturate(1.3)',fx:'linear-gradient(0deg,rgba(55,230,255,.18),transparent 40%)'}},
+ {id:'ps1',name:'Late-90s Console',tags:['retro','cheap'],real:3,cost:1,weeks:'1–2 wk',desc:'Low-res textures, wobbly vertices, dithering and fog close in. Instantly nostalgic.',
+  ch:['Rendered at low resolution with pixel snapping','Wobbly vertices and dithered color','Short draw distance hidden by fog'],
+  v:{sky1:'#6a7fb0',sky2:'#b0a7c0',gnd:'#5a6a3a',road:'#3a3838',line2:'#c0b050',wall:'#b0a090',roof:'#6a3a3a',win:'#405070',door:'#4a3020',leaf:'#3a5a2a',trunk:'#4a3020',sun:'#e0d0a0',ink2:'#000',flt:'contrast(1.2) saturate(.85)',fx:'repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 2px,transparent 2px 4px)'}},
+ {id:'voxel',name:'Voxel Town',tags:['retro','styl'],real:2,cost:4,weeks:'4–6 wk',desc:'The whole town made of little cubes you can knock apart one block at a time.',
+  ch:['Voxel meshes for buildings, people and cars','Destruction breaks off individual blocks','Big rebuild of the art; physics stays'],
+  v:{sky1:'#87c4ff',sky2:'#d6ecff',gnd:'#5fae4a',road:'#666',line2:'#ffd84a',wall:'#c9a97a',roof:'#8a4a3a',win:'#6fb8ff',door:'#6a4a2a',leaf:'#4f9a3a',trunk:'#6a4a2a',sun:'#fff7b0',ink2:'#000',leafr:'0',flt:'contrast(1.1)'}},
+ {id:'storybook',name:'Watercolor Storybook',tags:['styl'],real:3,cost:5,weeks:'3–4 wk',desc:'Soft watercolor washes, paper grain and pencil edges. A sweet look over a very unsweet game.',
+  ch:['Paper texture and watercolor bleed','Pencil-line edges','Soft pastel palette'],
+  v:{sky1:'#cfe3ee',sky2:'#f6f1e6',gnd:'#b9cf94',road:'#9a9aa2',line2:'#f6f1e6',wall:'#f3e2c8',roof:'#d08a7a',win:'#a9c8d8',door:'#b08a6a',leaf:'radial-gradient(circle at 40% 40%,#b9d98a,#7fae6a 60%,transparent 72%)',trunk:'#8a6a50',sun:'#fff3d6',ink2:'#6a5a4a',ol:'1px',flt:'saturate(.85) contrast(.9) blur(.3px)'}},
+ {id:'grunge',name:'Gritty Y2K Grunge',tags:['real','retro'],real:6,cost:5,weeks:'2–3 wk',desc:'Washed-out, grimy and overcast, with a VHS edge. Realistic enough, and very on-theme for a comedown.',
+  ch:['Desaturated grade with film grain','Dirt and grime decals on walls and roads','VHS overlay effects (respect reduced flashing)'],
+  v:{sky1:'#9aa1a3',sky2:'#c8c7bd',gnd:'#6a6a4a',road:'#3a3a3a',line2:'#b8a860',wall:'#a8a090',roof:'#4a4646',win:'#5a6a70',door:'#4a3a2a',leaf:'radial-gradient(circle,#5a6a3a,#2a3a1a)',trunk:'#3a2f25',sun:'#e8e6da',ink2:'#000',flt:'saturate(.6) contrast(1.1)',fx:'repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px)'}},
+ {id:'papercut',name:'Paper Cutout',tags:['styl','cheap'],real:2,cost:2,weeks:'2 wk',desc:'Layered cardstock with drop shadows. Everything is flat cutouts that fold and tear when wrecked.',
+  ch:['Flat cardboard shapes in layers','Drop shadows between layers','Walls tear like paper instead of shattering'],
+  v:{sky1:'#ffd6a5',sky2:'#fdffb6',gnd:'#caffbf',road:'#a0a0c0',line2:'#fff',wall:'#fff',roof:'#ff8fab',win:'#9bf6ff',door:'#ffc6ff',leaf:'#80ed99',trunk:'#b08968',sun:'#fff',ink2:'#000',flt:'drop-shadow(3px 4px 0 rgba(0,0,0,.25))'}},
+ {id:'vapor',name:'Vaporwave Strip Mall',tags:['retro','styl'],real:3,cost:3,weeks:'2 wk',desc:'Pastel pink and teal, marble busts, palm trees and a sun striped with gradients. The casino would love it.',
+  ch:['Pastel palette and gradient skies','Retro grid floors and chrome text','Palms instead of oaks'],
+  v:{sky1:'#ff9de2',sky2:'#a0e9ff',gnd:'#7a5af8',road:'#2a1a5a',line2:'#ff71ce',wall:'#ffd1f5',roof:'#01cdfe',win:'#b967ff',door:'#05ffa1',leaf:'#05ffa1',trunk:'#b967ff',sun:'repeating-linear-gradient(180deg,#ffef7a 0 18%,#ff71ce 18% 24%)',ink2:'#000',flt:'saturate(1.2)'}},
+ {id:'noir',name:'Noir With One Color',tags:['styl','cheap'],real:5,cost:3,weeks:'1–2 wk',desc:'Black and white with hard shadows. Only the stashes and the clock stay in color, so your goals pop.',
+  ch:['Grayscale grade with hard shadows','Stashes, clock and neon keep their color','Rain and smoke for mood'],
+  v:{sky1:'#cfcfcf',sky2:'#f0f0f0',gnd:'#777',road:'#2a2a2a',line2:'#ddd',wall:'#bbb',roof:'#333',win:'#e33',door:'#222',leaf:'radial-gradient(circle,#888,#333)',trunk:'#222',sun:'#fff',ink2:'#000',flt:'grayscale(1) contrast(1.35)'}}
+];
+const grid=document.getElementById('grid');
+const store={ get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
+let chosen=store.get('bt_look_choice');
+function meter(label,val,hint){ return `<span>${label}</span><span class="meter" role="img" aria-label="${label} ${val} of 10"><i style="width:${val*10}%"></i></span><span>${hint}</span>`; }
+function render(filter){
+  grid.innerHTML='';
+  STYLES.forEach((s,i)=>{ if(filter&&filter!=='all'&&!(filter==='cheap'?s.cost<=3:s.tags.includes(filter))) return;
+    const c=document.createElement('article'); c.className='card'+(chosen===s.id?' chosen':''); c.dataset.id=s.id;
+    const style=Object.entries(s.v).map(([k,v])=>`--${k}:${v}`).join(';');
+    c.innerHTML=`<div class="scene" style="${style}" aria-hidden="true"><div class="sun"></div><div class="house h1"><i></i><i></i><b></b></div><div class="tree"></div><div class="house h2"><i></i><i></i><b></b></div><div class="road"></div><div class="fx"></div></div>
+      <div class="body"><div class="top"><h2>${s.name}</h2>${s.rec?'<span class="rec">My pick</span>':`<span class="no">${String(i+1).padStart(2,'0')}</span>`}</div>
+      <p class="desc">${s.desc}</p>
+      <div class="meters">${meter('Realism',s.real,s.real+'/10')}${meter('Phone cost',s.cost,s.cost<=3?'light':s.cost<=6?'medium':'heavy')}<span>Build time</span><span></span><span>${s.weeks}</span></div>
+      <ul class="changes">${s.ch.map(x=>`<li>${x}</li>`).join('')}</ul>
+      <button class="pick" type="button" id="pick-${s.id}">${chosen===s.id?'Picked ✓':'Pick this style'}</button></div>`;
+    c.querySelector('.pick').addEventListener('click',()=>{ chosen=s.id; store.set('bt_look_choice',s.id); render(currentFilter); updateTray(); });
+    grid.appendChild(c); });
+}
+function updateTray(){ const s=STYLES.find(x=>x.id===chosen); const t=document.getElementById('choiceText'), code=document.getElementById('choiceCode');
+  if(!s){ t.textContent='No style picked yet. Tap “Pick this style” on a card.'; code.textContent='—'; return; }
+  t.textContent=`You picked ${s.name}. Paste this line back to me:`; code.textContent=`Use style: ${s.name} (${s.id})`; }
+let currentFilter='all';
+document.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>{ currentFilter=b.dataset.f; document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); render(currentFilter); }));
+document.getElementById('copyBtn').addEventListener('click',async()=>{ const code=document.getElementById('choiceCode'), btn=document.getElementById('copyBtn');
+  try{ await navigator.clipboard.writeText(code.textContent); btn.textContent='Copied'; }catch(e){ const r=document.createRange(); r.selectNodeContents(code); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); btn.textContent='Selected, copy it'; } setTimeout(()=>btn.textContent='Copy',1800); });
+render('all'); updateTray();
+</script>

@@ -14,3 +14,5 @@ Each is the 1k diffuse map, scaled to 512×512 by `ffmpeg`.
 | plaster.jpg | painted_plaster_wall | Amal Kumar | https://polyhaven.com/a/painted_plaster_wall |
 | metal.jpg | corrugated_iron | Jenelle van Heerden, Dimitrios Savva | https://polyhaven.com/a/corrugated_iron |
 | pavers.jpg | hexagonal_concrete_paving | Stephan Seeliger | https://polyhaven.com/a/hexagonal_concrete_paving |
+| bark.jpg | bark_brown_02 | Rob Tuytel | https://polyhaven.com/a/bark_brown_02 |
+| leaves.jpg | leaves_forest_ground | Dario Barresi, Dimitrios Savva | https://polyhaven.com/a/leaves_forest_ground |

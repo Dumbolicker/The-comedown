@@ -3,7 +3,7 @@ Data URIs keep the single-file game working everywhere (claude.ai link, file://,
 Run after changing a texture: python tests/embed_textures.py"""
 import base64, pathlib, re
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-LAYERS = ['asphalt', 'concrete', 'grass', 'brick', 'siding', 'roof', 'plaster', 'metal', 'pavers']
+LAYERS = ['asphalt', 'concrete', 'grass', 'brick', 'siding', 'roof', 'plaster', 'metal', 'pavers', 'bark', 'leaves']
 game = ROOT / 'game' / 'index.html'
 src = game.read_text(encoding='utf-8')
 parts = []
