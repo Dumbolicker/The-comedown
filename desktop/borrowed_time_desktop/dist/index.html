@@ -792,17 +792,34 @@ function windows(x0,y0,z0,x1,y1,z1,floorH,ww,wh,sp,lit,sides){ // sides: [-z,+z,
     for(let y=y0+1.2;y+wh<y1-0.3;y+=floorH) for(let c=0;c<cols;c++){ const u=start+c*sp, on=Math.random()<lit, cy=y+wh/2;
       const col=on?C.glass:hex(0x1c2129), g=on?-0.95:0;
       if(side===0) sdeco(u,cy,z0-0.04,ww/2,wh/2,0.05,col,g); else if(side===1) sdeco(u,cy,z1+0.04,ww/2,wh/2,0.05,col,g);
-      else if(side===2) sdeco(x0-0.04,cy,u,0.05,wh/2,ww/2,col,g); else sdeco(x1+0.04,cy,u,0.05,wh/2,ww/2,col,g); } } }
+      else if(side===2) sdeco(x0-0.04,cy,u,0.05,wh/2,ww/2,col,g); else sdeco(x1+0.04,cy,u,0.05,wh/2,ww/2,col,g);
+      // frame: sill below, head above, a vertical mullion (light stone / painted metal)
+      const fr=[0.82,0.8,0.76], off=side===0?[0,-1]:side===1?[0,1]:side===2?[-1,0]:[1,0], bx=side<2?u:(side===2?x0:x1), bz=side<2?(side===0?z0:z1):u, ax=side<2;
+      const F=(dy,ha,hy,out)=>sdeco(bx+off[0]*out,cy+dy,bz+off[1]*out,ax?ha:0.06,hy,ax?0.06:ha,fr);
+      F(-wh/2-0.05,ww/2+0.1,0.05,0.09); F(wh/2+0.04,ww/2+0.05,0.04,0.07); F(0,0.025,wh/2,0.08); } } }
 function house(sx0,sz0,sx1,sz1,frontNeg){
   const wall=hex(pick([0xe8d5b0,0xb8d4e3,0xf2c6c2,0xc9e4c5,0xf5e6a8,0xd9c2e8,0xf0f0ea])), roof=hex(pick([0x7a3b2e,0x4a4a52,0x3b5470,0x5c4632]));
   const hw=rand(2.8,3.5), hd=rand(2.5,3.0), wh=rand(2.9,3.3), rh=rand(1.4,2.0);
   const cx=(sx0+sx1)/2+rand(-0.5,0.5), inward=frontNeg?1:-1, front=frontNeg?sz0:sz1, cz=front+inward*(3.6+hd);
   // hollow and walk-in: wood-frame walls of breakable panels with a doorway and glass windows, a two-part breakable roof, furniture inside
   const bld=++BLD, t=0.18, x0=cx-hw, x1=cx+hw, z0=cz-hd, z1=cz+hd, win=(u,w)=>({u0:u-w/2,u1:u+w/2,y0:0.95,y1:1.95}), fz0=frontNeg?z0:z1-t, bz0=frontNeg?z1-t:z0;
-  wallRun('x',x0,x1,fz0,fz0+t,0,wh,[{u0:cx-0.6,u1:cx+0.6,y0:0,y1:2.1,door:1},win(cx-hw*0.6,1.0),win(cx+hw*0.6,1.0)],'wood',wall,bld);
+  TRIM=true; wallRun('x',x0,x1,fz0,fz0+t,0,wh,[{u0:cx-0.6,u1:cx+0.6,y0:0,y1:2.1,door:1},win(cx-hw*0.6,1.0),win(cx+hw*0.6,1.0)],'wood',wall,bld);
   wallRun('x',x0,x1,bz0,bz0+t,0,wh,[win(cx-hw*0.45,1.1),win(cx+hw*0.45,1.1)],'wood',wall,bld);
   wallRun('z',z0+t,z1-t,x0,x0+t,0,wh,[win(cz,1.0)],'wood',wall,bld); wallRun('z',z0+t,z1-t,x1-t,x1,0,wh,[win(cz,1.0)],'wood',wall,bld);
-  const r1=brkRamp(x0-0.3,wh,z0-0.3,x1+0.3,wh+rh,cz,3,'roof',roof,{bld,roof:true,cut:bld}); brkRamp(x0-0.3,wh,cz,x1+0.3,wh+rh,z1+0.3,4,'roof',roof,{bld,roof:true,cut:bld});
+  TRIM=false; const r1=brkRamp(x0-0.3,wh,z0-0.3,x1+0.3,wh+rh,cz,3,'roof',roof,{bld,roof:true,cut:bld}), r2=brkRamp(x0-0.3,wh,cz,x1+0.3,wh+rh,z1+0.3,4,'roof',roof,{bld,roof:true,cut:bld});
+  { // fascia along both eaves and rake boards up the gable edges, in white trim; each piece goes with its roof half
+    const fw=(x1-x0)/2+0.33, lenH=Math.hypot(cz-(z0-0.3),rh)/2, ang=Math.atan2(rh,cz-(z0-0.3));
+    W.trims.push({a:r1.id,c:TRIM_COL,p:[[cx,wh-0.06,z0-0.32,fw,0.11,0.03],[x0-0.33,wh+rh/2,(z0-0.3+cz)/2,0.03,0.1,lenH,qx(-ang)],[x1+0.33,wh+rh/2,(z0-0.3+cz)/2,0.03,0.1,lenH,qx(-ang)]]});
+    W.trims.push({a:r2.id,c:TRIM_COL,p:[[cx,wh-0.06,z1+0.32,fw,0.11,0.03],[x0-0.33,wh+rh/2,(z1+0.3+cz)/2,0.03,0.1,lenH,qx(ang)],[x1+0.33,wh+rh/2,(z1+0.3+cz)/2,0.03,0.1,lenH,qx(ang)]]});
+    // concrete foundation strip showing below the siding
+    GMT=2; for(const [a,b,c,d] of [[x0-0.05,z0-0.05,x1+0.05,z0+0.01],[x0-0.05,z1-0.01,x1+0.05,z1+0.05],[x0-0.05,z0,x0+0.01,z1],[x1-0.01,z0,x1+0.05,z1]]) sdeco((a+c)/2,0.16,(b+d)/2,(c-a)/2,0.16,(d-b)/2,hex(0x8f8b84)); GMT=0;
+    // exterior brick chimney stack on one gable end, from the ground to above the ridge (breakable with the house)
+    const cs=Math.random()<0.5?1:-1, chx=cs>0?x1+0.02:x0-0.66, chz=cz+rand(-0.8,0.8); brk(chx,0,chz-0.36,chx+0.64,wh+rh+0.75,chz+0.36,'brick',hex(pick([0x8e5444,0x7a4a3c,0x9a6a55])),{bld});
+    // front porch: two posts, a small roof over the door and a concrete step
+    const o=frontNeg?-1:1, dz=frontNeg?z0:z1, pz=dz+o*1.35, pc=hex(0xe8e4da);
+    brk(cx-1.12,0,pz-0.07,cx-0.98,2.45,pz+0.07,'wood',pc,{bld}); brk(cx+0.98,0,pz-0.07,cx+1.12,2.45,pz+0.07,'wood',pc,{bld});
+    brk(cx-1.3,2.45,Math.min(dz,pz+o*0.15),cx+1.3,2.56,Math.max(dz,pz+o*0.15),'roof',roof,{bld,roof:true});
+    GMT=2; sdeco(cx,0.06,dz+o*0.55,0.75,0.06,0.5,hex(0xa9a59c)); GMT=0; }
   furnish(cx,cz,hw,hd,wh,frontNeg,bld,r1);
   const yz=front+inward*0.6;
   if(Math.random()<0.6) for(let k=0;k<5;k++){ const x=sx0+1.2+k*2.05; if(Math.abs(x-cx)>1.3) prop('fence',x,0,yz,0); }
@@ -825,7 +842,14 @@ function furnish(cx,cz,hw,hd,wh,frontNeg,bld,roofB){ const fd=frontNeg?-1:1, bac
   light(cx,wh-0.45,cz,7,[1.25,1.0,0.74],{brk:roofB.id}); W.fixtures.push({p:V(cx,wh-0.12,cz),r:0.15,c:[1,0.95,0.82],brk:roofB.id});
   spot(cx+hw*0.35,0,cz-fd*0.3); }
 function gen_res(l){ for(let a=0;a<2;a++) for(let b=0;b<2;b++){ const x0=l.x0+a*(l.x1-l.x0)/2, z0=l.z0+b*(l.z1-l.z0)/2; house(x0,z0,x0+(l.x1-l.x0)/2,z0+(l.z1-l.z0)/2,b===0); } }
-function tower(x0,z0,x1,z1,h,col){ GMT=col[0]>col[1]*1.15?4:7; solid(x0,0,z0,x1,h,z1,col); GMT=0; windows(x0,0,z0,x1,h,z1,3.3,1.3,1.8,2.6,0.4,[true,true,true,true]);
+function towerDetail(x0,z0,x1,z1,y0,h,col){ const cx=(x0+x1)/2, cz=(z0+z1)/2, hx=(x1-x0)/2, hz=(z1-z0)/2, lt=tone(col,1.18), dk=tone(col,0.72);
+  GMT=2; if(y0<0.1) sdeco(cx,0.5,cz,hx+0.07,0.5,hz+0.07,hex(0x8a8780)); GMT=0;                                   // stone plinth
+  for(let y=Math.max(y0,0)+3.3;y<h-1.0;y+=3.3) sdeco(cx,y,cz,hx+0.05,0.06,hz+0.05,lt);                          // floor ledges
+  for(const [px,pz] of [[x0,z0],[x1,z0],[x0,z1],[x1,z1]]) sdeco(px,(y0+h)/2,pz,0.22,(h-y0)/2,0.22,lt);           // corner pilasters
+  sdeco(cx,h-0.18,cz,hx+0.28,0.18,hz+0.28,dk); sdeco(cx,h-0.42,cz,hx+0.14,0.06,hz+0.14,lt);                     // cornice
+  for(const [a,b,c,d] of [[x0-0.1,z0-0.1,x1+0.1,z0+0.15],[x0-0.1,z1-0.15,x1+0.1,z1+0.1],[x0-0.1,z0,x0+0.15,z1],[x1-0.15,z0,x1+0.1,z1]]) solid(a,h,b,c,h+0.85,d,dk);   // parapet
+}
+function tower(x0,z0,x1,z1,h,col){ GMT=col[0]>col[1]*1.15?4:7; solid(x0,0,z0,x1,h,z1,col); GMT=0; towerDetail(x0,z0,x1,z1,0,h,col); windows(x0,0,z0,x1,h,z1,3.3,1.3,1.8,2.6,0.4,[true,true,true,true]);
   sdeco((x0+x1)/2,h+0.02,(z0+z1)/2,(x1-x0)/2+0.1,0.18,(z1-z0)/2+0.1,tone(col,0.7));
   for(let k=0;k<1+randi(0,2);k++){ const x=rand(x0+2,x1-2), z=rand(z0+2,z1-2); solid(x-1,h,z-0.8,x+1,h+1.1,z+0.8,C.metal); }
   if(Math.random()<0.6){ const cx=(x0+x1)/2, cz=(z0+z1)/2; scyl(cx,h+3,cz,0.07,3,hex(0x6a6a6a)); sball(cx,h+6.1,cz,0.18,0.18,0.18,hex(0xff3030),1); } }
@@ -837,7 +861,7 @@ function lobbyTower(x0,z0,x1,z1,h,col){ const cx=(x0+x1)/2, cz=(z0+z1)/2, LH=4.2
   const fronts=[]; for(let u=x0+t+0.4;u<x1-t-1.6;u+=2.6) fronts.push(Math.abs(u+1.1-cx)<1.4?{u0:cx-1.2,u1:cx+1.2,y0:0,y1:2.7,door:1}:{u0:u,u1:Math.min(u+2.2,x1-t-0.4),y0:0.15,y1:3.4});
   wallRun('x',x0+t,x1-t,z0,z0+t,0,LH,fronts,'conc',tone(col,1.12),bld,9); wallRun('x',x0+t,x1-t,z1-t,z1,0,LH,fronts,'conc',tone(col,1.12),bld,9);
   GMT=col[0]>col[1]*1.15?4:7; for(const [a0,a1,b0,b1] of [[x0,sx0,z0,z1],[sx1,x1,z0,z1],[sx0,sx1,z0,sz0],[sx0,sx1,sz1,z1]]) solid(a0,LH,b0,a1,h,b1,col); GMT=0;   // floors above, around the stair core
-  windows(x0,LH,z0,x1,h,z1,3.3,1.3,1.8,2.6,0.4,[true,true,true,true]); sdeco(cx,h+0.02,cz,(x1-x0)/2+0.1,0.18,(z1-z0)/2+0.1,tone(col,0.7));
+  windows(x0,LH,z0,x1,h,z1,3.3,1.3,1.8,2.6,0.4,[true,true,true,true]); towerDetail(x0,z0,x1,z1,LH,h,col);
   for(let k=0;k<nF;k++){ const y0=k*rise, y1=y0+rise, left=k%2===0;                                         // flights alternate lanes and directions
     if(left) rampS(sx0,y0,zA,cx,y1,zB,3,hex(0x8d9096)); else rampS(cx,y0,zA,sx1,y1,zB,4,hex(0x8d9096));
     const lz0=left?zB:sz0, lz1=left?sz1:zA; solid(sx0,y1-0.22,lz0,sx1,y1,lz1,hex(0x7a7d84)); }
@@ -1010,7 +1034,7 @@ const LAYOUT=[['res','down','down','res'],['gas','plaza','park','down'],['res','
 const LOT_COL={res:C.grass,down:C.conc,gas:C.conc,plaza:C.conc,park:hex(0x4e8f3a),trailer:hex(0x8a8a4a),tower:hex(0x6b8f45),constr:C.dirt};
 function genWorld(){
   for(const k of BATCH_KEYS) STATIC[k].n=0; Object.assign(W,{solids:[],spots:[],rings:[],copSpawns:[],lamps:[],props:[],blocks:[],slots:null,tower:null,doc:null,docEnt:null,
-    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[],lobby:null,doors:[],doorKeys:new Set(),condemned:new Set()});
+    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[],lobby:null,doors:[],doorKeys:new Set(),condemned:new Set(),trims:[]});
   BRK.length=0; BRK_BY.clear(); BLD=0; BRK_DIRTY=true;
   // ground + fields
   GMT=3; sdeco(0,-0.5,0,HALF+160,0.5,HALF+160,hex(0x6e7845)); GMT=1; sdeco(0,-0.49,0,HALF,0.5,HALF,C.asph); GMT=0;
@@ -1186,14 +1210,20 @@ function brkRamp(x0,y0,z0,x1,y1,z1,dir,mat,col,o={}){ let yaw=0, sx=(x1-x0)/2, s
   if(dir===2) yaw=PI; else if(dir===3){ yaw=-PI/2; const t=sx; sx=sz; sz=t; } else if(dir===4){ yaw=PI/2; const t=sx; sx=sz; sz=t; }
   return brk(x0,y0,z0,x1,y1,z1,mat,col,Object.assign({},o,{ramp:dir,yaw,wsz:[sx,(y1-y0)/2,sz]})); }
 // a wall along x (axis 'x', thickness in z from t0 to t1) or along z, cut into ≤1.5 m columns and two courses, with door and window openings
+let TRIM=false; const TRIM_COL=[0.93,0.92,0.88];
+// a window frame the way it's built: sill (proud of the wall), head casing, side casings, and a cross mullion in the glass
+function addTrim(axis,u0,u1,t0,t1,ya,yb,anchor){ const tm=(t0+t1)/2, d=(t1-t0)/2+0.05, uc=(u0+u1)/2, w=(u1-u0)/2, hh=(yb-ya)/2, yc=(ya+yb)/2, P=[];
+  const add=(u,y,ha,hy,hd)=>P.push(axis==='x'?[u,y,tm,ha,hy,hd]:[tm,y,u,hd,hy,ha]);
+  add(uc,ya-0.035,w+0.08,0.035,d+0.035); add(uc,yb+0.045,w+0.06,0.045,d); add(u0+0.03,yc,0.03,hh,d); add(u1-0.03,yc,0.03,hh,d);
+  add(uc,yc,0.016,hh,0.035); add(uc,yc,w,0.016,0.035); W.trims.push({a:anchor,p:P,c:TRIM_COL}); }
 function wallRun(axis,a0,a1,t0,t1,y0,y1,ops,mat,col,bld,course=2.1){ const cuts=[a0,a1]; for(const q of ops) cuts.push(clamp(q.u0,a0,a1),clamp(q.u1,a0,a1));
   cuts.sort((p,q)=>p-q); const cols=[];
   for(let i=0;i<cuts.length-1;i++){ const len=cuts[i+1]-cuts[i]; if(len<0.03) continue; const n=Math.max(1,Math.ceil(len/1.5)); for(let k=0;k<n;k++) cols.push([cuts[i]+len*k/n,cuts[i]+len*(k+1)/n]); }
-  const box=(u0,u1,ya,yb,m,c)=>{ if(yb-ya<0.04) return; if(axis==='x') brk(u0,ya,t0,u1,yb,t1,m,c,{bld}); else brk(t0,ya,u0,t1,yb,u1,m,c,{bld}); };
+  const box=(u0,u1,ya,yb,m,c)=>{ if(yb-ya<0.04) return null; return axis==='x'?brk(u0,ya,t0,u1,yb,t1,m,c,{bld}):brk(t0,ya,u0,t1,yb,u1,m,c,{bld}); };
   const tm=(t0+t1)/2, pane=(u0,u1,ya,yb)=>{ if(axis==='x') brk(u0,ya,tm-0.025,u1,yb,tm+0.025,'glass',GLASS,{bld}); else brk(tm-0.025,ya,u0,tm+0.025,yb,u1,'glass',GLASS,{bld}); };
   for(const [u0,u1] of cols){ const um=(u0+u1)/2, op=ops.find(q=>um>q.u0&&um<q.u1), mid=Math.min(course,y1);
     if(op&&op.door){ box(u0,u1,Math.max(op.y1,y0),Math.max(op.y1,mid),mat,col); box(u0,u1,Math.max(op.y1,mid),y1,mat,col); }
-    else if(op){ box(u0,u1,y0,op.y0,mat,col); pane(u0,u1,op.y0,op.y1); box(u0,u1,op.y1,Math.max(op.y1,mid),mat,col); box(u0,u1,Math.max(op.y1,mid),y1,mat,col); }
+    else if(op){ const sill=box(u0,u1,y0,op.y0,mat,col); pane(u0,u1,op.y0,op.y1); if(TRIM&&sill) addTrim(axis,u0,u1,t0,t1,op.y0,op.y1,sill.id); box(u0,u1,op.y1,Math.max(op.y1,mid),mat,col); box(u0,u1,Math.max(op.y1,mid),y1,mat,col); }
     else { box(u0,u1,y0,mid,mat,col); box(u0,u1,mid,y1,mat,col); } }
   for(const q of ops) if(q.door&&y0<0.05) addDoor(axis,q.u0,q.u1,t0,t1,q.y1,mat,bld); }
 // support graph: who rests on whom (vertical) and who is bonded side by side (lateral, same course)
@@ -1283,7 +1313,8 @@ function rebuildBrk(){ BRK_DIRTY=false; for(const k of BATCH_KEYS){ BRKB[k].n=0;
     GMT=BRK_TEX[b.mat]||0;
     if(s.ramp) bpush(dst.wedge,(s.x0+s.x1)/2,(s.y0+s.y1)/2,(s.z0+s.z1)/2,qyaw(b.yaw),b.wsz[0],b.wsz[1],b.wsz[2],col,1,0);
     else bpush(dst.cube,(s.x0+s.x1)/2,(s.y0+s.y1)/2,(s.z0+s.z1)/2,QI,(s.x1-s.x0)/2,(s.y1-s.y0)/2,(s.z1-s.z0)/2,col,1,b.glow||0); }
-  GMT=0; if(gl){ uploadBatch(BRKB,'b_'); uploadBatch(SHO,'h_'); } }
+  GMT=0; for(const tr of W.trims){ const a=BRK[tr.a]; if(!a||!a.alive) continue; for(const p of tr.p) bpush(BRKB.cube,p[0],p[1],p[2],p[6]||QI,p[3],p[4],p[5],tr.c,1,0); }
+  if(gl){ uploadBatch(BRKB,'b_'); uploadBatch(SHO,'h_'); } }
 function drawDemolition(B,T,v,night){ const ga=0.24+0.5*night, gcol=night>0.3?mixc(GLASS,[1,0.84,0.55],night):GLASS;
   for(const b of W.glass||NONE){ if(!b.alive) continue; const s=b.s, c=boxCenter(s); if(vlen(vsub(c,v.pos))>80) continue;
     bpush(T.cube,c.x,c.y,c.z,QI,(s.x1-s.x0)/2,(s.y1-s.y0)/2,(s.z1-s.z0)/2,b.col===GLASS?gcol:b.col,ga,b.glow!==undefined?b.glow:-0.85); }
