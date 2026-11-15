@@ -21,7 +21,7 @@ STAGE = r"""() => { DEMO_INPUT=null; const I=%s, P=G.player, C=V(-HALF+ROAD/2+2*
   for(let i=0;i<30;i++){ update(1/60,I()); uni.pos=V(C.x-2.3,0,C.z+2.4); uni.yaw=PI*0.72; uni.fade=1; uni.speed=0; P.yaw=PI+0.25; }
   return {npcs:G.npcs.length,unicorns:G.unicorns.length}; }""" % I
 SHOW = r"""(id) => { setCharStyle(id,true); const I=%s, u=window.__uni; for(let i=0;i<6;i++){ update(1/60,I()); if(u){ u.fade=1; u.speed=0; if(!G.unicorns.includes(u)) G.unicorns.push(u); } } G.pops=[]; for(const n of G.npcs) n.bubbleT=0;
-  const t=performance.now(); for(let i=0;i<10;i++) render(); const ms=(performance.now()-t)/10; return {id,name:CSTYLES[id].name,ms:+ms.toFixed(1),inst:Object.values(DYN).reduce((a,b)=>a+b.n,0)}; }""" % I
+  const t=performance.now(); render(); const ms=performance.now()-t;   /* one frame: every extra render() queues a full software-rendered frame before the screenshot */ return {id,name:CSTYLES[id].name,ms:+ms.toFixed(1),inst:Object.values(DYN).reduce((a,b)=>a+b.n,0)}; }""" % I
 
 
 async def main():

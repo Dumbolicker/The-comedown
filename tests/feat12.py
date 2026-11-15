@@ -21,7 +21,7 @@ JS = r"""
     // every house roof rests on its walls (nothing falls at the start) and the hip surface matches its formula
     const hip=BRK.find(b=>b.s.ramp===5), hs=hip.s; out.hipTop={edge:+topAt(hs,hs.x0,(hs.z0+hs.z1)/2).toFixed(2),y0:+hs.y0.toFixed(2),mid:+topAt(hs,(hs.x0+hs.x1)/2,(hs.z0+hs.z1)/2).toFixed(2),y1:+hs.y1.toFixed(2)};
     // ---- no grass on paving: every grass blade (a static cone below 0.25 m) checked against the paved rectangles
-    const C=STATIC.cone, P_=W.paved; let blades=0, onPave=0;
+    const C=STATIC.blade||STATIC.cone, P_=W.paved; let blades=0, onPave=0;
     for(let i=0;i<C.n;i++){ const o=i*IF, x=C.data[o], y=C.data[o+1], z=C.data[o+2]; if(y>0.25) continue; blades++; if(P_.some(q=>x>q[0]&&x<q[2]&&z>q[1]&&z<q[3])) onPave++; }
     out.grass={blades,onPave,pavedRects:P_.length};
     // ---- odd jobs: placement
