@@ -814,10 +814,9 @@ function gen_down(l){ const f=()=>hex(pick([0x9c5a45,0xc9b79c,0x7d8a99,0x5a6b7d,
     rampS(cx+1,0,l.z1-8,l.x1-0.5,ah,l.z1-5.8,1,hex(0x50555c)); solid(l.x1-5,ah,l.z0+3,l.x1-3,ah+1.1,l.z0+4.5,C.metal);
     spot(l.x1-2.5,ah,l.z0+7,true); prop('dumpster',l.x1-3.5,0,l.z1-3,0); prop('crate',cx+3,0,l.z1-2.5,0.2); prop('crate',cx+4,0,l.z1-3,1.1); spot(cx+5,0,l.z1-4); } }
 function gen_gas(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
-  solid(cx-7,4.5,cz-10,cx+7,5.0,cz-1,hex(0xe9e6df)); sdeco(cx,4.66,cz-5.5,7.05,0.12,4.55,hex(0xc8312e),0.15);
-  for(const [px,pz] of [[cx-5.8,cz-9],[cx+5.8,cz-9],[cx-5.8,cz-2],[cx+5.8,cz-2]]) solid(px-0.22,0,pz-0.22,px+0.22,4.5,pz+0.22,hex(0xd8d5ce));
+  { const gb=++BLD; customBrk(brk(cx-7,4.5,cz-10,cx+7,5.0,cz-1,'metal',hex(0xe9e6df),{bld:gb,kind:'canopy',roof:true}),{densK:0.12});
+    for(const [px,pz] of [[cx-5.8,cz-9],[cx+5.8,cz-9],[cx-5.8,cz-2],[cx+5.8,cz-2]]) brk(px-0.22,0,pz-0.22,px+0.22,4.5,pz+0.22,'metal',hex(0xd8d5ce),{bld:gb,hpK:1.4}); }
   for(const px of [cx-2.6,cx+2.6]){ solid(px-0.6,0,cz-7,px+0.6,0.2,cz-4,hex(0xb5b1a8)); solid(px-0.35,0.2,cz-5.8,px+0.35,1.6,cz-5.2,hex(0xc8312e)); sdeco(px,1.3,cz-5.17,0.22,0.14,0.02,hex(0x9fe0ff),0.6); }
-  for(const lx of [cx-4,cx,cx+4]) for(const lz of [cz-8,cz-3]) sdeco(lx,4.47,lz,0.7,0.02,0.35,hex(0xfff4d0),-1);
   { // "Gulp & Go" mini-mart: brick walls, a glass storefront, a concrete roof you can still climb onto, aisles and a cooler inside
     const bld=++BLD, t=0.25, sx0=cx-6, sx1=cx+6, sz0=cz+3, sz1=cz+10.5, H=3.9, bc=hex(0xe0dacb);
     wallRun('x',sx0,sx1,sz0,sz0+t,0,H,[{u0:cx-2.9,u1:cx-1.3,y0:0,y1:2.3,door:1},{u0:cx-1.0,u1:cx+5.2,y0:0.5,y1:2.5}],'brick',bc,bld,2.6);
@@ -918,10 +917,8 @@ function gen_park(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2; const path=hex(0
 function gen_trailer(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
   const bodies=[0xede6d3,0xd8e4e0,0xe8d8c4,0xcfd8dc], stripes=[0x2e7d8c,0xb5533c,0x6b8e3a,0x4a5a9a];
   [[-5.5,-7.5],[5.5,-7.5],[-5.5,1],[-5.5,8.5],[5.5,8.5]].forEach(([ox,oz],k)=>{ const tx=cx+ox, tz=cz+oz;
-    solid(tx-4.2,0,tz-1.6,tx+4.2,2.9,tz+1.6,hex(bodies[k%4])); sdeco(tx,1.8,tz,4.23,0.15,1.63,hex(stripes[k%4])); sdeco(tx,0.18,tz,4.24,0.18,1.64,hex(0x6e6a62));
-    sdeco(tx,2.93,tz,4.27,0.05,1.67,tone(hex(bodies[k%4]),0.78)); sdeco(tx+2.3,1.05,tz+1.63,0.4,0.95,0.03,hex(0x7a6a5a)); sdeco(tx+2.3,0.12,tz+2.0,0.55,0.12,0.4,hex(0x8a8478));
-    solid(tx-2.0,2.9,tz-0.45,tx-1.1,3.45,tz+0.45,hex(0xb8bcc0)); sdeco(tx-1.55,3.2,tz+0.46,0.32,0.18,0.01,hex(0x6a6e72));
-    windows(tx-4.2,0,tz-1.6,tx+4.2,2.9,tz+1.6,10,0.9,0.7,2.2,0.5,[true,true,false,false]); spot(tx-2,2.9,tz,true); });
+    const tb=trailerShell(tx,tz,hex(bodies[k%4]),hex(stripes[k%4])); sdeco(tx+2.3,0.12,tz+2.0,0.55,0.12,0.4,hex(0x8a8478));
+    brk(tx-2.0,2.98,tz-0.45,tx-1.1,3.5,tz+0.45,'metal',hex(0xb8bcc0),{bld:tb}); spot(tx-2,2.9,tz,true); });
   { // Doc Suture's ripperdoc trailer: neon sign, operating chair, surgical lamp, a cart of glowing vials
     const tx=cx+5.5, tz=cz-7.5, fz=tz+1.6;
     sdeco(tx-1.4,2.42,fz+0.07,2.0,0.32,0.04,hex(0x14121c)); neonText('RIPPERDOC',tx-1.4,2.42,fz+0.12,0.08,hex(0xff4fd8)); sdeco(tx-1.4,2.12,fz+0.1,1.85,0.022,0.02,hex(0x37e6ff),1);
@@ -943,11 +940,9 @@ function gen_trailer(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
   W.spawn=V(jx,0,jz); W.spawnYaw=PI; spot(cx+1,0,cz-3.6); spot(cx-10.5,0,cz+4.6); spot(cx+10,0,cz+3.4); tramp(cx-5.5,cz-3.25); }
 function gen_tower(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2, tx=cx-4.5, tz=cz-4.5, leg=hex(0x7c8a96);
   const legs=[[tx-2.6,tz-2.6],[tx+2.6,tz-2.6],[tx+2.6,tz+2.6],[tx-2.6,tz+2.6]];
-  for(const [lx,lz] of legs){ solid(lx-0.22,0,lz-0.22,lx+0.22,16,lz+0.22,leg,false); scyl(lx,8,lz,0.22,8,leg); }
-  for(let k=0;k<4;k++){ const a=legs[k], b=legs[(k+1)%4], mx=(a[0]+b[0])/2, mz=(a[1]+b[1])/2, alongX=Math.abs(a[1]-b[1])<0.1;
-    for(const hy of [4.5,11]) for(const sg of [1,-1]) sdeco(mx,hy,mz,alongX?3.1:0.05,0.05,alongX?0.05:3.1,leg,0,alongX?qz(0.85*sg):qx(0.85*sg)); }
-  const tank=hex(0xa8c5d8); solid(tx-3.3,16,tz-3.3,tx+3.3,21.6,tz+3.3,tank,false);
-  scyl(tx,18.6,tz,3.8,2.6,tank); scyl(tx,19.9,tz,3.83,0.32,hex(0xd8524a)); bpush(STATIC.cone,tx,21.4,tz,QI,3.8,0.2,3.8,hex(0x8fb0c4),1,0); scyl(tx,16,tz,4.3,0.06,hex(0x6a7680));
+  // breakable: knock out three legs and the tank comes down (about 220 t, close to a real full tank)
+  const wbld=++BLD, wl=legs.map(([lx,lz],k)=>customBrk(brk(lx-0.22,0,lz-0.22,lx+0.22,16,lz+0.22,'metal',leg,{bld:wbld,kind:'wleg',hpK:2.2}),{k}));
+  const tank=hex(0xa8c5d8); customBrk(brk(tx-3.3,16,tz-3.3,tx+3.3,21.6,tz+3.3,'metal',tank,{bld:wbld,kind:'wtank',roof:true}),{legs:wl});
   W.tower={x0:tx-3.3,z0:tz-3.3,x1:tx+3.3,z1:tz+3.3,y:21.2}; spot(tx,21.6,tz,true);
   solid(cx+1.5,0,cz+1.5,cx+10.5,10.5,cz+10.5,hex(0xb7a58a)); windows(cx+1.5,0,cz+1.5,cx+10.5,10.5,cz+10.5,3.6,1.2,1.5,2.5,0.3,[true,true,true,true]);
   rampS(cx-1.5,0,cz-1.5,cx+1.5,10.8,cz+10.5,3,hex(0x6a6f75)); spot(cx+6,10.5,cz+6,true);
@@ -976,7 +971,7 @@ const LAYOUT=[['res','down','down','res'],['gas','plaza','park','down'],['res','
 const LOT_COL={res:C.grass,down:C.conc,gas:C.conc,plaza:C.conc,park:hex(0x4e8f3a),trailer:hex(0x8a8a4a),tower:hex(0x6b8f45),constr:C.dirt};
 function genWorld(){
   for(const k of BATCH_KEYS) STATIC[k].n=0; Object.assign(W,{solids:[],spots:[],rings:[],copSpawns:[],lamps:[],props:[],blocks:[],slots:null,tower:null,doc:null,docEnt:null,
-    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null});
+    lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null,customB:[]});
   BRK.length=0; BRK_BY.clear(); BLD=0; BRK_DIRTY=true;
   // ground + fields
   sdeco(0,-0.5,0,HALF+160,0.5,HALF+160,hex(0x6e7845)); sdeco(0,-0.49,0,HALF,0.5,HALF,C.asph);
@@ -1004,7 +999,7 @@ function genWorld(){
   for(const [a,b,c,d] of [[-o-th,-o-th,o+th,-o],[-o-th,o,o+th,o+th],[-o-th,-o,-o,o],[o,-o,o+th,o]]){ solid(a,0,b,c,2.4,d,wcol); solid(a,2.4,b,c,60,d,wcol,false); }
   for(let k=0;k<70;k++){ const an=rand(0,TAU), d=rand(o+8,o+80), x=Math.cos(an)*d, z=Math.sin(an)*d; if(Math.abs(x)<o+5&&Math.abs(z)<o+5) continue; tree(x,z,false); }
   brkGraph(); W.glass=BRK.filter(b=>b.mat==='glass'); W.slotsB=BRK.filter(b=>b.kind==='slot');
-  gridBuild(); uploadStatic(); BRK_DIRTY=true; if(RUB.ready) rubWorld();
+  gridBuild(); uploadStatic(); BRK_DIRTY=true; FIRE.list.length=0; if(RUB.ready) rubWorld();
 }
 
 /* ---------------- props ---------------- */
@@ -1068,7 +1063,7 @@ function makeProp(s){ const d=PK[s.kind]; const p={k:s.kind,d,pos:V(s.x,0,s.z),v
   p.pos.y=groundAt(s.x,s.z,0.1,s.y+0.5)+p.half.y+0.01; return p; }
 function propStep(dt,grav,evs){ const P=G.props, n=P.length;
   for(let i=0;i<n;i++){ const p=P[i]; if(!p.alive) continue; p.touched+=dt; p.scoreCd-=dt; if(p.thrown>0) p.thrown-=dt; if(p.alarm>0) p.alarm-=dt;
-    if(p.held||p.asleep||p.anchored) continue; const d=p.d;
+    if(p.rb||p.held||p.asleep||p.anchored) continue; const d=p.d;
     p.vel.y-=22*grav*dt; const drag=Math.max(0,1-0.12*dt); p.vel=vmul(p.vel,drag);
     p.pos=vadd(p.pos,vmul(p.vel,dt)); p.rot=qnorm(qmul(qscaled(vmul(p.ang,dt)),p.rot));
     const ext=extY(p.rot,p.half), bot=p.pos.y-ext, g=groundAt(p.pos.x,p.pos.z,0.12,bot+0.45);
@@ -1089,7 +1084,7 @@ function propStep(dt,grav,evs){ const P=G.props, n=P.length;
   // pairs: only awake props test against others, and only against props in the 3×3 neighbouring cells of a coarse grid
   const CS=4.5, hash=new Map(), key=(x,z)=>(clamp(Math.floor(x/CS)+512,0,1023)<<10)|clamp(Math.floor(z/CS)+512,0,1023);
   for(let j=0;j<n;j++){ const b=P[j]; if(!b.alive||b.held) continue; const k=key(b.pos.x,b.pos.z); let a=hash.get(k); if(!a) hash.set(k,a=[]); a.push(j); }
-  for(let i=0;i<n;i++){ const a=P[i]; if(!a.alive||a.held||a.asleep||a.anchored) continue; const gx=Math.floor(a.pos.x/CS), gz=Math.floor(a.pos.z/CS);
+  for(let i=0;i<n;i++){ const a=P[i]; if(!a.alive||a.held||a.asleep||a.anchored||a.rb) continue; const gx=Math.floor(a.pos.x/CS), gz=Math.floor(a.pos.z/CS);
     for(let ox=-1;ox<=1;ox++) for(let oz=-1;oz<=1;oz++){ const cell=hash.get(key((gx+ox)*CS+CS/2,(gz+oz)*CS+CS/2)); if(!cell) continue;
     for(const j of cell){ if(i===j) continue; const b=P[j]; if(!b.alive||b.held) continue;
       const bAwake=!b.asleep&&!b.anchored; if(bAwake&&j<i) continue;
@@ -1191,7 +1186,7 @@ function breakPanel(b,pt,dir,dmg){ killPanel(b); G.stats.demo=(G.stats.demo||0)+
   for(const n of G.npcs) if(n.alive&&n.kind==='civ'&&npcUp(n)&&n.startleCd<=0&&vlen(vsub(n.pos,pt))<9) startle(n,pt);
   brkCheck(b.bld); }
 function detachPanel(b){ if(!b.alive) return; const c=boxCenter(b.s); killPanel(b); G.stats.demo=(G.stats.demo||0)+1;
-  if(RUB.ready&&!b.kind) rubSlab(b); else fracture(b,c,V(rand(-0.3,0.3),-1,rand(-0.3,0.3)),b.hp0*1.2);
+  if(RUB.ready&&(!b.kind||CUSTOM_KINDS.has(b.kind))) rubSlab(b); else { if(b.kind==='wtank') tankSplashAt(V(c.x,0.5,c.z)); fracture(b,c,V(rand(-0.3,0.3),-1,rand(-0.3,0.3)),b.hp0*1.2); }
   if(b.roof){ if(!G.attract){ addScore(800,c,'CAVE-IN'); award(F_ROOF); } G.shake+=0.6; noise('rumble',1); } else if(!G.attract) addScore(Math.round(b.M.pts*0.6),null,'');
   brkCheck(b.bld); }
 // irregular boxes filling the panel: a jittered grid across its two long axes (glass gets more, smaller shards)
@@ -1230,7 +1225,7 @@ function bodyHitsPanel(id,speed,n3,charging){ const p=G.player, FF=FORMS[p.form]
 function brkBlast(pos,R,power){ for(const b of BRK){ if(!b.alive||b.falling) continue; const s=b.s; if(s.x1<pos.x-R||s.x0>pos.x+R||s.z1<pos.z-R||s.z0>pos.z+R) continue;
   const c=boxClosest(s,pos), d=vlen(vsub(c,pos)); if(d>R) continue; const f=1-d/R; hitBrk(b.id,power*f*f,c,vnorm(vsub(boxCenter(s),pos))); } }
 function rebuildBrk(){ BRK_DIRTY=false; for(const k of BATCH_KEYS){ BRKB[k].n=0; SHO[k].n=0; } const cut=G?G.cutBld:0;
-  for(const b of BRK){ if(!b.alive||b.mat==='glass'||b.kind==='slot') continue; const s=b.s, dst=(b.roof&&cut&&b.bld===cut)?SHO:BRKB, col=b.crack>0.05?tone(b.col,1-0.32*b.crack):b.col;
+  for(const b of BRK){ if(!b.alive||b.mat==='glass'||b.kind==='slot'||CUSTOM_KINDS.has(b.kind)) continue; const s=b.s, dst=(b.roof&&cut&&b.bld===cut)?SHO:BRKB, col=b.crack>0.05?tone(b.col,1-0.32*b.crack):b.col;
     if(s.ramp) bpush(dst.wedge,(s.x0+s.x1)/2,(s.y0+s.y1)/2,(s.z0+s.z1)/2,qyaw(b.yaw),b.wsz[0],b.wsz[1],b.wsz[2],col,1,0);
     else bpush(dst.cube,(s.x0+s.x1)/2,(s.y0+s.y1)/2,(s.z0+s.z1)/2,QI,(s.x1-s.x0)/2,(s.y1-s.y0)/2,(s.z1-s.z0)/2,col,1,b.glow||0); }
   if(gl){ uploadBatch(BRKB,'b_'); uploadBatch(SHO,'h_'); } }
@@ -1238,9 +1233,10 @@ function drawDemolition(B,T,v,night){ const ga=0.24+0.5*night, gcol=night>0.3?mi
   for(const b of W.glass||NONE){ if(!b.alive) continue; const s=b.s, c=boxCenter(s); if(vlen(vsub(c,v.pos))>80) continue;
     bpush(T.cube,c.x,c.y,c.z,QI,(s.x1-s.x0)/2,(s.y1-s.y0)/2,(s.z1-s.z0)/2,b.col===GLASS?gcol:b.col,ga,b.glow!==undefined?b.glow:-0.85); }
   for(const b of W.slotsB||NONE) if(b.alive) drawSlotMachine(B,b,v);
+  for(const b of W.customB||NONE) if(b.alive&&!b.falling) drawCustomBrk(B,b,boxCenter(b.s),QI);
   for(const f of W.fixtures||NONE){ if(f.brk!==undefined&&!BRK[f.brk].alive) continue; ball(B,f.p,V(f.r,f.r*0.6,f.r),QI,f.c,1,1); }
   for(const r of RUB.chunks){ if(!r.t||vlen(vsub(r.t,v.pos))>90) continue; bpush(r.glass?T.cube:B.cube,r.t.x,r.t.y,r.t.z,r.q,r.h.x,r.h.y,r.h.z,r.color,r.glass?0.55:1,r.glass?0.2:0); }
-  for(const r of RUB.slabs){ if(!r.t) continue; const b=r.b, s=b.s;
+  for(const r of RUB.slabs){ if(!r.t) continue; const b=r.b, s=b.s; if(CUSTOM_KINDS.has(b.kind)){ drawCustomBrk(B,b,r.t,r.q); continue; }
     if(s.ramp) bpush(B.wedge,r.t.x,r.t.y,r.t.z,qmul(r.q,qyaw(b.yaw)),b.wsz[0],b.wsz[1],b.wsz[2],b.col,1,0);
     else bpush(B.cube,r.t.x,r.t.y,r.t.z,r.q,(s.x1-s.x0)/2,(s.y1-s.y0)/2,(s.z1-s.z0)/2,b.col,1,0); }
   if(W.marquee) drawMarquee(B); }
@@ -1268,7 +1264,7 @@ function physTag(){ const el=document.getElementById('physTag'); if(el) el.textC
 function wedgeHull(s,cx,cy,cz){ const P=[]; for(const [x,z] of [[s.x0,s.z0],[s.x1,s.z0],[s.x0,s.z1],[s.x1,s.z1]]){ P.push(x-cx,s.y0-cy,z-cz); const t=topAt(s,x,z); if(t>s.y0+0.02) P.push(x-cx,t-cy,z-cz); } return new Float32Array(P); }
 function rubWorld(){ const R=RUB.R; if(!R) return; if(RUB.world){ try{ RUB.eq.free(); RUB.world.free(); }catch(e){} }
   const w=new R.World({x:0,y:-9.81,z:0}); try{ w.integrationParameters.numSolverIterations=2; }catch(e){} // rubble needs no precision stacking: measured 4.7 ms → see tests/feat5.py
-  RUB.world=w; RUB.eq=new R.EventQueue(true); RUB.chunks=[]; RUB.slabs=[]; RUB.byCol=new Map(); RUB.player=null; RUB.pc=null; RUB.pr=0; RUB.filled=new Set(); RUB.near=new Set();
+  RUB.world=w; RIGS.length=0; RUB.propN=0; RUB.eq=new R.EventQueue(true); RUB.chunks=[]; RUB.slabs=[]; RUB.byCol=new Map(); RUB.player=null; RUB.pc=null; RUB.pr=0; RUB.filled=new Set(); RUB.near=new Set();
   w.createCollider(R.ColliderDesc.cuboid(HALF+200,0.5,HALF+200).setTranslation(0,-0.5,0).setFriction(0.8));
   for(const s of W.solids){ s.col=null; s.rIn=false; } }
 // The town's ~1,700 static boxes are added to Rapier only around rubble (5×5 grid cells, ~40 m square), so each step stays cheap.
@@ -1280,7 +1276,7 @@ function rubEnsure(x,z){ const g=GRID, ix=Math.floor((x-g.ox)/g.cell), iz=Math.f
     for(const i of g.cells[cz*g.n+cx]) rubAddSolid(W.solids[i]); } }
 function rubPlayer(){ const R=RUB.R, w=RUB.world, p=G.player; if(!w||!p) return;
   if(!RUB.player||RUB.pr!==PR||RUB.ph!==PH){ if(RUB.player){ RUB.byCol.delete(RUB.pc.handle); w.removeRigidBody(RUB.player); }
-    const b=w.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(p.pos.x,p.pos.y+PH/2,p.pos.z)); const c=w.createCollider(R.ColliderDesc.capsule(Math.max(0.05,PH/2-PR),PR),b);
+    const b=w.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(p.pos.x,p.pos.y+PH/2,p.pos.z)); const c=w.createCollider(R.ColliderDesc.capsule(Math.max(0.05,PH/2-PR),PR).setCollisionGroups(PLAYER_GRP),b);
     RUB.player=b; RUB.pc=c; RUB.pr=PR; RUB.ph=PH; RUB.byCol.set(c.handle,{player:true}); }
   const at={x:p.pos.x,y:p.pos.y+PH/2,z:p.pos.z}; if(RUB.teleport){ RUB.player.setTranslation(at,true); RUB.teleport=false; } else RUB.player.setNextKinematicTranslation(at); }
 function rubBody(c,q,v,av,cd,rec){ const R=RUB.R, w=RUB.world; rubEnsure(c.x,c.z);
@@ -1292,26 +1288,26 @@ function rubChunk(c,h,q,v,av,mat,col,glass){ const M=MAT[mat], cd=RUB.R.Collider
 function rubSlab(b){ const R=RUB.R, s=b.s, M=b.M, cx=(s.x0+s.x1)/2, cy=(s.y0+s.y1)/2, cz=(s.z0+s.z1)/2;
   const cd=s.ramp?R.ColliderDesc.convexHull(wedgeHull(s,cx,cy,cz)):R.ColliderDesc.cuboid(Math.max(0.01,(s.x1-s.x0)/2-0.005),Math.max(0.01,(s.y1-s.y0)/2-0.005),Math.max(0.01,(s.z1-s.z0)/2-0.005));
   if(!cd){ fracture(b,V(cx,cy,cz),V(0,-1,0),b.hp0); return; }
-  const vol=(s.x1-s.x0)*(s.y1-s.y0)*(s.z1-s.z0)*(s.ramp?0.5:1), mass=vol*M.dens;
-  cd.setDensity(M.dens).setFriction(M.fric).setRestitution(M.rest).setActiveEvents(R.ActiveEvents.CONTACT_FORCE_EVENTS).setContactForceEventThreshold(mass*9.81*5);
+  const vol=(s.x1-s.x0)*(s.y1-s.y0)*(s.z1-s.z0)*(s.ramp?0.5:1), dens=M.dens*(b.densK||1), mass=vol*dens;
+  cd.setDensity(dens).setFriction(M.fric).setRestitution(M.rest).setActiveEvents(R.ActiveEvents.CONTACT_FORCE_EVENTS).setContactForceEventThreshold(mass*9.81*5);
   const rec={slab:true,b,mass,born:G.t}; rubBody(V(cx,cy,cz),QI,V(rand(-0.3,0.3),-0.4,rand(-0.3,0.3)),V(rand(-0.6,0.6),rand(-0.2,0.2),rand(-0.6,0.6)),cd,rec); RUB.slabs.push(rec); }
 function rubRemove(rec){ if(!rec||!rec.body) return; try{ RUB.byCol.delete(rec.cl.handle); RUB.world.removeRigidBody(rec.body); }catch(e){} rec.body=null;
   const a=rec.slab?RUB.slabs:RUB.chunks, i=a.indexOf(rec); if(i>=0) a.splice(i,1); }
 // a falling section that hits something at more than ~5 g breaks into pieces that keep its motion (v + ω×r)
-function slabFracture(rec){ if(!rec.body) return; const b=rec.b, body=rec.body, t=body.translation(), q=body.rotation(), lv=body.linvel(), av=body.angvel(), c0=boxCenter(b.s), w=V(av.x,av.y,av.z);
+function slabFracture(rec){ if(!rec.body) return; if(rec.b.kind==='wtank'){ const t=rec.body.translation(); tankSplashAt(V(t.x,Math.max(0.5,t.y),t.z)); } const b=rec.b, body=rec.body, t=body.translation(), q=body.rotation(), lv=body.linvel(), av=body.angvel(), c0=boxCenter(b.s), w=V(av.x,av.y,av.z);
   rubRemove(rec); for(const [c,h] of fractureParts(b)){ const r=qrot(q,vsub(c,c0)), vel=vadd(V(lv.x,lv.y,lv.z),vcross(w,r));
     spawnChunk(vadd(V(t.x,t.y,t.z),r),h,q,vadd(vmul(vel,0.6),V(rand(-1.2,1.2),rand(0.2,1.4),rand(-1.2,1.2))),V(rand(-4,4),rand(-4,4),rand(-4,4)),b.mat,tone(b.col,rand(0.8,1.05)),b.mat==='glass'); }
   brkFX(b,V(t.x,t.y,t.z),V(0,1,0),0.7); G.shake+=b.roof?0.5:0.15; }
 function rubStep(wdt){ if(!RUB.ready||!RUB.world||!(wdt>0)) return;
   // nothing to simulate unless rubble exists and is moving, or the player is close enough to disturb it (measured: an idle step costs ~1.3 ms)
-  let live=RUB.slabs.length>0; if(!live){ const pp=G.player.pos; for(const r of RUB.chunks){ if(!r.sl||(r.t&&Math.abs(r.t.x-pp.x)<4&&Math.abs(r.t.z-pp.z)<4&&Math.abs(r.t.y-pp.y)<4)){ live=true; break; } } }
+  const propLive=propSyncIn(), rigLive=ragRigSync(wdt); let live=RUB.slabs.length>0||propLive||rigLive; if(!live){ const pp=G.player.pos; for(const r of RUB.chunks){ if(!r.sl||(r.t&&Math.abs(r.t.x-pp.x)<4&&Math.abs(r.t.z-pp.z)<4&&Math.abs(r.t.y-pp.y)<4)){ live=true; break; } } }
   if(!live){ RUB.teleport=true; return; }
   const w=RUB.world, n=clamp(Math.ceil(wdt/(1/60)-0.01),1,4);
-  w.gravity={x:0,y:-9.81*G.mods.grav,z:0}; w.timestep=wdt/n; rubPlayer(); const frac=new Set(), hits=[];
+  w.gravity={x:0,y:-9.81*G.mods.grav,z:0}; w.timestep=wdt/n; rubPlayer(); const frac=new Set(), hits=[], phits=[];
   for(let i=0;i<n;i++){ w.step(RUB.eq); RUB.eq.drainContactForceEvents(e=>{ const a=RUB.byCol.get(e.collider1()), b=RUB.byCol.get(e.collider2()), f=e.totalForceMagnitude();
-    for(const [x,y] of [[a,b],[b,a]]){ if(!x) continue; if(x.slab&&f>x.mass*9.81*5) frac.add(x);
+    for(const [x,y] of [[a,b],[b,a]]){ if(!x) continue; if(x.prop!==undefined) phits.push([x.prop,y]); if(x.slab&&f>x.mass*9.81*5) frac.add(x);
       if(x.panel!==undefined&&y&&y.slab) hits.push([x.panel,f]); if(x.player&&y&&y.slab&&f>12000) hits.push([-1,f]); } }); }
-  RUB.steps+=n;
+  RUB.steps+=n; propHits(phits); propSyncOut(); ragRigRead();
   for(const [id,f] of hits){ if(id<0){ const p=G.player; if(!p.ragdoll&&G.dying<=0){ startRagdoll(p,V(rand(-2,2),2,rand(-2,2)),true); pop(vadd(p.pos,V(0,PH+0.4,0)),'FLATTENED','#ff8a3c'); } continue; }
     const b=BRK[id], dmg=(f-2500)/1400; if(b&&dmg>0) hitBrk(id,dmg,boxCenter(b.s),V(0,-1,0)); }
   for(const s of frac) slabFracture(s);
@@ -1320,6 +1316,142 @@ function rubStep(wdt){ if(!RUB.ready||!RUB.world||!(wdt>0)) return;
     if(r.t.y<-20||(r.glass&&G.t-r.born>9)||(r.slab&&G.t-r.born>12)){ if(r.slab&&r.t.y>-20) slabFracture(r); else rubRemove(r); continue; }
     if(!r.sl&&G.state==='play'){ const sp=Math.hypot(r.lv.x,r.lv.y,r.lv.z); if(sp>6){ const reach=(r.slab?1.2:0.45)+0.35;
       G.npcs.forEach((nn,ni)=>{ if(nn.alive&&npcUp(nn)&&nn.hitCd<=0&&Math.abs(nn.pos.x-r.t.x)<reach&&Math.abs(nn.pos.z-r.t.z)<reach&&r.t.y>nn.pos.y&&r.t.y<nn.pos.y+1.9) knockNpcG(ni,vadd(vmul(V(r.lv.x,0,r.lv.z),0.5),V(0,3,0)),true,false,'DEBRIS'); }); } } } }
+
+function tankSplashAt(c){
+  for(let k=0;k<6;k++) partsBurst(vadd(c,V(rand(-3,3),rand(0,2),rand(-3,3))),'debris',22,14,[0.62,0.8,0.95],0.16);
+  sfx('splash'); sfx('boom',0.8); G.shake+=1.4; addScore(2500,vadd(c,V(0,3,0)),'WATER DAMAGE'); award(F_WATER);
+  G.npcs.forEach((n,i)=>{ if(n.alive&&npcUp(n)&&vlen(vsub(n.pos,c))<14) knockNpcG(i,vadd(vmul(vnorm(V(n.pos.x-c.x,0,n.pos.z-c.z)),9),V(0,5,0)),true,false,'WASHED AWAY'); });
+  const P=G.player; if(vlen(vsub(P.pos,c))<12&&!P.ragdoll) startRagdoll(P,vadd(vmul(vnorm(V(P.pos.x-c.x,0,P.pos.z-c.z)),8),V(0,5,0)),false); }
+
+/* ---------------- props and furniture in Rapier ---------------- */
+// With Rapier loaded, props get a body once they are near the player or rubble, or start moving, so they stack and
+// collide with rubble. Game code keeps writing p.pos / p.vel / p.held (grabs, throws, tackles, blasts):
+// propSyncIn() pushes those writes into Rapier before the step and propSyncOut() reads the result back.
+const PROP_KG=14;           // one game mass unit is about 14 kg (a crate is 2 units, about 28 kg)
+const PROP_GRAV=22/9.81;    // props keep the game's cartoon gravity (22 m/s²); rubble falls at the real 9.81
+const usePropRapier=()=>RUB.ready&&!!RUB.world&&!!G&&!G.attract&&!G.custom&&RUB.props!==false;
+function propShape(p){ const R=RUB.R, d=p.d, h=p.half, r=Math.max(h.x,h.y,h.z);
+  if(d.round) return [R.ColliderDesc.ball(r),4/3*PI*r*r*r];
+  if(d.parts&&d.parts[0]&&d.parts[0][0]==='cyl'&&Math.abs(h.x-h.z)<0.02) return [R.ColliderDesc.cylinder(h.y,h.x),PI*h.x*h.x*2*h.y];
+  return [R.ColliderDesc.cuboid(h.x,h.y,h.z),8*h.x*h.y*h.z]; }
+function propMark(p){ p._s=[p.pos.x,p.pos.y,p.pos.z,p.vel.x,p.vel.y,p.vel.z,p.ang.x,p.ang.y,p.ang.z,p.rot.x,p.rot.y,p.rot.z,p.rot.w]; }
+function propBody(i){ const R=RUB.R, w=RUB.world, p=G.props[i]; if(p.rb) return;
+  const bd=(p.anchored?R.RigidBodyDesc.fixed():R.RigidBodyDesc.dynamic()).setTranslation(p.pos.x,p.pos.y,p.pos.z).setRotation(p.rot).setLinearDamping(0.02).setAngularDamping(0.5).setGravityScale(PROP_GRAV);
+  if(!p.anchored){ bd.setLinvel(p.vel.x,p.vel.y,p.vel.z).setAngvel(p.ang); if(p.asleep&&!p.held) bd.setSleeping(true); }
+  const body=w.createRigidBody(bd), [cd,vol]=propShape(p), kg=Math.max(0.5,p.mass*PROP_KG);
+  cd.setDensity(kg/Math.max(1e-3,vol)).setFriction(clamp(p.d.f/6,0.25,1)).setRestitution(clamp(p.d.b,0,0.6))
+    .setActiveEvents(R.ActiveEvents.CONTACT_FORCE_EVENTS).setContactForceEventThreshold(kg*9.81*PROP_GRAV*4);
+  p.rb=body; p.rc=w.createCollider(cd,body); p.kg=kg; RUB.byCol.set(p.rc.handle,{prop:i}); RUB.propN=(RUB.propN||0)+1; propMark(p); }
+function propDrop(p){ if(!p.rb) return; try{ RUB.byCol.delete(p.rc.handle); RUB.world.removeRigidBody(p.rb); }catch(e){} p.rb=null; p.rc=null; RUB.propN--; }
+function propSyncIn(){ if(!usePropRapier()) return false; const R=RUB.R, T=R.RigidBodyType, g=GRID, pp=G.player.pos; let live=false; rubEnsure(pp.x,pp.z);
+  for(let i=0;i<G.props.length;i++){ const p=G.props[i];
+    if(!p.alive){ if(p.rb) propDrop(p); continue; }
+    if(!p.rb){ if(p.asleep&&!p.held&&!RUB.filled.has(Math.floor((p.pos.x-g.ox)/g.cell)*4096+Math.floor((p.pos.z-g.oz)/g.cell))) continue;
+      rubEnsure(p.pos.x,p.pos.z); propBody(i); }
+    const b=p.rb, k=p._s, ty=b.bodyType(); p._pv=0;
+    if(p.held){ if(ty!==T.KinematicPositionBased) b.setBodyType(T.KinematicPositionBased,true); b.setNextKinematicTranslation(p.pos); b.setNextKinematicRotation(p.rot); live=true; continue; }
+    if(p.anchored){ if(ty!==T.Fixed){ b.setBodyType(T.Fixed,true); b.setTranslation(p.pos,true); b.setRotation(p.rot,true); } continue; }
+    const dv=(x,y,z,o)=>Math.abs(x-k[o])+Math.abs(y-k[o+1])+Math.abs(z-k[o+2]);
+    if(ty!==T.Dynamic){ b.setBodyType(T.Dynamic,true); b.setTranslation(p.pos,true); b.setRotation(p.rot,true); b.setLinvel(p.vel,true); b.setAngvel(p.ang,true); }
+    else { if(dv(p.pos.x,p.pos.y,p.pos.z,0)>1e-4) b.setTranslation(p.pos,true);
+      if(Math.abs(p.rot.x-k[9])+Math.abs(p.rot.y-k[10])+Math.abs(p.rot.z-k[11])+Math.abs(p.rot.w-k[12])>1e-4) b.setRotation(p.rot,true);
+      if(dv(p.vel.x,p.vel.y,p.vel.z,3)>1e-3) b.setLinvel(p.vel,true);
+      if(dv(p.ang.x,p.ang.y,p.ang.z,6)>1e-3) b.setAngvel(p.ang,true);
+      if(!p.asleep&&b.isSleeping()) b.wakeUp(); }
+    const sp=Math.hypot(p.vel.x,p.vel.y,p.vel.z), wantCcd=(p.thrown>0&&sp>10)||sp>25; if(wantCcd!==!!p.ccd){ b.enableCcd(wantCcd); p.ccd=wantCcd; }   // CCD only where tunnelling is likely: it was the biggest cost in a blast
+    p._pv=sp; p._pd=sp>1e-3?V(p.vel.x/sp,p.vel.y/sp,p.vel.z/sp):V(0,-1,0);   // speed and heading before the step, for impacts
+    if(!b.isSleeping()) live=true; }
+  return live; }
+// impact sounds, glass shatter, poop splats and wall damage come from Rapier contacts, using the speed before the step
+function propHits(list){ const seen=new Set(), hitP=new Set();
+  for(const [i,y] of list){ const p=G.props[i]; if(!p||!p.alive||p.held) continue; const sp=p._pv||0; if(sp<3) continue;
+    if(!seen.has(i)&&(p._impT||0)<=G.t){ seen.add(i); p._impT=G.t+0.12; G.evs.push({t:'impact',i,s:sp,n:vmul(p._pd,-1)}); }
+    if(y&&y.panel!==undefined&&sp>5&&p.k!=='coin'&&!hitP.has(i)){ const b=BRK[y.panel]; if(b&&b.alive){ hitP.add(i); hitBrk(y.panel,0.5*p.mass*14*sp*sp/100,V(p.pos.x,p.pos.y,p.pos.z),p._pd); } } } }
+function propSyncOut(){ if(!usePropRapier()) return;
+  for(const p of G.props){ if(!p.rb||!p.alive||p.held||p.anchored) continue; const b=p.rb; let sl=b.isSleeping();
+    if(!sl||!p.asleep){ const t=b.translation(), q=b.rotation(), lv=b.linvel(), av=b.angvel();
+      p.pos=V(t.x,t.y,t.z); p.rot=Q(q.x,q.y,q.z,q.w); p.vel=sl?V():V(lv.x,lv.y,lv.z); p.ang=sl?V():V(av.x,av.y,av.z);
+      p.grounded=Math.abs(lv.y)<0.6; p.still=sl?1:0;
+      if(!sl){ const e=lv.x*lv.x+lv.y*lv.y+lv.z*lv.z+0.05*(av.x*av.x+av.y*av.y+av.z*av.z); p.slowT=e<0.02?(p.slowT||0)+1/60:0; if(p.slowT>1.2){ b.sleep(); p.slowT=0; sl=true; p.vel=V(); p.ang=V(); } } }
+    p.asleep=sl; if(p.pos.y<-20){ p.alive=false; propDrop(p); continue; } propMark(p); } }
+
+/* ---------------- jointed ragdolls: limbs on spherical joints in Rapier ---------------- */
+// The ragdoll's torso still follows the game's own tumble; arms, legs and head hang off it on ball joints, collide
+// with the ground, walls, props and rubble (not with each other), and their angles drive the drawn pose.
+const RIG_MAX=4, RIGS=[], RIG_GRP=(0x0002<<16)|0x0001, PLAYER_GRP=(0x0004<<16)|0xFFFF;
+function rigGeo(e,isP){ return isP?{c:vadd(e.pos,V(0,Math.max(0.25,PH*0.3),0)),q:e.rrot,off:PH*0.54,ht:1,gw:1}:{c:vadd(e.pos,V(0,0.45,0)),q:e.rot,off:0.9*(e.height||1),ht:e.height||1,gw:e.girth||1}; }
+function rigMake(e,isP){ const R=RUB.R, w=RUB.world, g=rigGeo(e,isP), q=g.q, ht=g.ht, gw=g.gw, parts=[];
+  const torso=w.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(g.c.x,g.c.y,g.c.z).setRotation(q));
+  const seg=(parent,pc,anchor,len,rad,kg,lim)=>{ const aw=vadd(pc,qrot(q,anchor)), ctr=vadd(aw,qrot(q,V(0,-len/2,0)));
+    const b=w.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(ctr.x,ctr.y,ctr.z).setRotation(q).setLinvel(e.vel.x,e.vel.y,e.vel.z).setLinearDamping(0.4).setAngularDamping(3.0));
+    w.createCollider(R.ColliderDesc.capsule(Math.max(0.02,len/2-rad),rad).setDensity(kg/(PI*rad*rad*len)).setFriction(0.9).setRestitution(0.05).setCollisionGroups(RIG_GRP),b);
+    const jd=lim?R.JointData.revolute(anchor,V(0,len/2,0),V(1,0,0)):R.JointData.spherical(anchor,V(0,len/2,0)), j=w.createImpulseJoint(jd,parent,b,true);
+    if(lim){ try{ j.setLimits(lim[0],lim[1]); }catch(err){} } parts.push(b); return [b,ctr]; };
+  for(const sd of [1,-1]){ const [th,tc]=seg(torso,g.c,V(0.1*sd*gw,0.93*ht-g.off,0),0.45*ht,0.07,7,null); seg(th,tc,V(0,-0.225*ht,0),0.43*ht,0.06,4,[0,2.4]); }   // legs: hip ball joint, knee hinge
+  for(const sd of [1,-1]){ const [ua,uc]=seg(torso,g.c,V(0.235*sd*gw,1.35*ht-g.off,0),0.3*ht,0.055,2.5,null); seg(ua,uc,V(0,-0.15*ht,0),0.29*ht,0.05,1.8,[-2.5,0]); }   // arms: shoulder ball, elbow hinge
+  const r={e,isP,torso,parts,pose:null}; e.rig=r; RIGS.push(r); return r; }
+function rigDrop(i){ const r=RIGS[i]; try{ RUB.world.removeRigidBody(r.torso); for(const b of r.parts) RUB.world.removeRigidBody(b); }catch(err){} r.e.rig=null; RIGS.splice(i,1); }
+function ragRigCount(){ return RIGS.length; }
+function ragRigSync(wdt){ if(!usePropRapier()){ while(RIGS.length) rigDrop(RIGS.length-1); return false; }
+  const p=G.player;
+  for(let i=RIGS.length-1;i>=0;i--){ const r=RIGS[i], e=r.e; if(r.isP?(!e.ragdoll||e!==G.player||!!e.form):(!e.alive||e.state!=='rag'||G.npcs.indexOf(e)<0)) rigDrop(i); }
+  if(p.ragdoll&&!p.rig&&!p.form&&RIGS.length<RIG_MAX) rigMake(p,true);
+  for(const n of G.npcs){ if(RIGS.length>=RIG_MAX) break; if(n.alive&&n.state==='rag'&&!n.rig&&Math.abs(n.pos.x-p.pos.x)+Math.abs(n.pos.z-p.pos.z)<40) rigMake(n,false); }
+  for(const r of RIGS){ const g=rigGeo(r.e,r.isP); r.torso.setNextKinematicTranslation(g.c); r.torso.setNextKinematicRotation(g.q); }
+  return RIGS.length>0; }
+// limb directions in the torso's frame become the hip/knee/shoulder/elbow angles that drawHuman already understands
+function ragRigRead(){ for(const r of RIGS){ const tq=r.torso.rotation(), qi=qconj(Q(tq.x,tq.y,tq.z,tq.w));
+    const d=r.parts.map(b=>{ const o=b.rotation(); return qrot(qi,qrot(Q(o.x,o.y,o.z,o.w),V(0,-1,0))); });
+    const hip=v=>Math.atan2(-v.z,-v.y), sh=v=>-Math.asin(clamp(v.z,-1,1)), sz=v=>Math.atan2(v.x,-v.y), el=(a,b)=>Math.acos(clamp(vdot(a,b),-1,1));
+    r.pose={hipL:hip(d[0]),knL:wrapA(hip(d[1])-hip(d[0])),hipR:hip(d[2]),knR:wrapA(hip(d[3])-hip(d[2])),shL:sh(d[4]),szL:sz(d[4]),elL:el(d[4],d[5]),shR:sh(d[6]),szR:sz(d[6]),elR:el(d[6],d[7]),bob:0}; } }
+
+/* ---------------- new breakables: custom-drawn kinds, trailers, fences ---------------- */
+const CUSTOM_KINDS=new Set(['wleg','wtank','canopy']);
+function customBrk(b,extra){ Object.assign(b,extra||{}); (W.customB||(W.customB=[])).push(b); return b; }
+function drawCustomBrk(B,b,c,q){ const s=b.s, hy=(s.y1-s.y0)/2, steel=b.col;
+  if(b.kind==='wleg'){ bpush(B.cyl,c.x,c.y,c.z,q,0.22,hy,0.22,steel,1,0);
+    const nb=W.customB.find(o=>o.kind==='wleg'&&o.bld===b.bld&&o.k===(b.k+1)%4);           // cross braces to the next leg while both stand
+    if(nb&&nb.alive&&!nb.falling&&!b.falling){ const a=boxCenter(b.s), d=boxCenter(nb.s), m=vmul(vadd(a,d),0.5), len=Math.hypot(d.x-a.x,d.z-a.z), dir=vnorm(V(d.x-a.x,0,d.z-a.z));
+      for(const hy2 of [4.5,11]) for(const sg of [1,-1]){ const tilt=qarc(V(1,0,0),vnorm(vadd(dir,V(0,sg*0.75,0)))); bpush(B.cube,m.x,hy2,m.z,tilt,len*0.62,0.05,0.05,steel,1,0); } } }
+  else if(b.kind==='wtank'){ const W2=(l)=>vadd(c,qrot(q,l)); let p=W2(V(0,-0.2,0)); bpush(B.cyl,p.x,p.y,p.z,q,3.8,2.6,3.8,b.col,1,0);
+    p=W2(V(0,1.1,0)); bpush(B.cyl,p.x,p.y,p.z,q,3.83,0.32,3.83,hex(0xd8524a),1,0); p=W2(V(0,2.6,0)); bpush(B.cone,p.x,p.y,p.z,q,3.8,0.2,3.8,hex(0x8fb0c4),1,0);
+    p=W2(V(0,-2.8,0)); bpush(B.cyl,p.x,p.y,p.z,q,4.3,0.06,4.3,hex(0x6a7680),1,0); }
+  else if(b.kind==='canopy'){ const W2=(l)=>vadd(c,qrot(q,l)), hx=(s.x1-s.x0)/2, hz=(s.z1-s.z0)/2; bpush(B.cube,c.x,c.y,c.z,q,hx,hy,hz,b.col,1,0);
+    let p=W2(V(0,-0.09,0)); bpush(B.cube,p.x,p.y,p.z,q,hx+0.05,0.12,hz+0.05,hex(0xc8312e),1,0.15);
+    for(const lx of [-4,0,4]) for(const lz of [-2.5,2.5]){ p=W2(V(lx,-hy-0.03,lz)); bpush(B.cube,p.x,p.y,p.z,q,0.7,0.02,0.35,hex(0xfff4d0),1,-1); } } }
+function trailerShell(tx,tz,body,stripe){ const bld=++BLD, t=0.08, x0=tx-4.2, x1=tx+4.2, z0=tz-1.6, z1=tz+1.6;
+  const door={u0:tx+1.9,u1:tx+2.7,y0:0,y1:2.1,door:1}, wins=[{u0:tx-3.4,u1:tx-2.5,y0:2.05,y1:2.6},{u0:tx-0.6,u1:tx+0.3,y0:2.05,y1:2.6}];
+  for(const [y0,y1,col] of [[0,0.36,hex(0x6e6a62)],[0.36,1.65,body],[1.65,1.95,stripe],[1.95,2.9,body]]){ const w=y0>=1.95?wins:[];
+    wallRun('x',x0,x1,z1-t,z1,y0,y1,[door,...w],'metal',col,bld,9); wallRun('x',x0,x1,z0,z0+t,y0,y1,w,'metal',col,bld,9);
+    wallRun('z',z0+t,z1-t,x0,x0+t,y0,y1,[],'metal',col,bld,9); wallRun('z',z0+t,z1-t,x1-t,x1,y0,y1,[],'metal',col,bld,9); }
+  for(const b of BRK_BY.get(bld)) if(b.mat==='metal') b.hp=b.hp0=b.hp0*0.55;                          // thin aluminium skin
+  brk(x0-0.03,2.9,z0-0.03,x1+0.03,2.98,z1+0.03,'metal',tone(body,0.78),{bld,roof:true,cut:bld,hpK:0.6});
+  W.interiors.push({x0:x0+t,z0:z0+t,x1:x1-t,z1:z1-t,y1:2.9,bld,cut:bld}); return bld; }
+// fences splinter into planks on a hard hit instead of bouncing like a crate
+function splinterFence(i){ const o=G.props[i]; if(!o||!o.alive) return; o.alive=false; const col=o.tint||[0.94,0.93,0.88];
+  for(let k=-1;k<=1;k++){ const l=qrot(o.rot,V(k*0.62,0,0)); spawnChunk(vadd(o.pos,l),V(0.3,0.5,0.04),o.rot,vadd(vmul(o.vel,0.5),V(rand(-2,2),rand(1,3),rand(-2,2))),V(rand(-6,6),rand(-6,6),rand(-6,6)),'wood',tone(col,rand(0.85,1)),false); }
+  partsBurst(o.pos,'debris',10,5,[0.8,0.76,0.66],0.06); noise('crack',0.6); addScore(60,vadd(o.pos,V(0,1,0)),'SPLINTERED'); G.stats.wrecked++; }
+
+/* ---------------- fire: wood and roof panels catch, spread along the frame, and burn through ---------------- */
+const FIRE={list:[],max:48};
+function fireAt(id){ const b=BRK[id]; if(!b||!b.alive||b.burn>0||!(b.mat==='wood'||b.mat==='roof')||FIRE.list.length>=FIRE.max) return false;
+  b.burn=0.01; b.fuel=rand(10,15); b.flight={p:boxCenter(b.s),r:7,c:[1,0.55,0.2],k:1,flick:13}; W.lights.push(b.flight); FIRE.list.push(b); return true; }
+function fireBlast(pos,r){ for(const b of BRK){ if(!b.alive||!(b.mat==='wood'||b.mat==='roof')) continue; const q=boxClosest(b.s,pos); if(vlen(vsub(q,pos))<r&&Math.random()<0.55) fireAt(b.id); } }
+function fireBrkUpdate(dt){ if(!FIRE.list.length) return; const P=G.player;
+  for(let i=FIRE.list.length-1;i>=0;i--){ const b=FIRE.list[i];
+    if(!b.alive||b.fuel<=0){ if(b.alive) hitBrk(b.id,b.hp+1,boxCenter(b.s),V(0,-1,0)); b.burn=0; b.flight.k=0; FIRE.list.splice(i,1); continue; }
+    b.burn=Math.min(1,b.burn+dt/2.5); b.fuel-=dt; const s=b.s, c=boxCenter(s), ck=Math.round(b.burn*4);
+    if(ck!==b._ck){ b._ck=ck; b.crack=Math.max(b.crack,0.62*b.burn); BRK_DIRTY=true; }                 // charring
+    if(Math.random()<dt*16*b.burn) partsBurst(V(rand(s.x0,s.x1),rand(s.y0,s.y1),rand(s.z0,s.z1)),'fire',1,1.2,pick([[1,0.62,0.15],[1,0.42,0.1],[1,0.82,0.3]]),0.24);
+    if(Math.random()<dt*3*b.burn) partsBurst(V(c.x,s.y1+0.2,c.z),'smoke',1,0.6,[0.24,0.22,0.21],0.5);
+    if(b.burn>0.45){ b.hp-=dt*b.hp0*0.05; if(b.hp<=0){ hitBrk(b.id,1,c,V(0,-1,0)); continue; }
+      if(Math.random()<dt*0.5){ const ids=b.sup.concat(b.lat,b.ups); if(ids.length) fireAt(ids[(Math.random()*ids.length)|0]); }
+      if(Math.random()<dt*0.2){ for(const o of BRK_BY.get(b.bld)||NONE){ if(o!==b&&o.alive&&!o.burn&&vlen(vsub(boxClosest(o.s,c),c))<1.6){ fireAt(o.id); break; } } } }
+    if(G.state==='play'&&!P.ragdoll&&(P.hotCd||0)<=G.t&&vlen(vsub(boxClosest(s,vadd(P.pos,V(0,0.9,0))),vadd(P.pos,V(0,0.9,0))))<0.55){
+      P.hotCd=G.t+1.2; const away=vnorm(V(P.pos.x-c.x,0.01,P.pos.z-c.z)); startRagdoll(P,vadd(vmul(away,5),V(0,4,0)),false); pop(vadd(P.pos,V(0,PH+0.4,0)),'HOT HOT HOT','#ff8a3c'); sfx('bighit',0.5); } } }
+function fireBreath(p){ if(!(p.fireT>0)) return; const f=fwd(p.yaw), m=p.mouthW||vadd(p.pos,V(0,1.4,0));
+  for(const d of [1.5,3,4.5]){ const at=vadd(m,vmul(f,d)); for(const b of BRK_BY.get(b0bld(at))||NONE){ if(b.alive&&!b.burn&&vlen(vsub(boxClosest(b.s,at),at))<0.6) fireAt(b.id); } } }
+function b0bld(at){ for(const it of W.interiors||NONE){ if(at.x>it.x0-1.5&&at.x<it.x1+1.5&&at.z>it.z0-1.5&&at.z<it.z1+1.5) return it.bld; } return -1; }
 
 /* ---------------- slot machines (breakable), coins ---------------- */
 const SLOT_CABS=[0x6a1b9a,0xb71c3c,0x1d4e89,0x0f6b5a,0x8a5a12,0x2a2a33];
@@ -1644,7 +1776,8 @@ const FEATS=[
   ['Car Trouble','Set off 5 car alarms',10],['Hydro Therapy','Burst a fire hydrant',5],['Rookie Mistake','Get busted',5],
   ['Gnome Away','Throw a garden gnome 25 meters',10],['Bounce House','Bounce 5 times in a row on a trampoline',10],
   ['Shapeshifter','Turn into 3 different creatures in one run',15],['Against All Odds','Win the Cursed Doubloon (1 in 137,000)',60],['Street Artist','Paint 80 strokes on walls',15],['Special Delivery','Hit a cop with a thrown poop',10],['Chrome Addict','Install 3 implants at the ripperdoc',15],
-  ['Wrecking Ball','Break 25 walls, windows or machines',15],['Open Floor Plan','Bring a roof down',20],['Beat the House','Smash a slot machine open',10]];
+  ['Wrecking Ball','Break 25 walls, windows or machines',15],['Open Floor Plan','Bring a roof down',20],['Beat the House','Smash a slot machine open',10],['Water Damage','Bring the water tower down',30]];
+const F_WATER=FEATS.length-1;
 const F={FLYER:0,BOWL:1,POLY:2,CABINET:3,PYRO:4,PEOPLE:5,COP:6,TOP:7,DARTS:8,ROLLER:9,MARATHON:10,HANG:11,CAR:12,HYDRO:13,ROOKIE:14,GNOME:15,TRAMP:16,SHIFT:17,ODDS:18,ART:19,SPECIAL:20}; const F_SHIFT=17, F_ODDS=18, F_ART=19, F_SPECIAL=20, F_CHROME=21, F_WRECK=22, F_ROOF=23, F_SLOT=24;
 function newGame(attract){
   genWorld();
@@ -1696,7 +1829,7 @@ function knockNpcG(i,v,byPlayer,thrown,lbl){ const n=G.npcs[i]; if(n.hitCd>0) re
   if(n.kind==='cop'){ addScore(400,n.pos,'OFFICER DOWN'); heatAdd(1); award(F.COP); }
   else { if(up) G.stats.tackled++; addScore(lbl?320:thrown?250:150,n.pos,lbl||(thrown?'LAWN DARTS':'TACKLE')); if(!thrown&&Math.random()<0.3) playerSay(pick(TACKLE_LINES)); heatAdd(thrown?0.3:0.4); if(thrown) award(F.DARTS); if(G.stats.tackled>=15) award(F.PEOPLE); }
   sfx('bighit'); G.shake+=0.25; }
-function explode(pos){ const R=9; G.stats.booms++; brkBlast(pos,R,950);
+function explode(pos){ const R=9; G.stats.booms++; brkBlast(pos,R,950); fireBlast(pos,4.2);
   G.props.forEach((p,i)=>{ if(!p.alive||p.held) return; const d=vsub(p.pos,pos), dist=vlen(d); if(dist>R||dist<0.01) return; const f=1-dist/R, dir=vnorm(vadd(vnorm(d),V(0,0.8,0)));
     if(p.anchored){ if(dist<4.5) burstHydrant(i,vflat(vnorm(d))); return; }
     p.asleep=false; p.still=0; p.vel=vadd(p.vel,vmul(dir,24*f/Math.sqrt(Math.max(0.6,p.mass)))); p.ang=vadd(p.ang,V(rand(-10,10)*f,rand(-10,10)*f,rand(-10,10)*f)); p.touched=0;
@@ -1915,7 +2048,7 @@ function transform(key){ const p=G.player, F=FORMS[key]; if(!F) return; p.form=k
 function untransform(){ const p=G.player; if(!p.form) return; partsBurst(vadd(p.pos,V(0,1,0)),'smoke',18,2.5,[0.88,0.84,0.96],0.28); p.form=''; p.cloth={}; p.pose=null;
   toast('<span style="color:var(--dim)">You turned back into yourself. Mostly.</span>'); }
 function formUpdate(dt){ const p=G.player; if(p.form&&!G.parade){ p.formT-=dt; if(p.formT<=0) untransform(); } }
-function fireUpdate(dt){ const p=G.player; if(!(p.fireT>0)) return; p.fireT-=dt; const f=fwd(p.yaw), m=p.mouthW||vadd(p.pos,V(0,1.4,0));
+function fireUpdate(dt){ const p=G.player; fireBrkUpdate(dt); if(!(p.fireT>0)) return; p.fireT-=dt; fireBreath(p); const f=fwd(p.yaw), m=p.mouthW||vadd(p.pos,V(0,1.4,0));
   for(let k=0;k<5;k++){ if(G.parts.length>640) G.parts.shift(); const sp=vnorm(vadd(f,V(rand(-0.22,0.22),rand(-0.15,0.12),rand(-0.22,0.22))));
     G.parts.push({pos:{...m},vel:vadd(vmul(sp,rand(11,16)),vmul(p.vel,0.6)),life:rand(0.35,0.6),max:0.6,size:rand(0.12,0.22),col:[1,rand(0.5,0.8),0.15],kind:'fire',rot:QI,spin:V()}); }
   const R=8, cosA=Math.cos(0.45), hit=p.fireHit||(p.fireHit=new Set());
@@ -2201,7 +2334,7 @@ function processEvents(){ const evs=G.evs; G.evs=[]; const p=G.player;
     else if(e.t==='glitch'){ sfx('glitch'); } else if(e.t==='snap'){ sfx('glitch'); partsBurst(vadd(p.pos,V(0,1,0)),'spark',10,4,[1,0.54,0.24],0.05); }
     else if(e.t==='spiral'){ sfx('bounce'); pop(vadd(p.pos,V(0,1.5,0)),pick(['NOODLE MODE','WHOA','MY LEGS']),'#c9a6ff'); }
     else if(e.t==='stumble'){ noise('stumble'); G.shake+=0.12; }
-    else if(e.t==='impact'){ const o=G.props[e.i]; if(!o||!o.alive) continue; if(o.d.glass&&e.s>4.5){ shatter(e.i); continue; } if(o.d.splat&&o.thrown>0&&e.s>2.5){ splatPoop(e.i,e.n||V(0,1,0)); continue; } if(e.s>5) sfx('hit',Math.min(0.7,e.s/18));
+    else if(e.t==='impact'){ const o=G.props[e.i]; if(!o||!o.alive) continue; if(o.d.glass&&e.s>4.5){ shatter(e.i); continue; } if(o.k==='fence'&&e.s>8.5){ splinterFence(e.i); continue; } if(o.d.splat&&o.thrown>0&&e.s>2.5){ splatPoop(e.i,e.n||V(0,1,0)); continue; } if(e.s>5) sfx('hit',Math.min(0.7,e.s/18));
       if(o.d.boom&&e.s>7&&o.fuse<0) o.fuse=0.5; if(o.d.car&&e.s>4) alarm(e.i);
       if(o.k==='gnome'&&o.thrown>0&&hlen(vsub(o.pos,o.throwFrom))>=25) award(F.GNOME);
       if(o.touched<4){ if(!o.knocked){ o.knocked=true; G.stats.wrecked++; G.knocks.push(G.t); addScore(o.d.pts,o.pos,''); heatAdd(0.03); }
@@ -2652,7 +2785,7 @@ function drawPlayerHuman(B,p,a,f){ const F=FORMS[f], [o,q]=playerPose(p), sz=F?F
   if(p.foldT>0&&!p.ragdoll){ const k=foldK(p); Object.assign(T,{lean:0.25+1.35*k,bob:-0.1*k,hipL:-0.25*k,hipR:-0.25*k,knL:0.55*k+0.1,knR:0.55*k+0.1,shL:-0.3-0.9*k,shR:-0.3-0.9*k,szL:0.12,szR:-0.12,elL:0.15,elR:0.15}); }
   if(p.held>=0) Object.assign(T,{shL:-2.95,shR:-2.95,szL:0.25,szR:-0.25,elL:0.15,elR:0.15});
   if(p.hollerT>0&&p.held<0) Object.assign(T,{shL:-0.2,shR:-0.2,szL:1.9+Math.sin(G.t*25)*0.4,szR:-1.9-Math.sin(G.t*27)*0.4,elL:0.5,elR:0.5});
-  if(p.ragdoll){ const w=Math.sin(G.t*9); Object.assign(T,{szL:1.3+w*0.4,szR:-1.3-w*0.4,shL:-0.5+w*0.3,shR:0.4-w*0.3,hipL:-0.5-w*0.3,hipR:0.4+w*0.3,knL:0.8,knR:0.6,elL:0.6,elR:0.6,bob:0}); }
+  if(p.ragdoll){ const w=Math.sin(G.t*9); Object.assign(T,{szL:1.3+w*0.4,szR:-1.3-w*0.4,shL:-0.5+w*0.3,shR:0.4-w*0.3,hipL:-0.5-w*0.3,hipR:0.4+w*0.3,knL:0.8,knR:0.6,elL:0.6,elR:0.6,bob:0}); if(p.rig&&p.rig.pose) Object.assign(T,p.rig.pose); }
   if(p.scratch>0&&!air&&!p.ragdoll&&p.hollerT<=0&&p.held<0&&p.charge<=0&&!using) Object.assign(T,{shR:-2.6,szR:-0.7+Math.sin(G.t*30)*0.2,elR:1.6});
   if(using&&kind==='pour') Object.assign(T,{shL:lerp(T.shL,-2.85,reach),shR:lerp(T.shR,-2.85,reach),szL:lerp(T.szL,0.42,reach),szR:lerp(T.szR,-0.42,reach),elL:lerp(T.elL,0.3,reach),elR:lerp(T.elR,0.3,reach)});
   if(p.squatT>0) Object.assign(T,{hipL:-1.25,hipR:-1.25,knL:2.1,knR:2.1,lean:0.45,bob:-0.4,shL:-0.6,shR:-0.6,elL:1.2,elR:1.2});
@@ -2694,7 +2827,7 @@ function drawNpc(B,n,trip){ const [o,q]=npcPose(n), rag=n.state==='rag', cop=n.k
   const T=walkPose(n.phase,mv,run);
   if(n.state==='flee') Object.assign(T,{shL:-2.7+Math.sin(G.t*18+n.phase)*0.4,shR:-2.7+Math.cos(G.t*17)*0.4,szL:0.45,szR:-0.45,elL:0.5,elR:0.5,hp:-0.25});
   if(cop&&n.state==='chase') Object.assign(T,{shL:-1.3+T.shL*0.3,elL:0.3});
-  if(rag){ const w=Math.sin(G.t*8+n.phase); Object.assign(T,{szL:1.4+w*0.5,szR:-1.4-w*0.5,shL:-0.3,shR:0.3,hipL:0.4+w*0.4,hipR:-0.3-w*0.4,knL:0.9,knR:0.6,elL:0.8,elR:0.8,bob:0}); }
+  if(rag){ const w=Math.sin(G.t*8+n.phase); Object.assign(T,{szL:1.4+w*0.5,szR:-1.4-w*0.5,shL:-0.3,shR:0.3,hipL:0.4+w*0.4,hipR:-0.3-w*0.4,knL:0.9,knR:0.6,elL:0.8,elR:0.8,bob:0}); if(n.rig&&n.rig.pose) Object.assign(T,n.rig.pose); }
   const P=poseBlend(n,T,12);
   const look=n.look||(n.look=cop?{skin:n.skin,top:hex(0x24345e),pants:hex(0x1c2440),shoe:[0.08,0.08,0.08]}:{skin:n.skin,top:n.shirt,pants:n.pants,shoe:[0.16,0.14,0.13]});
   const out=drawHuman(B,{o,q,s:n.height,P,look,girth:n.girth});
