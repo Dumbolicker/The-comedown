@@ -44,11 +44,11 @@ The references are well-known papers with their DOIs so you can look them up. I 
   the search ring, carry him home), Raj at the gas station (stop a shoplifter, grab the stolen goods, bring them back),
   Vinny outside the casino (find the man in the purple suit at the park and collect) and Inspector Lowe (post the notice
   on a condemned house, clear the yard, bring the roof down). Each runs three or four steps.
-- **Talking:** when you're close, an **E · Talk** tag appears over the person and the prompt names the quest and its pay;
-  press E (on touch, the GRAB button turns into TALK), even while holding something. Quest people stand their ground: sprinting at them doesn't
-  scare them off, a bump just stops you, and after a real tackle they walk back to their spot. A **?** marks whoever
-  you need to talk to next. Far-off markers are smaller and fainter, with the distance under them.
-- **Following a quest:** one at a time. The corner panel shows the quest, "step 2 of 3", the pay, and an arrow with the
+- **Talking:** when you're close, an **E · Talk** tag appears over the person and the prompt names the quest and its pay.
+  Press E, even while holding something; on touch the GRAB button turns into TALK. Quest people stand their ground:
+  sprinting at them doesn't scare them off, a bump just stops you, and after a real tackle they walk back to their spot.
+  A **?** marks whoever you need to talk to next. Far-off markers are smaller and fainter, with the distance under them.
+- **Following a quest:** one at a time. The corner panel shows the quest, the step ("2/3"), the pay and an arrow with the
   distance; a gold ring marks a search area and a beam marks a target; an arrow at the screen edge points the way when
   the target is off screen.
 - **Why it works:** a specific goal beats "do your best" (Locke & Latham, 2002); seeing which step you're on and how far

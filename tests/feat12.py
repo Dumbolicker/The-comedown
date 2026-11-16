@@ -23,9 +23,9 @@ JS = r"""
     // every house roof rests on its walls (nothing falls at the start) and the hip surface matches its formula
     const hip=BRK.find(b=>b.s.ramp===5), hs=hip.s; out.hipTop={edge:+topAt(hs,hs.x0,(hs.z0+hs.z1)/2).toFixed(2),y0:+hs.y0.toFixed(2),mid:+topAt(hs,(hs.x0+hs.x1)/2,(hs.z0+hs.z1)/2).toFixed(2),y1:+hs.y1.toFixed(2)};
     // ---- no grass on paving: every grass blade (a static cone below 0.25 m) checked against the paved rectangles
-    const C=STATIC.blade||STATIC.cone, P_=W.paved; let blades=0, onPave=0;
-    for(let i=0;i<C.n;i++){ const o=i*IF, x=C.data[o], y=C.data[o+1], z=C.data[o+2]; if(y>0.25) continue; blades++; if(P_.some(q=>x>q[0]&&x<q[2]&&z>q[1]&&z<q[3])) onPave++; }
-    out.grass={blades,onPave,pavedRects:P_.length};
+    const C=STATIC.blade||STATIC.cone, P_=W.paved; let blades=0, onPave=0, indoors=0;
+    for(let i=0;i<C.n;i++){ const o=i*IF, x=C.data[o], y=C.data[o+1], z=C.data[o+2]; if(y>0.25) continue; blades++; if(P_.some(q=>x>q[0]&&x<q[2]&&z>q[1]&&z<q[3])) onPave++; if(W.interiors.some(i=>x>i.x0&&x<i.x1&&z>i.z0&&z<i.z1)) indoors++; }
+    out.grass={blades,onPave,indoors,pavedRects:P_.length};
     // ---- quests: five givers, placed clear of walls, who stand their ground
     startGame(); G.life=200; const P=G.player, givers=G.npcs.filter(n=>n.role==='quest');
     let minGap=1e9; for(let a=0;a<givers.length;a++) for(let b=a+1;b<givers.length;b++) minGap=Math.min(minGap,hlen(vsub(givers[a].pos,givers[b].pos)));
@@ -41,10 +41,10 @@ JS = r"""
     out.prompt=document.getElementById('promptmsg').textContent; update(1/60,I({grab:true})); step(2); out.acceptedWhileHolding=!!G.quest&&G.quest.q.id==='shoplifter'; syncHUD(1/60); out.hud=document.getElementById('quest').textContent;
     if(P.held>=0){ G.props[P.held].held=false; P.held=-1; }
     const res={}, d0=()=>G.dollas, logStep=(Q,arr)=>arr.push((Q&&G.quest===Q?Q.k:'end'));
-    const run=(id,fn)=>{ const n=giver(id); goTo(n); if(!G.quest||G.quest.q.id!==id) questTalk(n); const Q=G.quest, d=d0(), r={started:!!Q&&Q.q.id===id,steps:Q?Q.steps.length:0,path:[]}; try{ fn(Q,n,r); }catch(e){ r.err=String(e).slice(0,160); } step(4); r.done=!G.quest&&G.questDone.has(id); r.paid=G.dollas-d; res[id]=r; return r; };
+    const run=(id,fn)=>{ const n=giver(id); goTo(n); if(!G.quest||G.quest.q.id!==id) questTalk(n); const Q=G.quest, d=d0(), r={started:!!Q&&Q.q.id===id,steps:Q?Q.steps.length:0,pay:Q?Q.pay:null,path:[]}; try{ fn(Q,n,r); }catch(e){ r.err=String(e).slice(0,160); } step(4); r.done=!G.quest&&G.questDone.has(id); r.paid=G.dollas-d; res[id]=r; return r; };
     const hold=o=>{ const i=G.props.indexOf(o); P.pos=V(o.pos.x+0.6,0,o.pos.z); RUB.teleport=true; step(2); P.held=i; o.held=true; step(3); };
     const carryTo=(o,p)=>{ P.pos=V(p.x+0.9,0,p.z); RUB.teleport=true; o.pos=V(p.x+0.4,1,p.z); step(4); };
-    run('shoplifter',(Q,n,r)=>{ r.path.push(Q.k); const t=Q.thief; r.thiefFled=t.state; knockNpc(t,V(3,3,0)); step(3); r.path.push(Q.k); hold(Q.bag); r.path.push(Q.k); carryTo(Q.bag,n.pos); });
+    run('shoplifter',(Q,n,r)=>{ r.path.push(Q.k); const t=Q.thief; r.thiefFled=t.state; step(90); r.thiefRanM=+hlen(vsub(t.pos,n.pos)).toFixed(1); r.thiefInside=W.interiors.some(i=>t.pos.x>i.x0&&t.pos.x<i.x1&&t.pos.z>i.z0&&t.pos.z<i.z1); knockNpc(t,V(3,3,0)); step(3); r.path.push(Q.k); hold(Q.bag); r.path.push(Q.k); carryTo(Q.bag,n.pos); });
     run('parcel',(Q,n,r)=>{ r.path.push(Q.k); r.areaShown=!!Q.steps[0].area(Q); hold(Q.parcel); r.path.push(Q.k); carryTo(Q.parcel,Q.dest); P.held=-1; Q.parcel.held=false; step(4); r.path.push(Q.k); P.pos=vadd(Q.res.pos,V(1.2,0,0)); RUB.teleport=true; step(3); r.nearRes=G.nearQuest===Q.res; update(1/60,I({grab:true})); step(3); r.path.push(Q.k); goTo(n); update(1/60,I({grab:true})); step(3); });
     run('ernesto',(Q,n,r)=>{ r.path.push(Q.k); for(const nb of Q.nb){ P.pos=vadd(nb.pos,V(1.1,0,0)); RUB.teleport=true; step(3); update(1/60,I({grab:true})); step(2); } r.path.push(Q.k); hold(Q.ern); r.path.push(Q.k); carryTo(Q.ern,n.pos); });
     run('collections',(Q,n,r)=>{ r.path.push(Q.k); const park=W.blocks.find(b=>b.kind==='park'); P.pos=V((park.x0+park.x1)/2+2,0,(park.z0+park.z1)/2+2); RUB.teleport=true; step(4); r.path.push(Q.k); knockNpc(Q.mark,V(3,3,0)); step(3); r.path.push(Q.k);
@@ -54,14 +54,15 @@ JS = r"""
     // a timed step running out, and the HUD going away
     { const rj=giver('shoplifter'); G.questDone.delete('shoplifter'); goTo(rj); questTalk(rj); G.t+=80; step(2); out.timeout={failed:!G.quest&&!G.questDone.has('shoplifter'),hud:document.getElementById('quest').hidden}; }
     // a real key press (the keyboard handler, not a test shortcut) starts a quest
-    out.jobs=res; out.allDone=Object.values(res).filter(r=>r.done).length; out.paidTotal=Object.values(res).reduce((a,r)=>a+(r.paid||0),0); out.prof=Object.keys(PROF.quests).length;
+    out.jobs=res; out.allDone=Object.values(res).filter(r=>r.done).length; out.paidTotal=Object.values(res).reduce((a,r)=>a+(r.paid||0),0); out.payTotal=Object.values(res).reduce((a,r)=>a+(r.pay||0),0);   /* paid also counts money from wrecking during a quest */ out.prof=Object.keys(PROF.quests).length;
     // trailers
     { const T=W.interiors.filter(i=>i.trailer); out.trailers={n:T.length,raisedDoors:W.doors.filter(d=>(d.yb||0)>0.5).length,awnings:W.trims.filter(t=>t.p.some(p=>p[6]&&p[6]!==QI&&p[7]&&Math.abs(p[4]-0.012)<1e-6)).length,condemnedTrailer:T.some(i=>W.condemned.has(i.bld))};
       out.trailers.walkIn=T.map(it=>{ const d=W.doors.find(d=>d.bld===it.bld); if(!d) return 'no door'; const c=doorCenter(d); P.pos=V(c.x,0,c.z+3.4); RUB.teleport=true; P.vel=V(); P.yaw=PI; G.cam.yaw=PI; step(3);
         let was=false; for(let i=0;i<120;i++){ G.cam.yaw=PI; update(1/60,I({my:1})); if(G.inside===it) was=true; } return was?'in':'blocked at '+(P.pos.z-c.z).toFixed(2); });
       out.trailers.furniture=T.map(it=>G.props.filter(o=>o.pos.x>it.x0&&o.pos.x<it.x1&&o.pos.z>it.z0&&o.pos.z<it.z1&&o.pos.y>0.75).length);
       const tr=W.solids.find(s=>s.bouncy); out.trailers.trampolineClear=!W.solids.some(s=>s!==tr&&!s.gone&&s.y1>0.3&&s.x1>tr.x0-0.4&&s.x0<tr.x1+0.4&&s.z1>tr.z0-0.4&&s.z0<tr.z1+0.4);
-      const v=giver('collections'); P.pos=vadd(v.pos,V(0.9,0,0.6)); P.vel=V(); RUB.teleport=true; step(3); syncHUD(1/60); out.vinnyPrompt=document.getElementById('promptmsg').textContent; out.touchLabel=document.getElementById('bGrab').textContent; }
+      const v=giver('collections'); P.pos=vadd(v.pos,V(0.9,0,0.6)); P.vel=V(); RUB.teleport=true; step(3); syncHUD(1/60); out.vinnyPrompt=document.getElementById('promptmsg').textContent; out.touchLabel=document.getElementById('bGrab').textContent;
+      const li=LAST_INPUT; LAST_INPUT='pad'; syncHUD(1/60); out.padPrompt=document.getElementById('promptmsg').textContent; LAST_INPUT='touch'; syncHUD(1/60); out.touchPrompt=document.getElementById('promptmsg').textContent; LAST_INPUT=li; syncHUD(1/60); }
     // ---- street details
     out.street={lamps:W.lamps.length,lights:W.lights.length,carColors:cnt(G.props.filter(o=>o.k==='car'),o=>o.tint.map(c=>Math.round(c*9)).join(''))};
     // ---- character style previews: every style renders, K cycles, the Settings row switches, a link picks one

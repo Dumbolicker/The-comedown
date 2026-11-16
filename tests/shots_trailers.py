@@ -18,18 +18,20 @@ TRAILER = r"""(arg) => { DEMO_INPUT=null; const I=%s, P=G.player, [px,pz,lx,lz,d
   G.npcs=G.npcs.filter(n=>n.role==='quest'||hlen(vsub(n.pos,P.pos))>14); G.stashes=G.stashes.filter(s=>hlen(vsub(s.pos,P.pos))>10); G.pops=[];
   for(let i=0;i<40;i++) update(1/60,I()); P.lineT=0; P.line=''; return {inside:!!G.inside,at:[+(P.pos.x-cx).toFixed(2),+(P.pos.z-cz).toFixed(2)],lot:[+(L.x1-L.x0).toFixed(1),+(L.z1-L.z0).toFixed(1)]}; }""" % I
 GIVER = r"""(arg) => { DEMO_INPUT=null; const I=%s, P=G.player, [id,side,back,dist,pitch,clock]=arg, n=G.npcs.find(n=>n.role==='quest'&&QUESTS[n.qi].id===id); G.clock=clock;
-  G.quest=null; P.pos=vadd(n.pos,V(side,0,back)); P.vel=V(); RUB.teleport=true; const yaw=Math.atan2(n.pos.x-P.pos.x,n.pos.z-P.pos.z); P.yaw=yaw; G.cam.yaw=yaw+0.3;
+  /* stand in front of them (the way they face from their spot is away from their building), side steps to one side */
+  G.quest=null; const f=fwd(n.home?n.home.yaw:n.yaw); P.pos=vadd(n.pos,V(f.x*back+f.z*side,0,f.z*back-f.x*side)); P.vel=V(); RUB.teleport=true; const yaw=Math.atan2(n.pos.x-P.pos.x,n.pos.z-P.pos.z); P.yaw=yaw; G.cam.yaw=yaw+0.3;
   G.cam.pitch=pitch; G.cam.dist=G.cam.cur=dist; G.cam.focus=vadd(P.pos,V(0,1.4,0)); G.pops=[]; for(let i=0;i<30;i++) update(1/60,I()); syncHUD(1/60);
   return {who:QUESTS[n.qi].who,near:!!G.nearQuest,prompt:document.getElementById('promptmsg').textContent}; }""" % I
 SEARCH = r"""(arg) => { DEMO_INPUT=null; const I=%s, P=G.player, n=G.npcs.find(n=>n.role==='quest'&&QUESTS[n.qi].id==='ernesto'); G.clock=arg[0]; G.questDone.delete('ernesto');
   P.pos=vadd(n.pos,V(1.2,0,0.4)); P.vel=V(); RUB.teleport=true; for(let i=0;i<5;i++) update(1/60,I()); questTalk(n); for(let i=0;i<5;i++) update(1/60,I());
   const Q=G.quest; let k=0; while(Q&&Q.k<Q.steps.length&&!/Ernesto around/.test(Q.steps[Q.k].text)&&k++<8){ if(Q.nb) for(const nb of Q.nb){ P.pos=vadd(nb.pos,V(1.1,0,0)); RUB.teleport=true; for(let i=0;i<3;i++) update(1/60,I()); update(1/60,I({grab:true})); } for(let i=0;i<3;i++) update(1/60,I()); }
-  const a=Q&&Q.area||n.pos; P.pos=vadd(a,V(-7.5,0,6.5)); P.vel=V(); RUB.teleport=true; const yaw=Math.atan2(a.x-P.pos.x,a.z-P.pos.z); P.yaw=yaw; G.cam.yaw=yaw; G.cam.pitch=0.62; G.cam.dist=G.cam.cur=10;
+  const a=Q&&Q.area||n.pos, e=Q&&Q.ern?Q.ern.pos:a; let at=null; for(let k=0;k<24&&!at;k++){ const an=k/24*TAU, p=vadd(a,V(Math.cos(an)*10,0,Math.sin(an)*10)); if(hlen(vsub(p,e))>12&&!questBlocked(p)) at=p; }
+  P.pos=at||vadd(a,V(-7.5,0,6.5)); P.vel=V(); RUB.teleport=true; /* the ring shows while you're more than 11 m from Ernesto */ const yaw=Math.atan2(a.x-P.pos.x,a.z-P.pos.z); P.yaw=yaw; G.cam.yaw=yaw; G.cam.pitch=0.62; G.cam.dist=G.cam.cur=10;
   G.cam.focus=vadd(P.pos,V(0,1.4,0)); for(let i=0;i<30;i++) update(1/60,I()); syncHUD(1/60); return {step:Q?Q.steps[Q.k].text:null,hud:document.getElementById('quest').textContent.slice(0,120)}; }""" % I
 
 CHASE = r"""() => { DEMO_INPUT=null; const I=%s, P=G.player, n=G.npcs.find(n=>n.role==='quest'&&QUESTS[n.qi].id==='shoplifter'); G.clock=17.6; G.questDone.delete('shoplifter');
   if(G.quest){ questCleanup(G.quest); G.quest=null; } P.pos=vadd(n.pos,V(1.2,0,0.4)); P.vel=V(); RUB.teleport=true; for(let i=0;i<5;i++) update(1/60,I()); questTalk(n); for(let i=0;i<100;i++) update(1/60,I());
-  const Q=G.quest, t=Q&&Q.thief; if(!t) return {thief:false}; const yaw=Math.atan2(t.pos.x-P.pos.x,t.pos.z-P.pos.z); P.yaw=yaw; G.cam.yaw=yaw; G.cam.pitch=0.3; G.cam.dist=G.cam.cur=6.5;
+  const Q=G.quest, t=Q&&Q.thief; if(!t) return {thief:false}; const back=vsub(n.pos,t.pos), bl=Math.max(0.01,hlen(back)); P.pos=V(t.pos.x+back.x/bl*6,0,t.pos.z+back.z/bl*6); P.vel=V(); RUB.teleport=true; const yaw=Math.atan2(t.pos.x-P.pos.x,t.pos.z-P.pos.z); P.yaw=yaw; G.cam.yaw=yaw; G.cam.pitch=0.3; G.cam.dist=G.cam.cur=6.5;
   G.cam.focus=vadd(P.pos,V(0,1.4,0)); for(let i=0;i<10;i++) update(1/60,I()); syncHUD(1/60); return {thief:t.state,d:+hlen(vsub(t.pos,P.pos)).toFixed(1),hud:document.getElementById('quest').textContent.slice(0,90)}; }""" % I
 
 SHOTS = [
@@ -39,8 +41,8 @@ SHOTS = [
     ('trailers_doc', TRAILER, [5.2, -2.2, 5.6, -5.8, 4.8, 0.14, 19.4, 0]),
     ('trailers_inside', TRAILER, [-8.0, -7.44, -8.0, -8.6, 5.5, 0.62, 15.0, 0.75]),
     ('trailers_inside2', TRAILER, [-5.3, -7.3, -9.0, -7.5, 4.5, 0.85, 15.0, 0.75]),
-    ('quest_giver', GIVER, ['ernesto', 2.0, 1.4, 4.8, 0.16, 15.8]),
-    ('quest_giver2', GIVER, ['collections', -2.2, 1.6, 5.2, 0.16, 20.4]),
+    ('quest_giver', GIVER, ['ernesto', 0.9, 2.4, 4.8, 0.16, 15.8]),
+    ('quest_giver2', GIVER, ['collections', -1.0, 2.4, 5.2, 0.16, 20.4]),
     ('quest_search', SEARCH, [16.6]),
     ('quest_chase', CHASE, None),
 ]

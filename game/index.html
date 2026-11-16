@@ -822,7 +822,7 @@ function stopSign(x,z,q){ solid(x-0.05,CURB,z-0.05,x+0.05,CURB+2.4,z+0.05,C.lamp
 // a tree grown like one: tapered bark trunk with a root flare, 3-5 branches, leaf clusters at the tips (darker below)
 // real grass: blades (thin cones) scattered over the lawns, two per tuft, kept out of buildings and walls
 function grassAll(){ const dens=SET.quality==='low'?0:(SET.quality==='high'||(SET.quality==='auto'&&!IS_TOUCH)?3.2:1.4); if(!dens) return; const g=GRID;
-  for(const b of W.blocks){ if(!['res','park','trailer','tower'].includes(b.kind)) continue; const x0=b.x0+WALK+0.2, z0=b.z0+WALK+0.2, x1=b.x1-WALK-0.2, z1=b.z1-WALK-0.2, n=Math.floor((x1-x0)*(z1-z0)*dens), pv=W.paved.filter(q=>q[0]<x1&&q[2]>x0&&q[1]<z1&&q[3]>z0);
+  for(const b of W.blocks){ if(!['res','park','trailer','tower'].includes(b.kind)) continue; const x0=b.x0+WALK+0.2, z0=b.z0+WALK+0.2, x1=b.x1-WALK-0.2, z1=b.z1-WALK-0.2, n=Math.floor((x1-x0)*(z1-z0)*dens), pv=W.paved.concat(W.interiors.map(i=>[i.x0-0.25,i.z0-0.25,i.x1+0.25,i.z1+0.25])).filter(q=>q[0]<x1&&q[2]>x0&&q[1]<z1&&q[3]>z0);   /* nothing grows indoors */
     for(let i=0;i<n;i++){ const x=rand(x0,x1), z=rand(z0,z1); if(b.kind==='park'&&(Math.abs(x-(b.x0+b.x1)/2)<1.8||Math.abs(z-(b.z0+b.z1)/2)<1.8)) continue; if(pv.some(q=>x>q[0]-0.1&&x<q[2]+0.1&&z>q[1]-0.1&&z<q[3]+0.1)) continue; const cx=Math.floor((x-g.ox)/g.cell), cz=Math.floor((z-g.oz)/g.cell); let hit=false;
       for(const si of (g.cells[cz*g.n+cx]||NONE)){ const s=W.solids[si]; if(s.y0<0.3&&s.y1>0.05&&x>s.x0-0.15&&x<s.x1+0.15&&z>s.z0-0.15&&z<s.z1+0.15){ hit=true; break; } } if(hit) continue;
       const base=[rand(0.22,0.36),rand(0.42,0.62),rand(0.12,0.22)];
@@ -3776,7 +3776,7 @@ var QUESTS=[
   hi:"A box bounced off my van on the residential streets and I have 200 stops left. Find it and deliver it for me?",done:"Signed and delivered. You're a lifesaver."},
  {id:'ernesto',who:'Grandma Lupe',role:'gnome collector',title:'Ernesto Ran Away',pay:400,look:{shirt:0x8a5a9a,pants:0x3a3040,style:'skirt',skirt:0x4a3550,h:0.9,hat:0,hair:0xdcd8d0,skin:0xc68a5e,vsex:'f',girth:1.2},
   hi:"Mijo, my gnome Ernesto is gone! Ask the neighbors where he went.",done:"Ernesto! You got thinner. Here, for your trouble."},
- {id:'shoplifter',who:'Raj',role:'gas station clerk',title:'Five-Finger Discount',pay:400,look:{shirt:0xc0392b,pants:0x2a2a2e,hat:3,hair:0x141010,skin:0x9c6a44,vsex:'m',girth:1.05},
+ {id:'shoplifter',who:'Raj',role:'gas station clerk',title:'Five-Finger Discount',pay:400,look:{shirt:0xc0392b,pants:0x2a2a2e,style:'none',hat:3,hair:0x141010,skin:0x9c6a44,vsex:'m',girth:1.05},
   hi:"That guy just walked out with a bag of my stock! Stop him!",done:"It's all here. Free coffee for a week."},
  {id:'collections',who:'Vinny',role:'casino doorman',title:'Collections',pay:500,look:{shirt:0x1c1c22,pants:0x1c1c22,style:'tie',tie:0x8a1c2a,h:1.08,hat:0,hair:0x141010,skin:0xe0ac80,vsex:'m',girth:1.3},
   hi:"A guy in a purple suit owes the house. He hangs around the park. Go collect.",done:"Debt settled. Keep what you picked up, we're square."},
@@ -3820,7 +3820,8 @@ function questSteps(id){ const P=G.player;
     target(Q){ return this.close(Q)?Q.ern.pos:Q.area; }, area(Q){ return this.close(Q)?null:Q.area; }},
    {text:'Carry Ernesto home to Grandma Lupe',check(Q){ if(!Q.ern.alive) return 'fail:Ernesto got smashed'; if(qnear(Q.ern.pos,Q.n.pos,2.8)){ qTake(Q.ern); return true; } return false; }, target(Q){ return Q.n.pos; }}];
   if(id==='shoplifter') return [
-   {text:'Stop the shoplifter before he gets away',time:75,beam:true,start(Q){ const [r,w]=nearestWp(Q.n.pos), t=makeNpc(r,w,'civ'); t.pos=vadd(Q.n.pos,V(rand(-1.5,1.5),0,rand(1.2,2.2))); t.shirt=hex(0x2a2c30); t.pants=hex(0x2a3a5a); t.hat=1; t.speedK=1.15; t.role='qrun'; t.qname='Shoplifter'; t.look=null; G.npcs.push(t); Q.thief=t; startle(t,Q.n.pos); },
+   {text:'Stop the shoplifter before he gets away',time:75,beam:true,start(Q){ const [r,w]=nearestWp(Q.n.pos), t=makeNpc(r,w,'civ'); const o=fwd(Q.n.home?Q.n.home.yaw:Q.n.yaw); let sp=null; for(let k=0;k<10&&!sp;k++){ const sd=rand(-1.4,1.4), d=rand(1.8,2.8), q=V(Q.n.pos.x+o.x*d+o.z*sd,0,Q.n.pos.z+o.z*d-o.x*sd); if(!questBlocked(q)) sp=q; }
+      t.pos=sp||vadd(Q.n.pos,V(o.x*2.2,0,o.z*2.2));   /* out on the street side of Raj, not back inside the shop */ t.shirt=hex(0x2a2c30); t.pants=hex(0x2a3a5a); t.hat=3; t.speedK=1.15; t.role='qrun'; t.qname='Shoplifter'; t.look=null; G.npcs.push(t); Q.thief=t; startle(t,Q.n.pos); },
     check(Q){ const t=Q.thief; if(!t||!t.alive) return 'fail:He got away'; if(t.state==='rag'){ Q.bag=qProp('bag',vadd(t.pos,V(0,0.6,0)),'loot'); Q.bag.tint=hex(0xd8d2c0); say(t,'Ow! Fine, take it!',2.4); return true; }
       if(npcUp(t)&&t.state!=='flee'&&hlen(vsub(t.pos,P.pos))<16){ t.startleCd=0; startle(t,P.pos); } return false; }, target(Q){ return Q.thief&&Q.thief.alive?Q.thief.pos:null; }},
    {text:'Grab the stolen goods',check(Q){ if(!Q.bag.alive) return 'fail:The stolen goods got wrecked'; return qHeld(Q.bag); }, target(Q){ return Q.bag.pos; }},
@@ -3860,7 +3861,7 @@ function questSpots(){ W.questSpots=[]; const used=[], free=p=>!questBlocked(p)&
     used.push(p); W.questSpots.push(Object.assign({qi,p,yaw},extra)); }); }
 function questGivers(){ for(const sp of W.questSpots||NONE){ const q=QUESTS[sp.qi], n=qNpc(sp.p,sp.yaw,q.look,'quest',q.who); n.qi=sp.qi; if(sp.qbld) n.qbld=sp.qbld; } }
 function questPay(q){ return PROF.quests&&PROF.quests[q.id]?Math.round(q.pay*0.06)*10:q.pay; }
-function questPrompt(n){ const k=IS_TOUCH?'GRAB: ':'E: '; if(n.role!=='quest') return k+'talk to '+(n.qname||'them'); const q=QUESTS[n.qi], Q=G.quest;
+function questPrompt(n){ const k=LAST_INPUT==='touch'?'Tap TALK: ':talkKey()+': '; if(n.role!=='quest') return k+'talk to '+(n.qname||'them'); const q=QUESTS[n.qi], Q=G.quest;
   if(Q&&Q.n===n) return k+'talk to '+q.who+(Q.steps[Q.k]&&Q.steps[Q.k].turnIn?' · finish the quest':' · your quest');
   return k+'talk to '+q.who+(G.questDone.has(q.id)?'':' · quest: '+q.title+', Ð '+questPay(q)); }
 function questTalk(n){ const Q=G.quest;
@@ -3885,7 +3886,7 @@ function questUpdate(dt){ if(!G||G.attract||G.state!=='play'||!G.questDone) retu
   for(const n of G.npcs){ if(!n.alive||!(n.role==='quest'||n.role==='qnpc')||!npcUp(n)) continue; const d=hlen(vsub(n.pos,P.pos)); if(d<nd&&Math.abs(n.pos.y-P.pos.y)<1.7){ nd=d; near=n; }
     if(n.role==='quest'&&d<9&&n.talkCd<=0&&!G.questDone.has(QUESTS[n.qi].id)&&!G.quest){ say(n,pick(QUEST_HAIL),2.2); n.talkCd=rand(10,16); } }
   G.nearQuest=P.ragdoll?null:near;
-  if(near&&!PROF.qHint){ PROF.qHint=1; saveProfile(); toast('<b>QUESTS</b>','People with a gold ! over their heads need help. Walk up and press '+(IS_TOUCH?'GRAB':'E')+' to talk.','#ffd35a',4.5); }
+  if(near&&!PROF.qHint){ PROF.qHint=1; saveProfile(); toast('<b>QUESTS</b>','People with a gold ! over their heads need help. Walk up and press '+talkKey()+' to talk.','#ffd35a',4.5); }
   const Q=G.quest; if(!Q) return; const st=Q.steps[Q.k]; if(!st) return;
   if(st.time&&G.t-Q.st0>st.time){ questEnd(false,'Out of time'); return; }
   if(st.turnIn||!st.check) return; const r=st.check(Q);
@@ -3911,7 +3912,7 @@ function questOverlay(v){ if(!G.questDone) return; ov.textAlign='center'; const 
     if(s){ const fs=Math.round(clamp(30-d*0.32,14,27)); ov.globalAlpha=d>24?clamp(1-(d-24)/45,0.5,1):1; ov.font='900 '+fs+'px "Space Grotesk",system-ui,sans-serif'; ov.lineWidth=fs>20?5:4;
       ov.strokeStyle='rgba(10,8,16,.85)'; ov.strokeText(s,pr.x,pr.y); ov.fillStyle=col; ov.fillText(s,pr.x,pr.y);
       if(d>=12&&n!==G.nearQuest){ const t=Math.round(d)+'m'; ov.font='700 10px "Space Mono",monospace'; ov.lineWidth=3; ov.strokeText(t,pr.x,pr.y+12); ov.fillStyle='rgba(243,238,252,.92)'; ov.fillText(t,pr.x,pr.y+12); } ov.globalAlpha=1; }
-    if(n===G.nearQuest){ const label=(IS_TOUCH?'GRAB':'E')+' · Talk'; ov.font='800 14px "Space Grotesk",system-ui,sans-serif'; const w=ov.measureText(label).width+18, y=pr.y+(s?10:-6);
+    if(n===G.nearQuest){ const label=LAST_INPUT==='touch'?'Tap TALK':talkKey()+' · Talk'; ov.font='800 14px "Space Grotesk",system-ui,sans-serif'; const w=ov.measureText(label).width+18, y=pr.y+(s?10:-6);
       ov.fillStyle='rgba(16,14,24,.82)'; ov.beginPath(); ov.roundRect?ov.roundRect(pr.x-w/2,y,w,24,7):ov.rect(pr.x-w/2,y,w,24); ov.fill(); ov.strokeStyle='#ffd35a'; ov.lineWidth=1.5; ov.stroke(); ov.fillStyle='#ffd35a'; ov.fillText(label,pr.x,y+17); }
     else if(d<12&&n.role==='quest'&&s){ ov.font='700 11px "Space Mono",monospace'; ov.fillStyle='rgba(243,238,252,.85)'; ov.fillText(QUESTS[n.qi].who,pr.x,pr.y+14); } }
   if(!Q) return; const tg=questTarget(Q); if(!tg) return; const pr=project(VP,vadd(tg,V(0,1.4,0))), d=hlen(vsub(tg,G.player.pos)), col='#ffd35a';
@@ -4110,6 +4111,7 @@ function quitToTitle(){ recordRun(); document.body.classList.remove('paused'); f
 const KEYNAME={' ':'Space',arrowup:'↑',arrowdown:'↓',arrowleft:'←',arrowright:'→',shift:'Shift',control:'Ctrl',alt:'Alt',meta:'Cmd',tab:'Tab',enter:'Enter',backspace:'Bksp',capslock:'Caps'};
 const keyName=k=>KEYNAME[k]||(k.length===1?k.toUpperCase():k[0].toUpperCase()+k.slice(1));
 const kb=a=>keyName(SET.binds[a][0]);
+const talkKey=()=>LAST_INPUT==='pad'?'Y':LAST_INPUT==='touch'?'TALK':kb('grab');   /* the key that talks to people, for whatever you're playing with */
 const PAD_HINT='<b>Left stick</b> move · <b>right stick</b> look · <b>A</b> jump · <b>X</b>/<b>RT</b> tackle or throw · <b>Y</b> grab · <b>B</b> flop · <b>LB</b> holler · <b>RB</b> horn charge · <b>LT</b>/<b>L3</b> sprint · <b>D-pad ←</b> poop · <b>D-pad ↑↓</b> zoom · <b>D-pad →</b> voices · <b>Start</b> pause';
 function hintHTML(){ if(LAST_INPUT==='pad') return PAD_HINT;
   if(LAST_INPUT==='touch') return '<b>Left thumb</b> move · <b>right thumb</b> look · <b>TACKLE</b> · <b>JUMP</b> · <b>GRAB</b> · <b>FLOP</b> · <b>YELL</b> · <b>POOP</b> · <b>CHARGE</b> when you have horns · <b>II</b> pause';

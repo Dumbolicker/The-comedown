@@ -29,6 +29,7 @@ Requested on 15 Nov 2026:
 - [x] R1 renderer: material id packed into the instance glow, a 9-layer texture array, one fetch along the dominant axis
 - [x] R1 materials on ground, roads, lots, sidewalks, house siding, roofs, brick and plaster towers, trailers (before/after in `screenshots/b7/textures_before_after.jpg`)
 - [x] Grass stays off paving: every flat gray decal (driveways, walks, slabs) and every mulch bed is recorded as paved, and blades skip it (21,200 blades, 0 on paving in `tests/feat12.py`)
+- [x] Grass stays out of buildings: house floors are a decal, not a solid, so 4,794 of 19,628 blades (24%) were growing indoors. Every interior now counts as paved (15,198 blades, 0 indoors in `tests/feat12.py`)
 - [x] Houses rebuilt from real references (below)
 - [x] Street details: cobra-head street lights over the road, stop signs at residential corners, continental crosswalks around downtown, lane dashes at the real 10 ft / 30 ft rhythm, and car paint in real proportions
 - [x] Trailers rebuilt as lived-in single-wides you can walk into (below)

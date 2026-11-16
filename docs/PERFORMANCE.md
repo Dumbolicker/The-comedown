@@ -62,3 +62,24 @@ patches that moved as the camera moved slightly. Software GL showed it, and so c
 
 - A real phone or a real desktop GPU. SwiftShader is far slower than either, so read these as relative numbers.
 - Battery use.
+
+## Check after the quests and trailers batch (16 Nov 2026)
+
+The rebuilt trailers add breakable panels (siding bands, skirting, window frames) and some furniture, and the quests went
+from 21 people with a job to 5. The same probe ran twice on the build before the batch and twice on the new one, one run
+at a time on the same machine. A single run varies a lot (the new build's aerial render took 2.50 ms in one run and
+1.56 ms in the next), so the table shows the average of the two.
+
+| View | Triangles (main + shadow), before | After | Update JS, before | After | Render JS, before | After |
+| --- | --- | --- | --- | --- | --- | --- |
+| Street | 0.79M | 0.77M | 2.84 ms | 2.60 ms | 2.91 ms | 2.35 ms |
+| Aerial | 0.77M | 0.73M | 2.34 ms | 2.19 ms | 1.88 ms | 2.03 ms |
+| Blast | 0.74M | 0.80M | 12.3 ms | 13.4 ms | 3.1 ms | 3.8 ms |
+
+- **Walking around costs the same or less.** Drawing people in the aerial view went from 0.97 ms to 0.36 ms, because
+  about 35 people are out instead of about 50. The quest markers and talk tag cost 0.07 ms a frame.
+- **The trailers' extra panels don't show up.** One rebuild of the panel batch walks every breakable panel: 0.72 and
+  0.75 ms before (2,824 and 3,000 panels), 0.54 and 0.66 ms after (3,185 and 3,192 panels).
+- **The blast numbers depend on how much of the house comes down.** The new build's two blasts dropped 13 and 4 floor
+  slabs, against 0 and 2 for the old build's, and rebuilt the panel batch 24 and 19 times against 9 and 14. More falling
+  floors mean more physics and more rebuilds, whichever build it is.
