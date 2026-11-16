@@ -41,7 +41,7 @@ async def main():
         out = {}
 
         # 1. first visit: warning shows; choosing "reduce" saves the choice and turns on calm mode
-        await page.goto(GAME, wait_until="load"); await page.wait_for_timeout(800)
+        await page.goto(GAME, wait_until="load", timeout=180000); await page.wait_for_timeout(800)
         out['warning'] = await page.evaluate("()=>({shown:!document.getElementById('warn').hidden, titleBehind:!document.getElementById('title').hidden})")
         await page.click('#warnCalm')
         out['warning'].update(await page.evaluate("()=>({flash:SET.flash,shake:SET.shake,calmClass:document.body.classList.contains('calm'),saved:JSON.parse(localStorage.getItem('bt_settings')).warned})"))

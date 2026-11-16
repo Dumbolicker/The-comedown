@@ -37,15 +37,25 @@ The references are well-known papers with their DOIs so you can look them up. I 
 - **No endless streak pressure.** The streak bonus stops growing at day 6.
 - **Break reminder.** On by default, under Settings → Comfort. After each hour of play you get one short "stretch and drink some water" note. The WHO lists gaming disorder in ICD-11 (6C51), and an honest nudge costs nothing.
 
-## Odd jobs (21 neighbors with a task)
+## Quests (five people who need a hand)
 
-- **What:** people with a gold $ over their heads offer a job: knock over lawn ornaments, return a shopping cart, deliver a
-  parcel, tackle a man in a purple suit, climb the water tower, race three checkpoints, and so on. Press E (GRAB on touch) to
-  take one. One job at a time; the corner panel shows the task, progress, the pay and an arrow with the distance.
-- **Why it works:** a specific goal beats "do your best" (Locke & Latham, 2002); visible progress speeds people up as the
-  goal gets close (Kivetz, Urminsky & Zheng, 2006); the payout comes the moment the job is done.
-- **Guardrails:** jobs pay fake dollas only, plus 8 seconds on the clock. Only the parcel, the bounty and the race have time
-  limits, and failing one just ends the job. Repeats pay 60%, so nothing pushes you to grind.
+- **Who and what:** five people stand in fixed spots with a gold **!** over their heads: Marisol the delivery driver
+  (find a lost parcel, deliver it, get a signature), Grandma Lupe (ask two neighbors, find her runaway gnome Ernesto in
+  the search ring, carry him home), Raj at the gas station (stop a shoplifter, grab the stolen goods, bring them back),
+  Vinny outside the casino (find the man in the purple suit at the park and collect) and Inspector Lowe (post the notice
+  on a condemned house, clear the yard, bring the roof down). Each runs three or four steps.
+- **Talking:** when you're close, an **E · Talk** tag appears over the person and the prompt names the quest and its pay;
+  press E (on touch, the GRAB button turns into TALK), even while holding something. Quest people stand their ground: sprinting at them doesn't
+  scare them off, a bump just stops you, and after a real tackle they walk back to their spot. A **?** marks whoever
+  you need to talk to next. Far-off markers are smaller and fainter, with the distance under them.
+- **Following a quest:** one at a time. The corner panel shows the quest, "step 2 of 3", the pay, and an arrow with the
+  distance; a gold ring marks a search area and a beam marks a target; an arrow at the screen edge points the way when
+  the target is off screen.
+- **Why it works:** a specific goal beats "do your best" (Locke & Latham, 2002); seeing which step you're on and how far
+  the target is speeds people up as the end gets close (Kivetz, Urminsky & Zheng, 2006); the pay lands the moment you
+  hand the quest in.
+- **Guardrails:** quests pay fake dollas only, plus 8 seconds on the clock. Only catching the shoplifter has a time limit
+  (75 s), and running out just ends the quest. A repeat pays 60%, so nothing pushes you to grind them.
 
 ## References
 

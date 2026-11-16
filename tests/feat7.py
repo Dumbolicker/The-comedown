@@ -31,8 +31,13 @@ JS = r"""
     const cy=RUB.ready?(ch.t?ch.t.y:ch.body.translation().y):ch.pos.y;
     out.rubbleVsProp={canMovedM:+Math.hypot(Tc.pos.x-tc0.x,Tc.pos.y-tc0.y,Tc.pos.z-tc0.z).toFixed(2),chunkRestY:+cy.toFixed(2),interacted:Math.hypot(Tc.pos.x-tc0.x,Tc.pos.z-tc0.z)>0.05||cy>0.5};
     // ---- a thrown crate breaks a wooden wall panel
-    const pan=BRK.find(b=>b.alive&&b.mat==='wood'&&!b.roof&&b.s.y0<0.1&&(b.s.z1-b.s.z0)<0.3&&(b.s.x1-b.s.x0)>1.0);
-    const pc=boxCenter(pan.s), side=Math.sign((P.pos.z-pc.z)||1), Cr=mk('crate',V(pc.x,0.9,pc.z+side*2.2),V(0,1.5,-side*16)); Cr.thrown=1;
+    // thrown from outside with nothing in the way (from inside a house the couch or the table can stop it first)
+    const clearPath=(b,s)=>{ const c=boxCenter(b.s), z0=Math.min(c.z,c.z+s*2.4), z1=Math.max(c.z,c.z+s*2.4);
+      return !W.interiors.some(i=>c.x>i.x0&&c.x<i.x1&&c.z+s*2.2>i.z0&&c.z+s*2.2<i.z1)
+        &&!W.solids.some(q=>!q.gone&&q!==b.s&&q.x0<c.x+0.45&&q.x1>c.x-0.45&&q.y0<1.5&&q.y1>0.3&&q.z0<z1&&q.z1>z0)
+        &&!G.props.some(o=>o.alive&&Math.abs(o.pos.x-c.x)<0.9&&o.pos.z>z0-0.6&&o.pos.z<z1+0.6); };
+    const pan=BRK.find(b=>b.alive&&b.mat==='wood'&&!b.roof&&b.s.y0<0.1&&(b.s.z1-b.s.z0)<0.3&&(b.s.x1-b.s.x0)>1.0&&(clearPath(b,1)||clearPath(b,-1)));
+    const pc=boxCenter(pan.s), side=clearPath(pan,1)?1:-1, Cr=mk('crate',V(pc.x,0.9,pc.z+side*2.2),V(0,1.5,-side*16)); Cr.thrown=1;
     const hp0=pan.hp; step(40); out.thrownCrate={panelHpBefore:+hp0.toFixed(1),panelAlive:pan.alive,panelHpAfter:+(pan.alive?pan.hp:0).toFixed(1),damaged:!pan.alive||pan.hp<hp0};
     // ---- explosion among props: logic cost of the busiest second
     const c4=open(); P.pos=V(c4.x+9,0,c4.z); for(let k=0;k<12;k++) mk(pick(['crate','trash','barrel','cone','bag']),V(c4.x+rand(-2,2),0.6,c4.z+rand(-2,2))); step(60);

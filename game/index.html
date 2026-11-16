@@ -883,13 +883,13 @@ function roofBuild(kind,x0,z0,x1,z1,ye,pitch,ov,c,o){ const bld=o.bld, tr=o.trim
     const rlo=o.rlo===undefined?0.3:o.rlo, rhi=o.rhi===undefined?0.3:o.rhi, run=half+ov, rise=run*pitch, yr=ye+rise, ang=Math.atan2(rise,run), L=Math.hypot(run,rise);
     const Ac=(A0-rlo+A1+rhi)/2, Ah=(A1+rhi-A0+rlo)/2, Aw=(A0+A1)/2, W3=(a,y,b)=>ax?V(a,y,b):V(b,y,a), S3=(ha,hy,hb)=>ax?V(ha,hy,hb):V(hb,hy,ha), Hw=Math.max(0.05,rise-th/Math.cos(ang)-0.03);
     for(const sg of [-1,1]){ const lo=sg<0?B0-ov:Bc, hi=sg<0?Bc:B1+ov, dir=ax?(sg<0?3:4):(sg<0?1:2);
-      const P=ax?brkRamp(A0-rlo,ye,lo,A1+rhi,yr,hi,dir,'roof',c,{bld,roof:true,cut:bld}):brkRamp(lo,ye,A0-rlo,hi,yr,A1+rhi,dir,'roof',c,{bld,roof:true,cut:bld});
+      const RB={bld,roof:true,cut:bld,hpK:o.hpK||1}, P=ax?brkRamp(A0-rlo,ye,lo,A1+rhi,yr,hi,dir,'roof',c,RB):brkRamp(lo,ye,A0-rlo,hi,yr,A1+rhi,dir,'roof',c,RB);
       const c0=boxCenter(P.s), parts=[], add=(mesh,pos,q,h,col,m)=>parts.push([mesh,vsub(pos,c0),q,h,col,m]);
       const qs=ax?qx(sg*ang):qz(-sg*ang), midB=(lo+hi)/2, nB=sg*Math.sin(ang), nY=Math.cos(ang), pc=W3(Ac,(ye+yr)/2-nY*th/2,midB-nB*th/2);
-      add('cube',pc,qs,ax?V(Ah,th/2,L/2):V(L/2,th/2,Ah),c,6);                                                   // shingles
+      add('cube',pc,qs,ax?V(Ah,th/2,L/2):V(L/2,th/2,Ah),c,o.rm||6);                                                   // shingles
       const wb0=sg<0?B0:Bc, wb1=sg<0?Bc:B1, wy=sg<0?(ax?-PI/2:0):(ax?PI/2:PI);
       add('wedge',W3(Aw,ye+Hw/2,(wb0+wb1)/2),qyaw(wy),V(half/2,Hw/2,(A1-A0)/2),wl,wt);                        // gable end, clad like the walls
-      if(sg<0) add('cube',W3(Ac,yr+0.012,Bc),QI,S3(Ah,0.035,0.12),tone(c,0.8),6);                               // ridge cap
+      if(sg<0) add('cube',W3(Ac,yr+0.012,Bc),QI,S3(Ah,0.035,0.12),tone(c,0.8),o.rm||6);                               // ridge cap
       P.parts=parts;
       const eB=sg<0?B0-ov:B1+ov, oB=sg<0?-1:1, wB=(sg<0?B0:B1)+oB*0.07, gB=eB+oB*0.075, T=[], tp=(p,h,q,col)=>T.push([p.x,p.y,p.z,h.x,h.y,h.z,q||QI,col]);
       tp(W3(Ac,ye-0.07,eB+oB*0.012),S3(Ah,0.1,0.02));                                                          // fascia
@@ -1083,7 +1083,7 @@ function gen_gas(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
     wallRun('x',sx0,sx1,sz1-t,sz1,0,H,[],'brick',bc,bld,2.6);
     wallRun('z',sz0+t,sz1-t,sx0,sx0+t,0,H,[{u0:cz+6,u1:cz+7.5,y0:1.1,y1:2.3}],'brick',bc,bld,2.6); wallRun('z',sz0+t,sz1-t,sx1-t,sx1,0,H,[],'brick',bc,bld,2.6);
     const rf=brk(sx0,H,sz0,sx1,H+0.3,sz1,'conc',hex(0xd2ccbe),{bld,roof:true,cut:bld});
-    W.interiors.push({x0:sx0+t,z0:sz0+t,x1:sx1-t,z1:sz1-t,y1:H,bld,cut:bld});
+    W.interiors.push({x0:sx0+t,z0:sz0+t,x1:sx1-t,z1:sz1-t,y1:H,bld,cut:bld,shop:true});
     texDeco('tile',V(cx,0.03,(sz0+sz1)/2),V(6-t,0,0),V(0,0,-(3.75-t)),[0,0,1,1],{su:8,sv:5,far:70});
     for(const ax of [cx-1.6,cx+1.6]) prop('shelf2',ax,0,cz+7.0,0);
     solid(cx-4.6,0,sz1-t-0.75,cx+4.6,2.2,sz1-t,hex(0xcfd6dc)); sdeco(cx,1.15,sz1-t-0.77,4.5,0.95,0.02,hex(0xbfe6ff),0.55);
@@ -1175,20 +1175,20 @@ function gen_park(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2; const path=hex(0
   for(let k=0;k<3;k++) prop('ball',rand(cx+2,l.x1-2),0,rand(l.z0+2,cz-2.5),0); prop('trash',cx+1.8,0,cz-1.8,0);
   spot(l.x1-2,0,l.z1-2); spot(cx+6,0,cz-6); tramp(cx-6.5,cz+6.5); }
 function gen_trailer(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
-  const bodies=[0xede6d3,0xd8e4e0,0xe8d8c4,0xcfd8dc], stripes=[0x2e7d8c,0xb5533c,0x6b8e3a,0x4a5a9a];
-  [[-5.5,-7.5],[5.5,-7.5],[-5.5,1],[-5.5,8.5],[5.5,8.5]].forEach(([ox,oz],k)=>{ const tx=cx+ox, tz=cz+oz;
-    const tb=trailerShell(tx,tz,hex(bodies[k%4]),hex(stripes[k%4])); sdeco(tx+2.3,0.12,tz+2.0,0.55,0.12,0.4,hex(0x8a8478));
-    brk(tx-2.0,2.98,tz-0.45,tx-1.1,3.5,tz+0.45,'metal',hex(0xb8bcc0),{bld:tb}); spot(tx-2,2.9,tz,true); });
+  const bodies=[0xede6d3,0xd3dee0,0xe8dcc6,0xdfe3df,0xc9d5c2], stripes=[0x2e6d7c,0x9a4a36,0x5d7a3a,0x4a5a8a,0x7a5a3a];
+  [[-5.5,-7.5],[5.5,-7.5],[-5.5,1],[-5.5,7.9],[5.5,7.9]].forEach(([ox,oz],k)=>{ const tx=cx+ox, tz=cz+oz;
+    const tr=trailerShell(tx,tz,hex(bodies[k%5]),hex(stripes[k%5]),{noDeck:k===1,noAwn:k===1,hitch:ox>0?1:-1}), ry=topAt(tr.roof.A.s,tx-2,tz-0.3);
+    brk(tx-2.45,ry,tz-0.75,tx-1.55,ry+0.5,tz-0.05,'metal',hex(0xb8bcc0),{bld:tr.bld,hideIn:true}); spot(tx-2,ry+0.5,tz,true); });
   { // Doc Suture's ripperdoc trailer: neon sign, operating chair, surgical lamp, a cart of glowing vials
-    const tx=cx+5.5, tz=cz-7.5, fz=tz+1.6;
-    sdeco(tx-1.4,2.42,fz+0.07,2.0,0.32,0.04,hex(0x14121c)); neonText('RIPPERDOC',tx-1.4,2.42,fz+0.12,0.08,hex(0xff4fd8)); sdeco(tx-1.4,2.12,fz+0.1,1.85,0.022,0.02,hex(0x37e6ff),1);
+    const tx=cx+5.5, tz=cz-7.5, fz=tz+1.7;
+    sdeco(tx-1.4,2.79,fz+0.07,1.8,0.23,0.04,hex(0x14121c)); neonText('RIPPERDOC',tx-1.4,2.81,fz+0.12,0.065,hex(0xff4fd8)); sdeco(tx-1.4,2.6,fz+0.1,1.7,0.015,0.02,hex(0x37e6ff),1);
     sdeco(tx+3.55,2.4,fz+0.1,0.06,0.2,0.03,hex(0x7cff9b),1); sdeco(tx+3.55,2.4,fz+0.1,0.2,0.06,0.03,hex(0x7cff9b),1);
-    sdeco(tx+2.3,2.6,fz+0.75,1.05,0.04,0.75,hex(0x2a2e36)); scyl(tx+1.35,1.3,fz+1.45,0.03,1.3,hex(0x55585e)); scyl(tx+3.25,1.3,fz+1.45,0.03,1.3,hex(0x55585e));
+    sdeco(tx+2.0,2.97,fz+0.75,1.15,0.04,0.75,hex(0x2a2e36)); scyl(tx+0.9,1.48,fz+1.45,0.03,1.48,hex(0x55585e)); scyl(tx+3.1,1.48,fz+1.45,0.03,1.48,hex(0x55585e));
     const chx=tx-2.6, chz=fz+1.5; solid(chx-0.35,0,chz-0.85,chx+0.35,0.5,chz+0.85,hex(0x3a3f48)); sdeco(chx,0.58,chz+0.15,0.34,0.07,0.7,hex(0x2f8a9a)); sdeco(chx,0.95,chz-0.8,0.34,0.42,0.07,hex(0x2f8a9a),0,qx(0.45));
     scyl(chx+0.75,1.0,chz-0.7,0.035,1.0,hex(0x8a9096)); sdeco(chx+0.42,2.0,chz-0.7,0.36,0.03,0.03,hex(0x8a9096)); scyl(chx+0.08,1.95,chz-0.7,0.02,0.05,hex(0x8a9096)); sball(chx+0.08,1.86,chz-0.7,0.17,0.07,0.17,hex(0xe8f6ff),1);
     solid(tx+3.7,0,fz+0.55,tx+4.5,0.9,fz+1.2,hex(0x6a7078)); for(let k=0;k<4;k++) scyl(tx+3.85+k*0.18,1.0,fz+0.88,0.035,0.09,hex([0x37e6ff,0xff4fd8,0x7cff9b,0xffb63c][k]),1);
-    W.doc={pos:V(tx+2.3,0,fz+1.3),yaw:0}; solid(tx+2.05,0,fz+1.05,tx+2.55,1.9,fz+1.55,C.dark,false);
-    light(chx+0.08,1.75,chz-0.7,5,[0.85,1.05,1.25]); light(tx-1.4,2.3,fz+0.9,5.5,[1.1,0.3,0.95],{flick:6}); }
+    W.doc={pos:V(tx+1.55,0,fz+1.2),yaw:0}; solid(tx+1.3,0,fz+0.95,tx+1.8,1.9,fz+1.45,C.dark,false);
+    light(chx+0.08,1.75,chz-0.7,5,[0.85,1.05,1.25]); light(tx-1.4,2.7,fz+0.9,5.5,[1.1,0.3,0.95],{flick:6}); }
   const jx=cx+4.5, jz=cz+1;
   prop('couch',jx-1.8,0,jz+2.6,PI); prop('tv',jx-0.1,0,jz+2.9,PI+0.3); prop('chair',jx+1.4,0,jz+1.7,2.6); prop('chair',jx+2.2,0,jz-1.3,-0.6);
   prop('grill',jx+3.4,0,jz+2.8,0); prop('propane',jx+4.0,0,jz+3.0,0); prop('propane',jx-3.0,0,jz-3.5,0);
@@ -1197,7 +1197,7 @@ function gen_trailer(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
   prop('ball',jx+1.8,0,jz-3.8,0); prop('cart',jx-3.4,0,jz-0.8,0.8); for(let k=0;k<3;k++) prop('bag',cx-0.8+k*0.6,0,cz+2.4,0);
   prop('wheelie',cx+0.8,0,cz-1.4,0); prop('crate',cx+0.4,0,cz+1.6,0.4); prop('gnome',jx+2.6,0,jz+0.4,-1);
   scyl(jx+4.2,0.16,jz-2.6,1.1,0.16,hex(0x3aa0e0)); scyl(jx+4.2,0.31,jz-2.6,0.98,0.02,hex(0x7ad0f0),0.15);
-  W.spawn=V(jx,0,jz); W.spawnYaw=PI; spot(cx+1,0,cz-3.6); spot(cx-10.5,0,cz+4.6); spot(cx+10,0,cz+3.4); tramp(cx-5.5,cz-3.25); }
+  W.spawn=V(jx,0,jz); W.spawnYaw=PI; spot(cx+1,0,cz-3.6); spot(cx-10.5,0,cz+4.6); spot(cx+10,0,cz+3.4); tramp(cx-3.2,cz-3.2); }
 function gen_tower(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2, tx=cx-4.5, tz=cz-4.5, leg=hex(0x7c8a96);
   const legs=[[tx-2.6,tz-2.6],[tx+2.6,tz-2.6],[tx+2.6,tz+2.6],[tx-2.6,tz+2.6]];
   // breakable: knock out three legs and the tank comes down (about 220 t, close to a real full tank)
@@ -1264,8 +1264,8 @@ function genWorld(){
   const o=HALF, th=1.2, wcol=hex(0x9a968c);
   for(const [a,b,c,d] of [[-o-th,-o-th,o+th,-o],[-o-th,o,o+th,o+th],[-o-th,-o,-o,o],[o,-o,o+th,o]]){ solid(a,0,b,c,2.4,d,wcol); solid(a,2.4,b,c,60,d,wcol,false); }
   for(let k=0;k<70;k++){ const an=rand(0,TAU), d=rand(o+8,o+80), x=Math.cos(an)*d, z=Math.sin(an)*d; if(Math.abs(x)<o+5&&Math.abs(z)<o+5) continue; tree(x,z,false); }
-  questSpots(); brkGraph(); W.glass=BRK.filter(b=>b.mat==='glass'); W.slotsB=BRK.filter(b=>b.kind==='slot');
-  condemn(); gridBuild(); grassAll(); uploadStatic(); BRK_DIRTY=true; FIRE.list.length=0; NAV.built=false; if(RUB.ready) rubWorld();
+  brkGraph(); W.glass=BRK.filter(b=>b.mat==='glass'); W.slotsB=BRK.filter(b=>b.kind==='slot');
+  condemn(); questSpots(); gridBuild(); grassAll(); uploadStatic(); BRK_DIRTY=true; FIRE.list.length=0; NAV.built=false; if(RUB.ready) rubWorld();
 }
 
 /* ---------------- props ---------------- */
@@ -1418,12 +1418,14 @@ function brkRamp(x0,y0,z0,x1,y1,z1,dir,mat,col,o={}){ let yaw=0, sx=(x1-x0)/2, s
 // a wall along x (axis 'x', thickness in z from t0 to t1) or along z, cut into ≤1.5 m columns and two courses, with door and window openings
 let TRIM=false; const TRIM_COL=[0.93,0.92,0.88];
 // a window frame the way it's built: sill (proud of the wall), head casing, side casings, and a cross mullion in the glass
-var TRIM_C=null, SHUT=null, SHUT_OUT=1;   // this house's trim color; shutter color, and which side of the wall is outdoors (+1 / -1 along the wall's normal)
+var TRIM_C=null, SHUT=null, SHUT_OUT=1, AWN=null;   // AWN: aluminum awning color over each window (trailers)   // this house's trim color; shutter color, and which side of the wall is outdoors (+1 / -1 along the wall's normal)
 function addTrim(axis,u0,u1,t0,t1,ya,yb,anchor){ const tm=(t0+t1)/2, d=(t1-t0)/2+0.05, uc=(u0+u1)/2, w=(u1-u0)/2, hh=(yb-ya)/2, yc=(ya+yb)/2, P=[];
   const add=(u,y,ha,hy,hd,t=tm,c)=>P.push(axis==='x'?[u,y,t,ha,hy,hd,QI,c]:[t,y,u,hd,hy,ha,QI,c]);
   add(uc,ya-0.035,w+0.08,0.035,d+0.035); add(uc,yb+0.045,w+0.06,0.045,d); add(u0+0.03,yc,0.03,hh,d); add(u1-0.03,yc,0.03,hh,d);
   if(w>0.75) add(uc,yc,0.016,hh,0.035); add(uc,yc,w,0.016,0.035);   // meeting rail of a double-hung sash; wide windows get a center mullion too
   if(SHUT&&yb-ya>0.9&&ya>0.3){ const sw=clamp(w*0.85,0.28,0.42), so=tm+SHUT_OUT*((t1-t0)/2+0.035); add(u0-0.06-sw/2,yc,sw/2,hh+0.03,0.02,so,SHUT); add(u1+0.06+sw/2,yc,sw/2,hh+0.03,0.02,so,SHUT); }
+  if(AWN&&yb-ya>0.6){ const ao=tm+SHUT_OUT*((t1-t0)/2+0.27), ay=yb+0.15, aq=axis==='x'?qx(SHUT_OUT*0.4):qz(-SHUT_OUT*0.4); P.push(axis==='x'?[uc,ay,ao,w+0.14,0.012,0.29,aq,AWN]:[ao,ay,uc,0.29,0.012,w+0.14,aq,AWN]);
+    const vo=tm+SHUT_OUT*((t1-t0)/2+0.54); P.push(axis==='x'?[uc,ay-0.16,vo,w+0.14,0.06,0.01,QI,tone(AWN,0.8)]:[vo,ay-0.16,uc,0.01,0.06,w+0.14,QI,tone(AWN,0.8)]); }   // awning and its valance
   W.trims.push({a:anchor,p:P,c:TRIM_C||TRIM_COL}); }
 function wallRun(axis,a0,a1,t0,t1,y0,y1,ops,mat,col,bld,course=2.1){ const cuts=[a0,a1]; for(const q of ops) cuts.push(clamp(q.u0,a0,a1),clamp(q.u1,a0,a1));
   cuts.sort((p,q)=>p-q); const cols=[];
@@ -1434,7 +1436,7 @@ function wallRun(axis,a0,a1,t0,t1,y0,y1,ops,mat,col,bld,course=2.1){ const cuts=
     if(op&&op.door){ box(u0,u1,Math.max(op.y1,y0),Math.max(op.y1,mid),mat,col); box(u0,u1,Math.max(op.y1,mid),y1,mat,col); }
     else if(op){ const sill=box(u0,u1,y0,op.y0,mat,col); pane(u0,u1,op.y0,op.y1); if(TRIM&&sill) addTrim(axis,u0,u1,t0,t1,op.y0,op.y1,sill.id); box(u0,u1,op.y1,Math.max(op.y1,mid),mat,col); box(u0,u1,Math.max(op.y1,mid),y1,mat,col); }
     else { box(u0,u1,y0,mid,mat,col); box(u0,u1,mid,y1,mat,col); } }
-  for(const q of ops) if(q.door&&y0<0.05){ if(q.gdoor) addGarageDoor(axis,q.u0,q.u1,t0,t1,q.y1,bld,q); else addDoor(axis,q.u0,q.u1,t0,t1,q.y1,q.dmat||mat,bld,q.dcol); } }
+  for(const q of ops) if(q.door&&Math.abs((q.y0||0)-y0)<0.05){ if(q.gdoor) addGarageDoor(axis,q.u0,q.u1,t0,t1,q.y1,bld,q); else addDoor(axis,q.u0,q.u1,t0,t1,q.y1,q.dmat||mat,bld,q.dcol,q.y0||0); } }
 // support graph: who rests on whom (vertical) and who is bonded side by side (lateral, same course)
 function brkGraph(){ const statics=W.solids.filter(s=>s.brk===undefined&&!s.hidden&&!s.ramp);
   for(const list of BRK_BY.values()) for(const b of list){ const s=b.s;
@@ -1861,7 +1863,7 @@ function wallHint(){ if(!G||G.attract||(G.wallHintT||0)>G.t) return; G.wallHintT
 // panel is permanent (slot machines stay breakable). Each condemned building gets a sign with an orange X by its door.
 // ?wreck=all in the address turns the limit off (the older test suites use it).
 function condemn(){ const all=WRECK_ALL, C=W.condemned; C.clear();
-  const isHouse=it=>!!it.house, isTrailer=it=>{ const L=BRK_BY.get(it.bld); return !!L&&L.some(b=>Math.abs(b.s.y1-0.36)<0.005&&b.s.y0<0.01); };
+  const isHouse=it=>!!it.house, isTrailer=it=>!!it.trailer;
   const sp=W.spawn||V(), dist=it=>Math.hypot((it.x0+it.x1)/2-sp.x,(it.z0+it.z1)/2-sp.z);
   const houses=W.interiors.filter(isHouse).sort((a,b)=>dist(a)-dist(b)), trailers=W.interiors.filter(isTrailer);
   for(const it of houses.slice(0,2)) C.add(it.bld); if(houses.length>2) C.add(pick(houses.slice(2)).bld); if(trailers.length) C.add(pick(trailers).bld);
@@ -1875,10 +1877,10 @@ function condemn(){ const all=WRECK_ALL, C=W.condemned; C.clear();
 /* ---------------- doors: every doorway gets a door that swings (or slides) open as people come close ---------------- */
 // A thin solid fills a shut doorway; it disappears while the door is open. Paths treat doorways as open, people open
 // doors by walking up to them, and in a condemned building a charge or sprint kicks the door off its hinges.
-function addDoor(axis,u0,u1,t0,t1,y1,mat,bld,dcol){ const key=axis+'|'+u0.toFixed(2)+'|'+u1.toFixed(2)+'|'+t0.toFixed(2); if(W.doorKeys.has(key)) return; W.doorKeys.add(key);
-  const w=u1-u0, tm=(t0+t1)/2, glass=mat==='conc'||mat==='brick', h=Math.min(y1,2.12)-0.02, dbl=w>1.5;
-  const s2={x0:axis==='x'?u0:tm-0.05,z0:axis==='x'?tm-0.05:u0,x1:axis==='x'?u1:tm+0.05,z1:axis==='x'?tm+0.05:u1,y0:0,y1:h,ramp:0,launch:false,hidden:true,door:true}; W.solids.push(s2);
-  W.doors.push({axis,u0,u1,tm,h,glass,mat,bld,col:dcol,s:s2,open:0,hold:0,side:1,broken:false,leaves:dbl?[{hu:u0,len:w/2,sg:1},{hu:u1,len:w/2,sg:-1}]:[{hu:u0,len:w,sg:1}]}); }
+function addDoor(axis,u0,u1,t0,t1,y1,mat,bld,dcol,yb=0){ const key=axis+'|'+u0.toFixed(2)+'|'+u1.toFixed(2)+'|'+t0.toFixed(2); if(W.doorKeys.has(key)) return; W.doorKeys.add(key);
+  const w=u1-u0, tm=(t0+t1)/2, glass=mat==='conc'||mat==='brick', h=Math.min(y1-yb,2.12)-0.02, dbl=w>1.5;
+  const s2={x0:axis==='x'?u0:tm-0.05,z0:axis==='x'?tm-0.05:u0,x1:axis==='x'?u1:tm+0.05,z1:axis==='x'?tm+0.05:u1,y0:yb,y1:yb+h,ramp:0,launch:false,hidden:true,door:true}; W.solids.push(s2);
+  W.doors.push({axis,u0,u1,tm,h,yb,glass,mat,bld,col:dcol,s:s2,open:0,hold:0,side:1,broken:false,leaves:dbl?[{hu:u0,len:w/2,sg:1},{hu:u1,len:w/2,sg:-1}]:[{hu:u0,len:w,sg:1}]}); }
 // a sectional garage door (8×7 ft single, 16×7 ft double): four panels split by grooves, a row of small windows on some
 function addGarageDoor(axis,u0,u1,t0,t1,yh,bld,q){ const tm=(t0+t1)/2, c=q.col||hex(0xefefeb), o={bld,tex:7}, b=axis==='x'?brk(u0+0.02,0,tm-0.05,u1-0.02,yh,tm+0.05,'wood',c,o):brk(tm-0.05,0,u0+0.02,tm+0.05,yh,u1-0.02,'wood',c,o);
   const P=[], out=q.out||1, uc=(u0+u1)/2, w=(u1-u0)/2-0.05, at=tm+out*0.056, add=(u,y,ha,hy,col)=>P.push(axis==='x'?[u,y,at,ha,hy,0.008,QI,col]:[at,y,u,0.008,hy,ha,QI,col]);
@@ -1888,22 +1890,22 @@ function addGarageDoor(axis,u0,u1,t0,t1,yh,bld,q){ const tm=(t0+t1)/2, c=q.col||
 function doorCenter(d){ return d.axis==='x'?V((d.u0+d.u1)/2,0,d.tm):V(d.tm,0,(d.u0+d.u1)/2); }
 function doorsUpdate(dt){ const P=G.player, ps=Math.hypot(P.vel.x,P.vel.z);
   for(const d of W.doors){ if(d.broken) continue; const c=doorCenter(d); let near=null, nd=1.9;
-    const chk=p=>{ const dd=Math.hypot(p.x-c.x,p.z-c.z); if(dd<nd&&p.y<d.h){ nd=dd; near=p; } }; chk(P.pos); for(const n of G.npcs) if(n.alive&&n.state!=='rag') chk(n.pos);
+    const yb=d.yb||0, chk=p=>{ const dd=Math.hypot(p.x-c.x,p.z-c.z); if(dd<nd&&p.y<yb+d.h&&p.y>yb-1.3){ nd=dd; near=p; } }; chk(P.pos); for(const n of G.npcs) if(n.alive&&n.state!=='rag') chk(n.pos);
     if(near){ if(d.open<0.08) d.side=Math.sign(d.axis==='x'?near.z-d.tm:near.x-d.tm)||1; d.hold=1.1; } else d.hold-=dt;
     // kicked in: a charge or a sprint into a shut door of a condemned building
     if(near===P.pos&&nd<1.0&&d.open<0.5&&(ps>8.5||P.charge>0)&&canWreck()&&W.condemned.has(d.bld)&&G.state==='play'){ doorKick(d,P.vel); continue; }
     const tgt=d.hold>0?1:0; d.open+=(tgt-d.open)*Math.min(1,dt*(tgt?6:3)); d.s.gone=d.open>0.12; } }
 function doorKick(d,v){ d.broken=true; d.s.gone=true; const c=doorCenter(d), sp=Math.max(6,Math.hypot(v.x,v.z)), dir=vnorm(V(v.x||0.01,0,v.z||0.01));
-  for(const l of d.leaves){ const along=d.axis==='x'?V(l.sg,0,0):V(0,0,l.sg), mid=vadd(V(d.axis==='x'?l.hu:d.tm,d.h/2,d.axis==='x'?d.tm:l.hu),vmul(along,l.len/2));
+  for(const l of d.leaves){ const along=d.axis==='x'?V(l.sg,0,0):V(0,0,l.sg), mid=vadd(V(d.axis==='x'?l.hu:d.tm,(d.yb||0)+d.h/2,d.axis==='x'?d.tm:l.hu),vmul(along,l.len/2));
     spawnChunk(mid,d.axis==='x'?V(l.len/2,d.h/2,0.03):V(0.03,d.h/2,l.len/2),QI,vadd(vmul(dir,sp*0.8),V(0,2,0)),V(rand(-3,3),rand(-2,2),rand(-3,3)),d.glass?'glass':'wood',d.glass?GLASS:hex(0x6b4a2e),d.glass); }
   noise(d.glass?'shatter':'crack',0.9,c); sfx('bighit',0.6,c); G.shake+=0.25; addScore(150,vadd(c,V(0,1.8,0)),'DOOR KICKED'); G.stats.wrecked++; }
 function drawDoors(B,T,v){ for(const d of W.doors){ if(d.broken) continue; const c=doorCenter(d); if(Math.abs(c.x-v.pos.x)+Math.abs(c.z-v.pos.z)>90) continue;
-    const th=d.open*1.45, col=d.col||(d.mat==='wood'?hex(0x7a5534):d.mat==='metal'?hex(0xc4c9cf):null);
+    const yb=d.yb||0, th=d.open*1.45, col=d.col||(d.mat==='wood'?hex(0x7a5534):d.mat==='metal'?hex(0xc4c9cf):null);
     for(const l of d.leaves){ const dir=d.axis==='x'?V(l.sg*Math.cos(th),0,-d.side*Math.sin(th)):V(-d.side*Math.sin(th),0,l.sg*Math.cos(th)), q=qyaw(Math.atan2(-dir.z,dir.x));
       const hinge=d.axis==='x'?V(l.hu,0,d.tm):V(d.tm,0,l.hu), m=vadd(hinge,vmul(dir,l.len/2));
-      if(d.glass){ bpush(T.cube,m.x,d.h/2,m.z,q,l.len/2-0.03,d.h/2-0.04,0.02,GLASS,0.42,-0.85); const e=vadd(hinge,vmul(dir,l.len-0.03)); bpush(B.cube,e.x,d.h/2,e.z,q,0.03,d.h/2,0.03,[0.2,0.21,0.24],1,0);
-        const bar=vadd(hinge,vmul(dir,l.len*0.55)); bpush(B.cube,bar.x,1.05,bar.z,q,l.len*0.35,0.025,0.05,[0.75,0.76,0.78],1,0); }
-      else { bpush(B.cube,m.x,d.h/2,m.z,q,l.len/2-0.01,d.h/2,0.035,col,1,0); const k=vadd(hinge,vmul(dir,l.len-0.12)); bpush(B.sph,k.x,1.0,k.z,q,0.035,0.035,0.06,[0.85,0.7,0.3],1,0.1); } } } }
+      if(d.glass){ bpush(T.cube,m.x,yb+d.h/2,m.z,q,l.len/2-0.03,d.h/2-0.04,0.02,GLASS,0.42,-0.85); const e=vadd(hinge,vmul(dir,l.len-0.03)); bpush(B.cube,e.x,yb+d.h/2,e.z,q,0.03,d.h/2,0.03,[0.2,0.21,0.24],1,0);
+        const bar=vadd(hinge,vmul(dir,l.len*0.55)); bpush(B.cube,bar.x,yb+1.05,bar.z,q,l.len*0.35,0.025,0.05,[0.75,0.76,0.78],1,0); }
+      else { bpush(B.cube,m.x,yb+d.h/2,m.z,q,l.len/2-0.01,d.h/2,0.035,col,1,0); const k=vadd(hinge,vmul(dir,l.len-0.12)); bpush(B.sph,k.x,yb+1.0,k.z,q,0.035,0.035,0.06,[0.85,0.7,0.3],1,0.1); } } } }
 
 /* ---------------- new breakables: custom-drawn kinds, trailers, fences ---------------- */
 const CUSTOM_KINDS=new Set(['wleg','wtank','canopy']);
@@ -1919,14 +1921,69 @@ function drawCustomBrk(B,b,c,q){ const s=b.s, hy=(s.y1-s.y0)/2, steel=b.col;
   else if(b.kind==='canopy'){ const W2=(l)=>vadd(c,qrot(q,l)), hx=(s.x1-s.x0)/2, hz=(s.z1-s.z0)/2; bpush(B.cube,c.x,c.y,c.z,q,hx,hy,hz,b.col,1,0);
     let p=W2(V(0,-0.09,0)); bpush(B.cube,p.x,p.y,p.z,q,hx+0.05,0.12,hz+0.05,hex(0xc8312e),1,0.15);
     for(const lx of [-4,0,4]) for(const lz of [-2.5,2.5]){ p=W2(V(lx,-hy-0.03,lz)); bpush(B.cube,p.x,p.y,p.z,q,0.7,0.02,0.35,hex(0xfff4d0),1,-1); } } }
-function trailerShell(tx,tz,body,stripe){ const bld=++BLD, t=0.08, x0=tx-4.2, x1=tx+4.2, z0=tz-1.6, z1=tz+1.6;
-  const door={u0:tx+1.9,u1:tx+2.7,y0:0,y1:2.1,door:1}, wins=[{u0:tx-3.4,u1:tx-2.5,y0:2.05,y1:2.6},{u0:tx-0.6,u1:tx+0.3,y0:2.05,y1:2.6}];
-  for(const [y0,y1,col] of [[0,0.36,hex(0x6e6a62)],[0.36,1.65,body],[1.65,1.95,stripe],[1.95,2.9,body]]){ const w=y0>=1.95?wins:[];
-    wallRun('x',x0,x1,z1-t,z1,y0,y1,[door,...w],'metal',col,bld,9); wallRun('x',x0,x1,z0,z0+t,y0,y1,w,'metal',col,bld,9);
-    wallRun('z',z0+t,z1-t,x0,x0+t,y0,y1,[],'metal',col,bld,9); wallRun('z',z0+t,z1-t,x1-t,x1,y0,y1,[],'metal',col,bld,9); }
+// A single-wide mobile home the way they sit in a park: the box rides on a chassis 0.75 m up, hidden behind skirting; ribbed
+// aluminum siding with a color stripe; horizontal windows under aluminum awnings; a low crowned metal roof; a tow hitch at
+// one end; a wooden deck with steps up to the raised door; tall propane tanks; the odd window AC unit.
+function trailerShell(tx,tz,body,stripe,o={}){ const bld=++BLD, t=0.08, x0=tx-4.7, x1=tx+4.7, z0=tz-1.7, z1=tz+1.7, FL=0.75, top=3.05, hs=o.hitch||1;
+  const dx=tx+(o.doorX!==undefined?o.doorX:2.5*hs), door={u0:dx-0.45,u1:dx+0.45,y0:FL,y1:FL+2.0,door:1,dmat:'wood',dcol:hex(pick([0xf2f1ec,0x8b2b2b,0x6b4a2e,0x2e5d62]))};
+  const wy0=FL+0.85, wy1=FL+1.72, Wn=(u,w)=>({u0:u-w/2,u1:u+w/2,y0:wy0,y1:wy1});
+  const fw=[Wn(tx-3.2*hs,1.3),Wn(tx-0.6*hs,1.5),Wn(dx-1.35*hs,0.8)].filter(w=>w.u1<dx-0.55||w.u0>dx+0.55), bw=[Wn(tx-3.1,1.2),Wn(tx-0.2,1.5),Wn(tx+2.7,1.2)];
+  const ew=[{u0:tz-0.45,u1:tz+0.45,y0:wy0+0.1,y1:wy1}], skirt=tone(body,0.7), awn=hex(pick([0xf2f1ec,0xe6decb,0x3f6b4a,0x8a4a3a,0x2e4f7a]));
+  TRIM_C=hex(0xdfe3e6);
+  // skirting around the chassis, then three bands of siding: lower body, the stripe, upper body with the windows
+  wallRun('x',x0,x1,z1-t,z1,0,FL,[],'metal',skirt,bld,9); wallRun('x',x0,x1,z0,z0+t,0,FL,[],'metal',skirt,bld,9);
+  wallRun('z',z0+t,z1-t,x0,x0+t,0,FL,[],'metal',skirt,bld,9); wallRun('z',z0+t,z1-t,x1-t,x1,0,FL,[],'metal',skirt,bld,9);
+  for(const [y0,y1,col] of [[FL,FL+0.55,body],[FL+0.55,FL+0.7,stripe],[FL+0.7,top,body]]){ const up=y1===top, c=up?y0+1.0:9; TRIM=up; AWN=up&&!o.noAwn?awn:null;
+    SHUT_OUT=1; wallRun('x',x0,x1,z1-t,z1,y0,y1,up?[door,...fw]:[door],'metal',col,bld,c);
+    SHUT_OUT=-1; wallRun('x',x0,x1,z0,z0+t,y0,y1,up?bw:[],'metal',col,bld,c);
+    SHUT_OUT=-1; wallRun('z',z0+t,z1-t,x0,x0+t,y0,y1,up&&hs>0?ew:[],'metal',col,bld,c);
+    SHUT_OUT=1; wallRun('z',z0+t,z1-t,x1-t,x1,y0,y1,up&&hs<0?ew:[],'metal',col,bld,c); }
+  TRIM=false; AWN=null; SHUT_OUT=1;
   for(const b of BRK_BY.get(bld)) if(b.mat==='metal') b.hp=b.hp0=b.hp0*0.55;                          // thin aluminium skin
-  brk(x0-0.03,2.9,z0-0.03,x1+0.03,2.98,z1+0.03,'metal',tone(body,0.78),{bld,roof:true,cut:bld,hpK:0.6});
-  W.interiors.push({x0:x0+t,z0:z0+t,x1:x1-t,z1:z1-t,y1:2.9,bld,cut:bld}); return bld; }
+  GMT=5; solid(x0+t,0,z0+t,x1-t,FL,z1-t,hex(0x8a7560)); GMT=0;                                          // the floor, up on the chassis
+  const roof=roofBuild('gx',x0,z0,x1,z1,top,0.11,0.1,tone(body,0.92),{bld,wall:body,wtex:8,trim:hex(0xc9cdd1),rlo:0.1,rhi:0.1,gutters:false,rm:8,hpK:0.6});
+  W.interiors.push({x0:x0+t,z0:z0+t,x1:x1-t,z1:z1-t,y1:top,bld,cut:bld,trailer:true});
+  // tow hitch on the outer end: A-frame, coupler, jack stand
+  { const hx=hs>0?x1:x0, dk=hex(0x2c2e31);
+    sdeco(hx+hs*0.65,0.42,tz-0.28,0.72,0.05,0.05,dk,0,qyaw(-Math.atan2(0.55,1.3)*hs)); sdeco(hx+hs*0.65,0.42,tz+0.28,0.72,0.05,0.05,dk,0,qyaw(Math.atan2(0.55,1.3)*hs));
+    sdeco(hx+hs*1.33,0.45,tz,0.12,0.07,0.09,dk); scyl(hx+hs*1.15,0.22,tz,0.05,0.22,hex(0x5a5e63)); sdeco(hx+hs*1.15,0.02,tz,0.12,0.02,0.12,hex(0x5a5e63)); }
+  // tall propane tanks on the inner end, on a small slab
+  { const px=hs>0?x0-0.4:x1+0.4; GMT=2; sdeco(px,0.04,tz-0.1,0.3,0.04,0.65,hex(0x9c988f)); GMT=0;
+    for(const dz of [-0.4,0.25]){ scyl(px,0.62,tz+dz,0.19,0.55,hex(0xe8e8e4)); sball(px,1.17,tz+dz,0.19,0.08,0.19,hex(0xe8e8e4)); scyl(px,1.29,tz+dz,0.05,0.05,hex(0x8a8e93)); }
+    solid(px-0.2,0,tz-0.6,px+0.2,1.25,tz+0.45,hex(0xe8e8e4),false); }
+  // window AC unit hanging out of a back window
+  if(Math.random()<0.6){ const w=pick(bw), ux=(w.u0+w.u1)/2; sdeco(ux,wy0+0.2,z0-0.25,0.32,0.21,0.25,hex(0xd8dadc)); sdeco(ux,wy0+0.2,z0-0.505,0.28,0.17,0.005,hex(0x5a5e63)); }
+  // wooden deck and steps up to the door
+  if(!o.noDeck){ const wood=hex(0x9a7a56), dz1=z1+1.05; GMT=5; solid(dx-0.95,0,z1,dx+0.95,FL-0.03,dz1,wood); solid(dx-0.5,0,dz1,dx+0.5,0.48,dz1+0.32,wood); solid(dx-0.5,0,dz1+0.32,dx+0.5,0.24,dz1+0.64,wood); GMT=0;
+    for(const sx of [-0.92,0.92]){ sdeco(dx+sx,FL+0.45,dz1-0.03,0.03,0.45,0.03,wood); sdeco(dx+sx,FL+0.86,(z1+dz1)/2,0.025,0.025,(dz1-z1)/2,wood); }
+    const ra=Math.atan2(FL-0.28,0.63), rl=Math.hypot(FL-0.28,0.63)/2;                       /* rail drops from the deck post to the bottom-step post */
+    for(const sx of [-1,1]){ sdeco(dx+sx*0.725,FL+0.86,dz1-0.03,0.225,0.025,0.025,wood); sdeco(dx+sx*0.53,FL+0.45,dz1-0.03,0.03,0.45,0.03,wood);
+      sdeco(dx+sx*0.53,0.24+0.45,dz1+0.6,0.025,0.45,0.025,wood); sdeco(dx+sx*0.53,(FL+0.86+0.24+0.9)/2,dz1+0.285,0.02,0.022,rl,wood,0,qx(ra)); }
+    GMT=2; sdeco(dx,0.02,dz1+1.0,0.55,0.02,0.4,hex(0xa9a59c)); GMT=0; }
+  else { const st=hex(0x8f9398); GMT=8; solid(dx-0.5,0,z1,dx+0.5,0.5,z1+0.34,st); solid(dx-0.5,0,z1+0.34,dx+0.5,0.25,z1+0.68,st); GMT=0;   /* two-step metal stoop */
+    for(const sx of [-0.53,0.53]){ sdeco(dx+sx,0.25+0.5,z1+0.64,0.018,0.5,0.018,st); sdeco(dx+sx,1.25,z1+0.34,0.018,0.018,0.32,st); } }
+  trailerFurnish(tx,tz,x0+t,z0+t,x1-t,z1-t,FL,top,hs,roof);
+  // gravel pad under and around it: no grass grows there
+  noGrass(x0-0.4,z0-0.4,x1+0.4,z1+(o.noDeck?0.95:1.8));
+  return {bld,z1,roof}; }
+// inside a single-wide: living room at the hitch end, galley kitchen along the back wall, bedroom at the far end (u runs toward the hitch)
+function trailerFurnish(tx,tz,ix0,iz0,ix1,iz1,FL,top,hs,roof){ const X=u=>tx+u*hs, xs=(a,b)=>[Math.min(X(a),X(b)),Math.max(X(a),X(b))], bz=(iz0+iz1)/2, wood=hex(0x8a6a48),
+    cab=hex(pick([0xe8e2d4,0x9a7a56,0x7a8a7e,0xcfd6cf])), ctop=hex(pick([0xc9c2b0,0x8a8478,0xb8a98c])), rb=(roof.ceil||roof.A).id;
+  // living room: couch on the back wall, TV on a low stand across from it, a rug
+  prop('couch',X(3.5),FL,iz0+0.5,0); { const [a,b]=xs(3.45,4.45); solid(a,FL,iz1-0.42,b,FL+0.48,iz1,wood); } prop('tv',X(3.95),FL+0.48,iz1-0.24,PI);
+  sdeco(X(3.5),FL+0.004,bz,0.95,0.004,0.8,hex(pick([0x8a2a3a,0x2a4a7a,0x6a5a2a,0x3a6a4a])));
+  // galley: base cabinets with a counter and sink under the back window, fridge at the end, a table and stools under the front window
+  { const [a,b]=xs(-1.45,0.95); solid(a,FL,iz0,b,FL+0.8,iz0+0.6,cab); sdeco((a+b)/2,FL+0.82,iz0+0.31,(b-a)/2+0.02,0.02,0.32,ctop);
+    sdeco(X(-0.2),FL+0.836,iz0+0.3,0.3,0.004,0.2,hex(0x8e969c)); scyl(X(-0.2),FL+0.95,iz0+0.07,0.015,0.12,hex(0xb8bcc0));
+    for(let u=-1.15;u<0.9;u+=0.6) sdeco(X(u),FL+0.4,iz0+0.605,0.27,0.34,0.004,tone(cab,0.88)); }
+  prop('fridge',X(1.55),FL,iz0+0.4,0); prop('table',X(-0.6),FL,iz1-0.5,0); prop('stool',X(-1.5),FL,iz1-0.55,0); prop('stool',X(0.3),FL,iz1-0.55,0);
+  // bedroom: bed with its headboard on the end wall (under the end window), a nightstand and lamp
+  { const ue=-4.62, [a,b]=xs(ue,ue+2.05), quilt=hex(pick([0x6a3a4a,0x3a5a7a,0x7a6a3a,0x4a6a4a]));
+    solid(a,FL,bz-0.72,b,FL+0.42,bz+0.72,wood); sdeco((a+b)/2,FL+0.5,bz,(b-a)/2-0.02,0.08,0.7,hex(0xece6da)); sdeco(X(ue+1.25),FL+0.6,bz,0.8,0.03,0.73,quilt);
+    for(const pz of [-0.36,0.36]) sdeco(X(ue+0.3),FL+0.62,bz+pz,0.16,0.06,0.3,hex(0xf4f0e8)); sdeco(X(ue+0.03),FL+0.47,bz,0.03,0.47,0.76,wood);
+    const [c,d]=xs(ue,ue+0.45); solid(c,FL,bz+0.82,d,FL+0.55,bz+1.22,wood); sball(X(ue+0.22),FL+0.75,bz+1.02,0.12,0.14,0.12,hex(0xffe2a8),0.7); }
+  light(X(0.2),top-0.5,bz,6.5,[1.2,1.0,0.76],{brk:rb}); W.fixtures.push({p:V(X(0.2),top-0.14,bz),r:0.14,c:[1,0.95,0.82],brk:rb});
+  spot(X(-2.4),FL,bz); }
 // fences splinter into planks on a hard hit instead of bouncing like a crate
 function splinterFence(i){ const o=G.props[i]; if(!o||!o.alive) return; o.alive=false; const col=o.tint||[0.94,0.93,0.88];
   for(let k=-1;k<=1;k++){ const l=qrot(o.rot,V(k*0.62,0,0)); spawnChunk(vadd(o.pos,l),V(0.3,0.5,0.04),o.rot,vadd(vmul(o.vel,0.5),V(rand(-2,2),rand(1,3),rand(-2,2))),V(rand(-6,6),rand(-6,6),rand(-6,6)),'wood',tone(col,rand(0.85,1)),false); }
@@ -2121,7 +2178,7 @@ function say(n,s,t){ n.bubble=s; n.bubbleT=t; speak(s,n.kind==='cop'?'cop':'npc'
 function knockNpc(n,v){ if(CST.pow&&G&&!G.attract) pop(vadd(n.pos,V(0,1.9,0)),pick(['POW!','BAM!','WHAM!','THWACK!']),'#ffe14d'); if(n.state!=='rag') n.rot=qyaw(n.yaw); n.state='rag'; n.st=0; n.still=0; n.vel=v; n.pos.y+=0.05;
   const r=V(rand(-1,1),rand(-1,1),rand(-1,1)); n.ang=vadd(vmul(vnorm(r),rand(4,9)),vmul(V(v.z,0,-v.x),0.3)); n.hitCd=0.5; n.grounded=false;
   if(n.kind==='civ') say(n,pick(OUCH),1.8); }
-function startle(n,from){ if(!npcUp(n)||n.kind==='cop') return; n.state='flee'; n.st=0; n.fleeFrom={...from}; n.startleCd=6; n.vel.y=3.2; n.grounded=false; say(n,pick(STARTLED),1.8); }
+function startle(n,from){ if(!npcUp(n)||n.kind==='cop'||n.role==='quest'||n.role==='qnpc') return;   /* quest people never run from you */ n.state='flee'; n.st=0; n.fleeFrom={...from}; n.startleCd=6; n.vel.y=3.2; n.grounded=false; say(n,pick(STARTLED),1.8); }
 function nearestWp(p){ let best=[0,0], bd=1e9; W.rings.forEach((r,ri)=>r.forEach((w,wi)=>{ const d=(w.x-p.x)**2+(w.z-p.z)**2; if(d<bd){ bd=d; best=[ri,wi]; } })); return best; }
 function otherRing(p,cur){ let best=null, bd=22*22; W.rings.forEach((r,ri)=>{ if(ri===cur) return; r.forEach((w,wi)=>{ const d=(w.x-p.x)**2+(w.z-p.z)**2; if(d<bd){ bd=d; best=[ri,wi]; } }); }); return best; }
 function npcWalk(n,wish,speed,dt,grav){ const k=smooth(8,dt); n.vel.x+=(wish.x*speed-n.vel.x)*k; n.vel.z+=(wish.z*speed-n.vel.z)*k; n.vel.y-=22*grav*dt;
@@ -2149,7 +2206,7 @@ function npcUpdate(dt,grav,evs){ if(dt<=0) return; const P=G.player, pv=P.vel, p
       else if(G.player.squatT>0&&dist<12&&n.talkCd<=0){ say(n,pick(POOP_SEE),2.2); n.talkCd=rand(5,9); }
       else if(dist<9&&n.talkCd<=0&&n.role!=='quest'&&Math.random()<dt*0.5){ say(n,pick(n.role==='gambler'?GAMBLER_LINES:n.role==='bouncer'?BOUNCER_LINES:G.unicorns.length?PARTY_NPC:G.mods.drunk>0.3?DRUNK_NPC:G.mods.bounce?FLOAT_NPC:COMMENTS),2.5); n.talkCd=rand(8,16); } }
     let wish=V(), speed=0;
-    if(n.state==='getup'){ if(n.st>0.7){ n.st=0; n.fleeFrom={...P.pos}; n.state=n.kind==='cop'?(G.heat>=1?'chase':'leave'):'flee'; } }
+    if(n.state==='getup'){ if(n.st>0.7){ n.st=0; n.fleeFrom={...P.pos}; n.state=n.kind==='cop'?(G.heat>=1?'chase':'leave'):(n.role==='quest'||n.role==='qnpc')?'home':'flee'; } }
     else if(n.state==='walk'){ const ring=W.rings[n.ring], len=ring.length, tgt=ring[n.wp%len], tv=vflat(vsub(tgt,n.pos)), d=hlen(tv);
       if(d<0.8){ if(Math.random()<0.12){ n.state='idle'; n.st=0; n.idleFor=rand(1.5,4.5); } else if(Math.random()<0.1){ const o=otherRing(n.pos,n.ring); if(o){ n.ring=o[0]; n.wp=o[1]; } } else n.wp=((n.wp+n.dir)%len+len)%len; }
       else { wish=vmul(tv,1/d); speed=1.45*n.speedK; }
@@ -2357,7 +2414,7 @@ function actions(inp){ const p=G.player; if(p.ragdoll||G.dying>0){ if(p.ragdoll)
     else if(FF&&FF.fire){ if(!(p.fireT>0)){ p.fireT=0.9; p.fireHit=new Set(); noise('pour',0.8); sfx('boom',0.35); heatAdd(0.25); } }
     else if(p.chargeCd<=0){ const d0=(p.speed>1.5||Math.hypot(inp.mx,inp.my)>0.2)?fwd(p.yaw):cf, at=SET.assist!==false?assistPick(d0,4.5,0.62):null, d=focusDir()||(at?vnorm(vflat(vsub(at.pos,p.pos))):d0); p.charge=FF&&FF.force>2.4?0.45:0.3; p.chargeCd=G.mods.jugg?0.2:0.5; p.cdir=d; G.chargeHits=new Set(); sfx('whoosh');
       if(FF&&FF.burn) partsBurst(vadd(vadd(p.pos,V(0,1,0)),vmul(d,0.6)),'fire',22,6,[1,0.6,0.15],0.22); } }
-  if(inp.grab){ if(G.nearSlots){ openSlots(); return; } if(G.nearDoc&&p.held<0){ openDoc(); return; } if(G.nearQuest&&p.held<0){ questTalk(G.nearQuest); return; }
+  if(inp.grab){ if(G.nearSlots){ openSlots(); return; } if(G.nearDoc&&p.held<0){ openDoc(); return; } if(G.nearQuest){ questTalk(G.nearQuest); return; }
     if(p.held>=0){ dropHeld(vadd(p.vel,vmul(fwd(p.yaw),2))); sfx('grab'); }
     else { const i=grabCandidate(); if(i>=0){ const o=G.props[i]; p.held=i; o.held=true; o.asleep=false; o.vel=V(); o.ang=V(); o.touched=0; sfx('grab'); if(!o.knocked){ o.knocked=true; G.stats.wrecked++; addScore(o.d.pts/2,o.pos,'YOINK'); } } } }
   if(inp.holler&&p.hollerCd<=0){ const bark=FF&&FF.bark; p.holler=bark?pick(['WOOF! WOOF!','BARK BARK BARK!','ARF! ARF!','AWOOOOO!']):FF?pick(FORM_LINES[p.form]).toUpperCase():pick(HOLLERS); p.hollerT=1.8; p.hollerCd=2.2; sfx(bark?'bark':'holler'); speak(p.holler,'player');
@@ -2389,8 +2446,9 @@ function interactions(){ const p=G.player, m=G.mods, rag=p.ragdoll, r=rag?Math.m
   // bodies: walking into people
   const speed=Math.hypot(pv.x,pv.z);
   G.npcs.forEach((n,i)=>{ if(!n.alive) return; const d=vflat(vsub(n.pos,p.pos)), dist=hlen(d); if(dist>PR+0.42||Math.abs(n.pos.y-p.pos.y)>Math.max(1.5,PH*0.8)) return;
-    if(npcUp(n)){ if((speed>8.2||(rag&&speed>5)||m.jugg||(PH>3&&speed>2))&&n.hitCd<=0) knockNpcG(i,vadd(vmul(vflat(pv),0.9*Math.sqrt(m.force)),V(0,4,0)),true,false);
-      else { const nr=dist>1e-4?vmul(d,1/dist):V(1,0,0), push=vmul(nr,(PR+0.42-dist)*0.5); n.pos=vadd(n.pos,push); p.pos=vsub(p.pos,push); if(n.kind==='civ'&&n.talkCd<=0){ say(n,'Hey! Watch it!',1.5); n.talkCd=6; } } } });
+    const qp=n.role==='quest'||n.role==='qnpc';   /* quest people: a bump stops you, only a real tackle or a blast knocks them over */
+    if(npcUp(n)){ if(!qp&&(speed>8.2||(rag&&speed>5)||m.jugg||(PH>3&&speed>2))&&n.hitCd<=0) knockNpcG(i,vadd(vmul(vflat(pv),0.9*Math.sqrt(m.force)),V(0,4,0)),true,false);
+      else { const nr=dist>1e-4?vmul(d,1/dist):V(1,0,0), push=vmul(nr,(PR+0.42-dist)*0.5); if(qp) p.pos=vsub(p.pos,vmul(push,2)); else { n.pos=vadd(n.pos,push); p.pos=vsub(p.pos,push); } if(n.kind==='civ'&&n.talkCd<=0){ say(n,'Hey! Watch it!',1.5); n.talkCd=6; } } } });
   // flying props hit people; heavy sleeping props block them
   const hits=new Map();
   for(const o of G.props){ if(!o.alive||o.held) continue; const sp=vlen(o.vel), moving=!o.asleep&&sp>5.5, block=o.asleep&&(o.d.stand||o.mass>=2.5); if(!moving&&!block) continue;
@@ -3612,11 +3670,11 @@ function syncHUD(dt){ const g=G, tl=g.life, clk=$('clock'), noClock=!!(g.inside&
   questHUD(); setT('scoreval',g.score.toLocaleString()); setT('dollasval','Ð '+g.dollas.toLocaleString());
   $('combo').classList.toggle('on',g.combo>1); if(g.combo>1) setT('comboval','x'+comboMult().toFixed(1));
   const st=$('stars').children; for(let i=0;i<5;i++) st[i].classList.toggle('on',g.heat>=i+1); $('stars').classList.toggle('seen',g.seen); { const FFh=FORMS[g.player.form], hb=!(FFh&&FFh.horns), bc=$('bCharge'); if(bc.hidden!==hb) bc.hidden=hb; }
-  const near=!!(g.player&&!g.player.ragdoll&&nearSlot(g.player)); g.nearSlots=near;
+  const near=!!(g.player&&!g.player.ragdoll&&nearSlot(g.player))&&!(g.nearQuest&&hlen(vsub(g.nearQuest.pos,g.player.pos))<1.6); g.nearSlots=near;
   const nearDoc=!near&&!!W.doc&&hlen(vsub(g.player.pos,W.doc.pos))<2.9&&!g.player.ragdoll&&!g.player.objKind&&!(g.player.foldT>0); g.nearDoc=nearDoc;
   let pm=''; if(near) pm=IS_TOUCH?'Tap SLOTS to gamble your dollas':'Press E to gamble your dollas';
   else if(nearDoc) pm=IS_TOUCH?'Tap DOC to buy cyberware':'Press E: ripperdoc cyberware';
-  else if(g.nearQuest&&g.player.held<0){ const q=QUESTS[g.nearQuest.qi]; pm=(IS_TOUCH?'GRAB: talk to ':'E: talk to ')+q.who+(g.quest&&g.quest.n===g.nearQuest?' · your job':g.questDone.has(q.id)?'':' · odd job, Ð '+questPay(q)); }
+  else if(g.nearQuest) pm=questPrompt(g.nearQuest);
   else if(g.mods.object&&g.player.objKind) pm=`You are a ${OBJECTS[g.player.objKind].name}. Wait it out.`;
   else if(g.player.foldT>0) pm='Laced. You are folded in half. Wait it out.';
   else if(g.player.stuckT>0) pm='Horns stuck in the wall!';
@@ -3624,7 +3682,7 @@ function syncHUD(dt){ const g=G, tl=g.life, clk=$('clock'), noClock=!!(g.inside&
   else if(g.player.held>=0) pm=IS_TOUCH?'TACKLE throws · GRAB drops':'Click to throw · E to drop';
   else if(g.player.ragdoll) pm=IS_TOUCH?'Move or JUMP to get up':'Q, Space or move to get up';
   else { const i=grabCandidate(); if(i>=0) pm=(IS_TOUCH?'GRAB the ':'E: grab the ')+G.props[i].d.name; }
-  setT('promptmsg',pm); $('prompt').classList.toggle('on',!!pm); setT('bGrab',near?'SLOTS':g.nearDoc?'DOC':g.player.held>=0?'DROP':'GRAB');
+  setT('promptmsg',pm); $('prompt').classList.toggle('on',!!pm); setT('bGrab',near?'SLOTS':g.nearDoc?'DOC':g.nearQuest?'TALK':g.player.held>=0?'DROP':'GRAB');
   setS('hint','opacity',g.alive<22&&!(VW<1100&&$('effects').childElementCount)?'1':'0'); // never sit on top of the effect pills
   hudT-=dt; if(hudT>0) return; hudT=0.1; let h='';
   if(g.player.form){ const FF=FORMS[g.player.form]; h+=`<div class="fx" style="color:#ffb63c"><span class="dot"></span><span class="nm">${g.parade?'PARADE · '+FF.name+' · '+(g.parade.i+1)+'/'+PARADE.length:FF.name+' · '+Math.ceil(g.player.formT)+'s'}</span></div>`; }
@@ -3707,128 +3765,161 @@ function dailyCheck(){ if(!G||G.attract||G.state!=='play') return; for(const c o
   if(v>=c.n){ c.it.done=true; PROF.chrome=(PROF.chrome||0)+DAILY_REWARD; saveProfile(); toast('<b>DAILY CHALLENGE DONE</b>',c.txt+' · +Ð '+DAILY_REWARD+' to the chrome bank','#7cff9b',3.5); sfx('feat'); } } }
 function dailyHTML(progress){ return dailyList().map(c=>{ let v=0; if(progress&&G&&!G.attract){ try{ v=c.d[3](); }catch(e){} }
   const pr=progress&&!c.it.done?` <span style="opacity:.7">(${c.n>=100?Math.floor(v).toLocaleString():+Math.min(v,c.n).toFixed(c.n<10?1:0)} / ${c.n.toLocaleString()})</span>`:''; return `<div>${c.it.done?'✓':'○'} ${c.txt}${pr}</div>`; }).join(''); }
-function renderDaily(){ const el=$('dailyBox'); if(el) el.innerHTML=`<b>Today's challenges</b> · Ð ${DAILY_REWARD} each into the chrome bank`+dailyHTML(false)+`<div style="margin-top:6px">Chrome bank: <b>Ð ${(PROF.chrome||0).toLocaleString()}</b> · next run starts with up to Ð 250 of it</div><div>Odd jobs done: <b>${Object.keys(PROF.quests||{}).length} / ${typeof QUESTS!=='undefined'&&QUESTS?QUESTS.length:21}</b> · look for a gold $ over people's heads</div>`; }
-/* ---------------- odd jobs: neighbors with a task and a payout ---------------- */
-// One job at a time, shown in the corner with live progress and a pointer to where it happens; the first completion pays in full,
-// repeats pay 60%, and each one adds 8 seconds to the clock. Clear, specific goals with visible progress and an immediate reward
-// (goal setting, goal gradient: docs/ENGAGEMENT.md). Only the parcel, the bounty and the race have time limits.
+function renderDaily(){ const el=$('dailyBox'); if(el) el.innerHTML=`<b>Today's challenges</b> · Ð ${DAILY_REWARD} each into the chrome bank`+dailyHTML(false)+`<div style="margin-top:6px">Chrome bank: <b>Ð ${(PROF.chrome||0).toLocaleString()}</b> · next run starts with up to Ð 250 of it</div><div>Quests done: <b>${typeof QUESTS!=='undefined'&&QUESTS?QUESTS.filter(q=>(PROF.quests||{})[q.id]).length:0} / ${typeof QUESTS!=='undefined'&&QUESTS?QUESTS.length:5}</b> · look for a gold ! over people's heads</div>`; }
+/* ---------------- quests: five people around town, each with a story in a few steps ---------------- */
+// Walk up to someone with a gold ! over their head and press E (GRAB on touch). Each quest runs 3–4 steps with a marker,
+// a pointer and the step shown in the corner; one quest at a time. The first finish pays in full, a repeat 60%, and each
+// finish adds 8 seconds (clear goals, visible progress, an immediate reward: docs/ENGAGEMENT.md).
+// Quest people never run from you; a bump just stops you, and after a real tackle they walk back to their spot.
 var QUESTS=[
- {id:'hoa',who:'Darlene',role:'HOA president',at:['res',0],look:{shirt:0x9a4a6a,pants:0x2a2a30,style:'scarf'},hi:'You! The lawn ornaments on this street are a disgrace.',task:'Knock over 3 lawn ornaments',done:'Finally, some standards.',type:'knock',kinds:['flamingo','gnome'],n:3,pay:150},
- {id:'mail',who:'Mr. Okafor',role:'retired mailman',at:['res',1],look:{shirt:0x3a5a8a,pants:0x2a3550},hi:'Thirty years I fed those mailboxes. Thirty years!',task:'Knock over 4 mailboxes',done:'Ahh. That felt like retirement.',type:'knock',kinds:['mailbox'],n:4,pay:200},
- {id:'nurse',who:'Tina',role:'night-shift nurse',at:['res',2],look:{shirt:0x5fa3a0,pants:0x5fa3a0},hi:'They mow at 7 AM while I sleep. Return the favor.',task:'Set off 3 car alarms',done:'Music to my ears.',type:'stat',stat:'alarms',n:3,pay:250},
- {id:'coach',who:'Coach Ray',role:'little league coach',at:['res',3],look:{shirt:0xc0392b,pants:0x30343a},hi:'Kid, I need to see some hustle. Hit somebody.',task:'Tackle 5 people',done:'THAT is fundamentals.',type:'stat',stat:'tackled',n:5,pay:200},
- {id:'gnome',who:'Grandma Lupe',role:'gnome collector',at:['res',4],look:{shirt:0x8a5a9a,pants:0x3a3040,style:'skirt',h:0.92},hi:'Mijo, my gnome Ernesto ran off. Bring me any gnome.',task:'Bring Grandma Lupe a garden gnome',done:'Ernesto! You got thinner.',type:'fetch',kinds:['gnome'],pay:300},
- {id:'bins',who:'Kevin',role:'landlord',at:['res',5],look:{shirt:0xd8d2c0,pants:0x6a5a48},hi:'My tenant walked off with the trash can. Bring me one. Any one.',task:'Bring Kevin a trash can or wheelie bin',done:'Security deposit: kept.',type:'fetch',kinds:['trash','wheelie'],pay:150},
- {id:'cart',who:'Raj',role:'gas station clerk',at:['gas',0],look:{shirt:0xc0392b,pants:0x2a2a2e},hi:'Somebody keeps stealing our shopping carts. Bring one back.',task:'Return a shopping cart to Raj',done:'The cart has come home.',type:'fetch',kinds:['cart'],pay:250},
- {id:'preach',who:'Brother Dale',role:'street preacher',at:['plaza',0],look:{shirt:0xf0f0ea,pants:0x1e1e22,style:'tie'},hi:'The people are asleep, child! Wake them!',task:'Holler at 8 people',done:'Hallelujah, they are AWAKE.',type:'stat',stat:'hollered',n:8,pay:150},
- {id:'tramp',who:'Ranger Sue',role:'park ranger',at:['park',0],look:{shirt:0x6a7a4a,pants:0x4a4030},hi:'The trampolines need a safety inspection. You look expendable.',task:'Bounce on a trampoline 5 times',done:'Inspection passed. Probably.',type:'stat',stat:'bounces',n:5,pay:200},
- {id:'air',who:'Jayden',role:'skater kid',at:['park',1],look:{shirt:0x2a2a2e,pants:0x3a5a7a,h:0.9},hi:"Bet you can't get three seconds of air. Bet.",task:'Get 3 seconds of airtime in one jump',done:'Okay that was actually sick.',type:'air',n:3,pay:250},
- {id:'propane',who:'Duane',role:'trailer park king',at:['trailer',0],look:{shirt:0xe8e4da,pants:0x3a4a6a},hi:'My propane tank has been talking back. Handle it.',task:'Blow up a propane tank',done:'Quiet at last.',type:'stat',stat:'booms',n:1,pay:300},
- {id:'drone',who:'Crystal',role:'not paranoid',at:['trailer',1],look:{shirt:0x7a3a8a,pants:0x2a2a2e,style:'pony'},hi:'There is a drone. It watches me. It watches YOU.',task:'Knock a police drone out of the sky',done:'See? I TOLD you.',type:'stat',stat:'drones',n:1,pay:500},
- {id:'demo',who:'Big Mike',role:'demolition foreman',at:['constr',0],look:{shirt:0xf0a020,pants:0x3a4a6a,h:1.06},hi:"Union says I need a second wrecker. You're hired.",task:'Wreck 12 things',done:'Ten minutes early. Beautiful.',type:'stat',stat:'wrecked',n:12,pay:250},
- {id:'roof',who:'Inspector Lowe',role:'code enforcement',at:['constr',1],look:{shirt:0xc8c0a8,pants:0x5a5448,style:'tie'},hi:'The marked houses are condemned. I want one roof on the ground.',task:'Bring down a roof on a condemned house',done:'Paperwork approved.',type:'stat',stat:'roofs',n:1,pay:600},
- {id:'chaos',who:'Tyler',role:'crypto guy',at:['down',0],look:{shirt:0x2a3a5a,pants:0xc8b89a},hi:'I need numbers going up. Any numbers. Make chaos.',task:'Score 5,000 chaos',done:'To the moon, my guy.',type:'stat',stat:'score',n:5000,pay:300},
- {id:'fire',who:'Brenda',role:'insurance adjuster',at:['down',1],look:{shirt:0x5a6a7a,pants:0x2a2a30,style:'scarf'},hi:'Slow month for claims. A condemned house would burn nicely.',task:'Set a condemned house on fire',done:'Claim number 4471. Lovely.',type:'stat',stat:'fires',n:1,pay:450},
- {id:'parcel',who:'Marisol',role:'delivery driver',at:['down',2],look:{shirt:0x6b4a2e,pants:0x6b4a2e},hi:'I have 200 stops left. Take this one for me?',task:'Deliver the parcel to the marked door',done:"You're a lifesaver.",type:'deliver',time:90,pay:400},
- {id:'bounty',who:'Vinny',role:'casino doorman',at:['down',3],look:{shirt:0x1c1c22,pants:0x1c1c22,style:'tie',h:1.08},hi:'The guy in the purple suit owes the house. Go say hi. Hard.',task:'Tackle the man in the purple suit',done:'Debt settled.',type:'bounty',time:120,pay:400},
- {id:'tower',who:'Gary',role:'neighborhood watch',at:['tower',0],look:{shirt:0xd8c050,pants:0x5a5448},hi:'I need eyes up high. Get on top of that water tower.',task:'Climb to the top of the water tower',done:'I can see my house from here! Well, you can.',type:'reach',pay:350},
- {id:'race',who:'Doug',role:'marathon dad',at:['res',2],look:{shirt:0x3ab0e0,pants:0x2a2a30},hi:'Race me! Three checkpoints, forty-five seconds. Go go go!',task:'Hit 3 checkpoints in 45 seconds',done:'New personal best. For you.',type:'race',time:45,pay:400},
- {id:'hydrant',who:"Lil' Dre",role:'bored kid',at:['res',0],look:{shirt:0xe05a3a,pants:0x3a4a6a,h:0.86},hi:"It's so hot. Open a hydrant. Please.",task:'Bust open a fire hydrant',done:'BEST. DAY. EVER.',type:'knock',kinds:['hydrant'],n:1,pay:200}];
-var QUEST_HAIL=['Hey! You looking for work?','Psst. Got a job for you.','You! Yes, you. I need a favor.','Want to make some dollas?'];
-// where each neighbor stands: inside their block, near the sidewalk, clear of walls, props and each other
+ {id:'parcel',who:'Marisol',role:'delivery driver',title:'The Lost Parcel',pay:450,look:{shirt:0x6b4a2e,pants:0x6b4a2e,hat:0,hair:0x2a1a12,style:'pony',skin:0xc68a5e,vsex:'f',girth:0.95},
+  hi:"A box bounced off my van on the residential streets and I have 200 stops left. Find it and deliver it for me?",done:"Signed and delivered. You're a lifesaver."},
+ {id:'ernesto',who:'Grandma Lupe',role:'gnome collector',title:'Ernesto Ran Away',pay:400,look:{shirt:0x8a5a9a,pants:0x3a3040,style:'skirt',skirt:0x4a3550,h:0.9,hat:0,hair:0xdcd8d0,skin:0xc68a5e,vsex:'f',girth:1.2},
+  hi:"Mijo, my gnome Ernesto is gone! Ask the neighbors where he went.",done:"Ernesto! You got thinner. Here, for your trouble."},
+ {id:'shoplifter',who:'Raj',role:'gas station clerk',title:'Five-Finger Discount',pay:400,look:{shirt:0xc0392b,pants:0x2a2a2e,hat:3,hair:0x141010,skin:0x9c6a44,vsex:'m',girth:1.05},
+  hi:"That guy just walked out with a bag of my stock! Stop him!",done:"It's all here. Free coffee for a week."},
+ {id:'collections',who:'Vinny',role:'casino doorman',title:'Collections',pay:500,look:{shirt:0x1c1c22,pants:0x1c1c22,style:'tie',tie:0x8a1c2a,h:1.08,hat:0,hair:0x141010,skin:0xe0ac80,vsex:'m',girth:1.3},
+  hi:"A guy in a purple suit owes the house. He hangs around the park. Go collect.",done:"Debt settled. Keep what you picked up, we're square."},
+ {id:'condemned',who:'Inspector Lowe',role:'code enforcement',title:'Code Violation',pay:700,look:{shirt:0xc8c0a8,pants:0x5a5448,style:'pony',hat:0,hair:0x8a7e70,skin:0xf1c9a5,vsex:'f',girth:1.0},
+  hi:"That house is condemned and I'm short-staffed. Post the notice, clear the yard, then bring it down.",done:"Paperwork approved. Nice demolition."}];
+var QUEST_HAIL=['Hey! Got a minute?','Psst. I could use some help.','You! Yes, you. I need a favor.','Want to make some dollas?'];
+const qnear=(a,b,r)=>!!a&&!!b&&Math.hypot(a.x-b.x,a.z-b.z)<r;
+function qHeld(o){ const P=G.player; return !!o&&o.alive&&P.held>=0&&G.props[P.held]===o; }
+function qTake(o){ if(!o||!o.alive) return; const i=G.props.indexOf(o); if(G.player.held===i) G.player.held=-1; o.held=false; o.alive=false; }
+function qNpc(pos,yaw,look,role,name){ const n=makeNpc(-1,0,'civ'); n.pos={...pos}; n.pos.y=groundAt(pos.x,pos.z,0.2,2); n.yaw=yaw; n.state='idle'; n.idleFor=1e9; n.startleCd=0; n.talkCd=rand(1,5);
+  n.home={p:{...n.pos},yaw}; n.role=role; n.qname=name; const L=look||{}; if(L.shirt!==undefined) n.shirt=hex(L.shirt); if(L.pants!==undefined) n.pants=hex(L.pants); if(L.style) n.style=L.style; if(L.h) n.height=L.h; if(L.tie!==undefined) n.tieCol=hex(L.tie); if(L.skirt!==undefined) n.skirtCol=hex(L.skirt); if(L.hair!==undefined) n.hair=hex(L.hair); if(L.skin!==undefined) n.skin=hex(L.skin);
+  if(L.hat!==undefined) n.hat=L.hat; if(L.vsex) n.vsex=L.vsex; if(L.girth) n.girth=L.girth; n.look=null; G.npcs.push(n); return n; }
+function qRelease(n){ if(!n||!n.alive) return; n.role=''; n.home=null; const [r,w]=nearestWp(n.pos); n.ring=r; n.wp=w; if(n.state==='idle'||n.state==='home') n.state='walk'; }
+function qProp(kind,pos,tag){ const o=makeProp({kind,x:pos.x,y:0,z:pos.z,yaw:rand(0,6)}); if(pos.y) o.pos.y=Math.max(o.pos.y,pos.y); o.qtag=tag; o.knocked=true; G.props.push(o); return o; }
+function qCenter(it){ return V((it.x0+it.x1)/2,0,(it.z0+it.z1)/2); }
+function qDoorFront(it){ const d=W.doors.find(o=>o.bld===it.bld), c=qCenter(it); if(!d) return c; const dc=doorCenter(d), o2=d.axis==='x'?Math.sign(dc.z-c.z)||1:Math.sign(dc.x-c.x)||1; return d.axis==='x'?V(dc.x,0,dc.z+o2*1.6):V(dc.x+o2*1.6,0,dc.z); }
+function qPickHouse(from,dmin,dmax,not){ const L=W.interiors.filter(i=>i.house&&!W.condemned.has(i.bld)&&!(not||[]).includes(i.bld)).map(i=>({i,d:hlen(vsub(qCenter(i),from))}));
+  const ok=L.filter(e=>e.d>dmin&&e.d<dmax); return (ok.length?pick(ok):L.sort((a,b)=>Math.abs(a.d-dmin)-Math.abs(b.d-dmin))[0]).i; }
+function qOpenSpot(c,r){ for(let k=0;k<40;k++){ const p=V(c.x+rand(-r,r),0,c.z+rand(-r,r)); if(!questBlocked(p)) return p; } return V(c.x,0,c.z); }
+// each step: text, start(Q), check(Q) → true (done) | 'fail:why' | false, target(Q) for the pointer, area(Q) for a search circle,
+// talk(Q,n) when you press E at a quest person, turnIn: finish by talking to the quest giver, time: seconds allowed
+function questSteps(id){ const P=G.player;
+  if(id==='parcel') return [
+   {text:'Find the parcel: search the yards in the circle',start(Q){ const it=qPickHouse(Q.n.pos,30,90), p=qDoorFront(it); Q.parcel=qProp('parcel',V(p.x+rand(-2,2),0.3,p.z),'parcel'); Q.from=it.bld; Q.area=V(Q.parcel.pos.x+rand(-6,6),0,Q.parcel.pos.z+rand(-6,6)); },
+    check(Q){ if(!Q.parcel.alive) return 'fail:The parcel got wrecked'; return qHeld(Q.parcel); }, close(Q){ return hlen(vsub(Q.parcel.pos,P.pos))<13; },
+    target(Q){ return this.close(Q)?Q.parcel.pos:Q.area; }, area(Q){ return this.close(Q)?null:Q.area; }},
+   {text:'Deliver the parcel to the marked door',beam:true,start(Q){ const it=qPickHouse(Q.parcel.pos,25,95,[Q.from]); Q.dest=qDoorFront(it); Q.destBld=it.bld; },
+    check(Q){ if(!Q.parcel.alive) return 'fail:The parcel got wrecked'; return qnear(Q.parcel.pos,Q.dest,2.4); }, target(Q){ return Q.dest; }},
+   {text:'Get a signature from the resident',start(Q){ const c=qCenter(W.interiors.find(i=>i.bld===Q.destBld)); Q.res=qNpc(V(Q.dest.x+rand(-0.5,0.5),0,Q.dest.z),Math.atan2(Q.dest.x-c.x,Q.dest.z-c.z),{shirt:pick([0x5a7a9a,0x9a6a4a,0x6a8a5a]),pants:0x3a3a40},'qnpc','Resident'); say(Q.res,'Is that my package?',2.5); },
+    check(Q){ return !!Q.signed; }, target(Q){ return Q.res.pos; },
+    talk(Q,n){ if(n!==Q.res) return false; Q.signed=true; say(n,'Finally! Sign here... there. Thank you!',3); qTake(Q.parcel); return true; }},
+   {text:'Tell Marisol it\'s delivered',turnIn:true}];
+  if(id==='ernesto') return [
+   {text:'Ask two neighbors where Ernesto went',start(Q){ Q.asked=0; Q.nb=[]; const used=[], lines=['A gnome? Running? ...Toward the trailer park, I think.','Little red hat, heading for the trailers. Strangest morning of my life.'];
+      for(let k=0;k<2;k++){ const it=qPickHouse(Q.n.pos,12,70,used); used.push(it.bld); const p=qDoorFront(it), c=qCenter(it), nb=qNpc(V(p.x+rand(-1,1),0,p.z),Math.atan2(p.x-c.x,p.z-c.z),{shirt:pick([0x4a6a8a,0x8a6a4a,0x6a8a5a,0xb07a9a]),pants:0x3a3a40},'qnpc',pick(['Mrs. Kim','Mr. Hale','Neighbor','Mrs. Ortiz']));
+        nb.qline=lines[k]; nb.qdone=false; Q.nb.push(nb); } },
+    check(Q){ return Q.asked>=2; }, progress(Q){ return Q.asked+'/2'; }, target(Q){ const n=Q.nb.find(n=>!n.qdone); return n&&n.pos; },
+    talk(Q,n){ if(!Q.nb.includes(n)||n.qdone) return false; n.qdone=true; Q.asked++; say(n,n.qline,3.6); return true; }},
+   {text:'Find Ernesto around the trailer park',start(Q){ const b=W.blocks.find(b=>b.kind==='trailer'), sp=qOpenSpot(V((b.x0+b.x1)/2,0,(b.z0+b.z1)/2),9); Q.ern=qProp('gnome',V(sp.x,0.3,sp.z),'ernesto'); Q.ern.tint=hex(0x2c5fa8); Q.area=V(sp.x+rand(-5,5),0,sp.z+rand(-5,5)); },
+    check(Q){ if(!Q.ern.alive) return 'fail:Ernesto got smashed'; return qHeld(Q.ern); }, close(Q){ return hlen(vsub(Q.ern.pos,P.pos))<11; },
+    target(Q){ return this.close(Q)?Q.ern.pos:Q.area; }, area(Q){ return this.close(Q)?null:Q.area; }},
+   {text:'Carry Ernesto home to Grandma Lupe',check(Q){ if(!Q.ern.alive) return 'fail:Ernesto got smashed'; if(qnear(Q.ern.pos,Q.n.pos,2.8)){ qTake(Q.ern); return true; } return false; }, target(Q){ return Q.n.pos; }}];
+  if(id==='shoplifter') return [
+   {text:'Stop the shoplifter before he gets away',time:75,beam:true,start(Q){ const [r,w]=nearestWp(Q.n.pos), t=makeNpc(r,w,'civ'); t.pos=vadd(Q.n.pos,V(rand(-1.5,1.5),0,rand(1.2,2.2))); t.shirt=hex(0x2a2c30); t.pants=hex(0x2a3a5a); t.hat=1; t.speedK=1.15; t.role='qrun'; t.qname='Shoplifter'; t.look=null; G.npcs.push(t); Q.thief=t; startle(t,Q.n.pos); },
+    check(Q){ const t=Q.thief; if(!t||!t.alive) return 'fail:He got away'; if(t.state==='rag'){ Q.bag=qProp('bag',vadd(t.pos,V(0,0.6,0)),'loot'); Q.bag.tint=hex(0xd8d2c0); say(t,'Ow! Fine, take it!',2.4); return true; }
+      if(npcUp(t)&&t.state!=='flee'&&hlen(vsub(t.pos,P.pos))<16){ t.startleCd=0; startle(t,P.pos); } return false; }, target(Q){ return Q.thief&&Q.thief.alive?Q.thief.pos:null; }},
+   {text:'Grab the stolen goods',check(Q){ if(!Q.bag.alive) return 'fail:The stolen goods got wrecked'; return qHeld(Q.bag); }, target(Q){ return Q.bag.pos; }},
+   {text:'Bring the goods back to Raj',check(Q){ if(!Q.bag.alive) return 'fail:The stolen goods got wrecked'; if(qnear(Q.bag.pos,Q.n.pos,2.8)){ qTake(Q.bag); return true; } return false; }, target(Q){ return Q.n.pos; }}];
+  if(id==='collections'){ const park=W.blocks.find(b=>b.kind==='park')||W.blocks[0], PC=V((park.x0+park.x1)/2,0,(park.z0+park.z1)/2); return [
+   {text:'Head to the park',check(Q){ return qnear(P.pos,PC,13); }, target(Q){ return PC; }},
+   {text:'Find the man in the purple suit and tackle him',beam:true,start(Q){ let p=qOpenSpot(PC,8); if(hlen(vsub(p,P.pos))<6) p=qOpenSpot(PC,8);
+      const m=qNpc(p,rand(0,6),{shirt:0x5a2a8a,pants:0x3a1c5c,style:'tie',tie:0xe0b030,h:1.04},'qrun','Purple Suit'); m.girth=1.2; m.speedK=1.2; m.home=null; m.state='walk'; const [r,w]=nearestWp(p); m.ring=r; m.wp=w; Q.mark=m; },
+    check(Q){ const m=Q.mark; if(!m||!m.alive) return 'fail:He got away'; if(m.state==='rag'){ Q.coins=[]; for(let i=0;i<6;i++){ tossProp('coin',vadd(m.pos,V(rand(-0.3,0.3),0.8,rand(-0.3,0.3))),V(rand(-2.5,2.5),rand(3,5),rand(-2.5,2.5))); const c=G.props[G.props.length-1]; c.coin=25; c.qtag='house'; Q.coins.push(c); } say(m,'Okay, okay! Take it!',2.5); return true; }
+      if(npcUp(m)&&m.state!=='flee'&&hlen(vsub(m.pos,P.pos))<10){ m.startleCd=0; startle(m,P.pos); } return false; }, target(Q){ return Q.mark&&Q.mark.alive?Q.mark.pos:null; }},
+   {text:"Pick up the house's money",check(Q){ return Q.coins.filter(c=>!c.alive).length>=5; }, progress(Q){ return Q.coins.filter(c=>!c.alive).length+'/6'; }, target(Q){ const c=Q.coins.find(c=>c.alive); return c&&c.pos; }},
+   {text:'Report back to Vinny',turnIn:true}]; }
+  if(id==='condemned') return [
+   {text:'Post the notice on the condemned house',beam:true,start(Q){ Q.it=W.interiors.find(i=>i.bld===Q.n.qbld)||W.interiors.find(i=>i.house&&W.condemned.has(i.bld)); Q.door=qDoorFront(Q.it); },
+    check(Q){ if(qnear(P.pos,Q.door,1.9)){ pop(vadd(Q.door,V(0,2.1,0)),'NOTICE POSTED','#ffd35a'); sfx('pickup'); return true; } return false; }, target(Q){ return Q.door; }},
+   {text:'Clear the junk out of the yard',start(Q){ const it=Q.it, pd=4.5; Q.junk=G.props.filter(o=>o.alive&&!o.held&&!['coin','chunk','car','hydrant'].includes(o.k)&&o.pos.x>it.x0-pd&&o.pos.x<it.x1+pd&&o.pos.z>it.z0-pd&&o.pos.z<it.z1+pd).slice(0,8).map(o=>({o,p:{...o.pos}}));
+      for(let k=Q.junk.length;k<3;k++){ const o=qProp(pick(['trash','crate','tire']),vadd(Q.door,V(rand(-2,2),0.3,rand(-0.8,0.8))),'junk'); Q.junk.push({o,p:{...o.pos}}); } },
+    moved(Q){ return Q.junk.filter(j=>!j.o.alive||hlen(vsub(j.o.pos,j.p))>1.5).length; }, check(Q){ return this.moved(Q)>=3; }, progress(Q){ return Math.min(3,this.moved(Q))+'/3'; },
+    target(Q){ const j=Q.junk.find(j=>j.o.alive&&hlen(vsub(j.o.pos,j.p))<=1.5); return j&&j.o.pos; }},
+   {text:'Bring the roof down (propane blows, so does a HENNY juggernaut)',check(Q){ return (BRK_BY.get(Q.it.bld)||[]).some(b=>b.roof&&!b.alive); },
+    target(Q){ const c=qCenter(Q.it), pr=G.props.filter(o=>o.alive&&o.k==='propane'&&!qHeld(o)&&hlen(vsub(o.pos,c))<35).sort((a,b)=>hlen(vsub(a.pos,P.pos))-hlen(vsub(b.pos,P.pos)))[0]; return P.held>=0&&G.props[P.held]&&G.props[P.held].k==='propane'?c:(pr?pr.pos:c); }},
+   {text:'Report back to Inspector Lowe',turnIn:true}];
+  return [{text:'Talk to them again',turnIn:true}]; }
+// where the five stand: Marisol on a downtown sidewalk, Lupe in her front yard, Raj at the gas station door, Vinny at the casino
+// door, Lowe in front of a condemned house
 function questBlocked(p){ for(const s of W.solids){ if(s.door||s.y0>2||s.y1<0.2) continue; if(p.x>s.x0-0.6&&p.x<s.x1+0.6&&p.z>s.z0-0.6&&p.z<s.z1+0.6) return true; }
   for(const pr of W.props) if(Math.hypot(pr.x-p.x,pr.z-p.z)<1.1) return true; return false; }
-function questSpots(){ W.questSpots=[]; const byKind={}; for(const b of W.blocks) (byKind[b.kind]||(byKind[b.kind]=[])).push(b);
-  const used=[], F=[[0.5,0],[0.5,1],[0,0.5],[1,0.5],[0.25,0],[0.75,0],[0.25,1],[0.75,1],[0,0.25],[0,0.75],[1,0.25],[1,0.75]];
-  QUESTS.forEach((q,qi)=>{ const list=byKind[q.at[0]]||W.blocks, b=list[q.at[1]%list.length], m=WALK+0.9; let best=null;
-    for(const [fx,fz] of F){ const p=V(lerp(b.x0+m,b.x1-m,fx),0,lerp(b.z0+m,b.z1-m,fz)); if(used.some(u=>Math.hypot(u.x-p.x,u.z-p.z)<3)||questBlocked(p)) continue; best=p; break; }
-    if(!best){ for(const [fx,fz] of F){ const p=V(lerp(b.x0+WALK*0.5,b.x1-WALK*0.5,fx),0,lerp(b.z0+WALK*0.5,b.z1-WALK*0.5,fz)); if(!used.some(u=>Math.hypot(u.x-p.x,u.z-p.z)<3)){ best=p; break; } } }   // the sidewalk
-    if(!best) best=V((b.x0+b.x1)/2,0,b.z0+WALK*0.5);
-    used.push(best); W.questSpots.push({qi,p:best,yaw:Math.atan2(best.x-(b.x0+b.x1)/2,best.z-(b.z0+b.z1)/2)}); }); }
-function questGivers(){ for(const sp of W.questSpots||NONE){ const q=QUESTS[sp.qi], n=makeNpc(-1,0,'civ'); n.pos={...sp.p}; n.pos.y=groundAt(sp.p.x,sp.p.z,0.2,2); n.yaw=sp.yaw; n.state='idle'; n.idleFor=1e9;
-    n.home={p:{...n.pos},yaw:sp.yaw}; n.role='quest'; n.qi=sp.qi; n.talkCd=rand(1,5); const L=q.look||{};
-    if(L.shirt!==undefined) n.shirt=hex(L.shirt); if(L.pants!==undefined) n.pants=hex(L.pants); if(L.style) n.style=L.style; if(L.h) n.height=L.h; G.npcs.push(n); } }
+function questSpots(){ W.questSpots=[]; const used=[], free=p=>!questBlocked(p)&&!used.some(u=>hlen(vsub(u,p))<4)&&!(W.slotsB||NONE).some(b=>hlen(vsub(boxCenter(b.s),p))<4)&&!(W.doc&&hlen(vsub(W.doc.pos,p))<5);
+  const near=b=>{ for(let r=0;r<5;r+=0.5) for(let a=0;a<12;a++){ const p=V(b.x+Math.cos(a*0.524)*r,0,b.z+Math.sin(a*0.524)*r); if(free(p)) return p; } return V(b.x,0,b.z); };
+  const face=(p,from)=>Math.atan2(p.x-from.x,p.z-from.z);
+  QUESTS.forEach((q,qi)=>{ let p, yaw=0, extra={};
+    if(q.id==='parcel'){ const b=W.blocks.filter(b=>b.kind==='down')[1]||W.blocks[0], c=V((b.x0+b.x1)/2,0,(b.z0+b.z1)/2); p=near(V(c.x+3,0,b.z1-WALK*0.5)); yaw=face(p,c); }
+    else if(q.id==='ernesto'){ const H=W.houses.filter(h=>!W.condemned.has(h.bld))[3]||W.houses[0]; p=near(V(H.x+1.4,0,H.front+H.out*2.1)); yaw=face(p,V(H.x,0,H.z)); }
+    else if(q.id==='shoplifter'){ const it=W.interiors.find(i=>i.shop); if(it){ p=near(qDoorFront(it)); yaw=face(p,qCenter(it)); } else { const b=W.blocks.find(b=>b.kind==='gas'); p=near(V((b.x0+b.x1)/2,0,b.z0+WALK)); } }
+    else if(q.id==='collections'){ const it=W.interiors.find(i=>i.casino); if(it){ const c=qCenter(it); p=near(V(c.x+2.6,0,it.z1+1.4)); yaw=0; } else { const b=W.blocks.filter(b=>b.kind==='down')[2]||W.blocks[0]; p=near(V((b.x0+b.x1)/2,0,b.z0+WALK)); } }
+    else { const it=W.interiors.filter(i=>i.house&&W.condemned.has(i.bld))[0]||W.interiors.find(i=>i.house), H=W.houses.find(h=>h.bld===it.bld); p=near(H?V(H.x-1.8,0,H.front+H.out*2.6):qDoorFront(it)); yaw=face(p,qCenter(it)); extra.qbld=it.bld; }
+    used.push(p); W.questSpots.push(Object.assign({qi,p,yaw},extra)); }); }
+function questGivers(){ for(const sp of W.questSpots||NONE){ const q=QUESTS[sp.qi], n=qNpc(sp.p,sp.yaw,q.look,'quest',q.who); n.qi=sp.qi; if(sp.qbld) n.qbld=sp.qbld; } }
 function questPay(q){ return PROF.quests&&PROF.quests[q.id]?Math.round(q.pay*0.06)*10:q.pay; }
-const questStat=k=>k==='score'?G.score:(G.stats[k]||0);
-function questTalk(n){ const q=QUESTS[n.qi], P=G.player;
-  if(G.quest&&G.quest.n===n){ say(n,'Well? '+q.task+'.',2.4); return; }
-  if(G.questDone.has(q.id)){ say(n,pick(['Thanks again, really.','You did good.','Nothing else today.']),2.2); return; }
-  if(G.quest){ toast('<b>JOB DROPPED</b>',G.quest.q.task,'#c9d1d9',2.2); questCleanup(G.quest); }
-  const Q={q,n,t0:G.t,pay:questPay(q),base:q.type==='stat'?questStat(q.stat):0,seen:new Set(),pr:0,k:0};
-  if(q.type==='knock') for(const o of G.props) if(o.knocked) Q.seen.add(o);
-  if(q.type==='fetch') for(const o of G.props) if(hlen(vsub(o.pos,n.pos))<3) Q.seen.add(o);
-  if(q.type==='air') G.qAir=0;
-  if(q.type==='deliver'){ // the parcel goes straight into your hands; the address is a house door 35–90 m away
-    const doors=W.doors.filter(d=>{ const it=W.interiors.find(i=>i.bld===d.bld); if(!it||!it.house) return false; const dd=hlen(vsub(doorCenter(d),P.pos)); return dd>35&&dd<90; });
-    const d=pick(doors.length?doors:W.doors), c=doorCenter(d), it=W.interiors.find(i=>i.bld===d.bld), o2=it?(d.axis==='x'?Math.sign(c.z-(it.z0+it.z1)/2):Math.sign(c.x-(it.x0+it.x1)/2))||1:1;
-    Q.dest=d.axis==='x'?V(c.x,0,c.z+o2*1.3):V(c.x+o2*1.3,0,c.z);
-    if(P.held>=0) dropHeld(V(0,0,0)); const o=makeProp({kind:'parcel',x:P.pos.x,y:P.pos.y,z:P.pos.z,yaw:P.yaw}); o.knocked=true; o.asleep=false; o.held=true; G.props.push(o); P.held=G.props.length-1; Q.parcel=o; }
-  if(q.type==='bounty'){ const far=[]; W.rings.forEach((r,ri)=>r.forEach((w,wi)=>{ const dd=hlen(vsub(w,P.pos)); if(dd>30&&dd<70) far.push([ri,wi]); })); const [ri,wi]=pick(far.length?far:[[0,0]]);
-    const t=makeNpc(ri,wi,'civ'); t.shirt=hex(0x5a2a8a); t.pants=hex(0x3a1c5c); t.style='tie'; t.tieCol=hex(0xe0b030); t.height=1.04; t.girth=1.2; t.speedK=1.25; t.role='mark'; G.npcs.push(t); Q.target=t; }
-  if(q.type==='race'){ Q.cps=[]; let from=n.pos; for(let k=0;k<3;k++){ let best=null, bd=1e9;
-      W.rings.forEach(r=>r.forEach(w=>{ const dd=hlen(vsub(w,from)), sc=Math.abs(dd-24)+Math.random()*6; if(dd>16&&!Q.cps.some(c=>hlen(vsub(c,w))<14)&&sc<bd){ bd=sc; best=w; } }));
-      if(!best) break; Q.cps.push(V(best.x,best.y,best.z)); from=best; } }
-  G.quest=Q; say(n,q.hi,3.2); n.talkCd=6; sfx('pickup');
-  toast('<b>ODD JOB · '+q.who.toUpperCase()+'</b>',q.task+' · pays Ð '+Q.pay+(q.time?' · '+q.time+' s':''),'#ffd35a',3.6); }
-function questCleanup(Q){ if(Q.parcel&&Q.parcel.alive){ const i=G.props.indexOf(Q.parcel); if(G.player.held===i) G.player.held=-1; Q.parcel.alive=false; } if(Q.target) Q.target.role=''; }
+function questPrompt(n){ const k=IS_TOUCH?'GRAB: ':'E: '; if(n.role!=='quest') return k+'talk to '+(n.qname||'them'); const q=QUESTS[n.qi], Q=G.quest;
+  if(Q&&Q.n===n) return k+'talk to '+q.who+(Q.steps[Q.k]&&Q.steps[Q.k].turnIn?' · finish the quest':' · your quest');
+  return k+'talk to '+q.who+(G.questDone.has(q.id)?'':' · quest: '+q.title+', Ð '+questPay(q)); }
+function questTalk(n){ const Q=G.quest;
+  if(n.role!=='quest'){ const st=Q&&Q.steps[Q.k]; if(st&&st.talk&&st.talk(Q,n)) return; say(n,pick(['Hm?','Can I help you?','Nice day for it.']),1.6); return; }
+  const q=QUESTS[n.qi]; n.yaw=Math.atan2(G.player.pos.x-n.pos.x,G.player.pos.z-n.pos.z);
+  if(Q&&Q.n===n){ const st=Q.steps[Q.k]; if(st&&st.turnIn){ questAdvance(Q); return; } say(n,'Still waiting on you: '+st.text.toLowerCase()+'.',2.8); return; }
+  if(G.questDone.has(q.id)){ say(n,pick(['Thanks again, really.','You did good.','Come back another day.']),2.2); return; }
+  if(Q){ toast('<b>QUEST DROPPED</b>',Q.q.title,'#c9d1d9',2.2); questCleanup(Q); }
+  const NQ={q,n,k:-1,t0:G.t,st0:G.t,pay:questPay(q),steps:questSteps(q.id)}; G.quest=NQ; say(n,q.hi,4.5); n.talkCd=8; sfx('pickup');
+  toast('<b>NEW QUEST · '+q.title.toUpperCase()+'</b>',q.who+', '+q.role+' · pays Ð '+NQ.pay,'#ffd35a',3.4); questAdvance(NQ); }
+function questAdvance(Q){ Q.k++; if(Q.k>=Q.steps.length){ questEnd(true); return; } const st=Q.steps[Q.k]; Q.st0=G.t; if(st.start) st.start(Q);
+  if(Q.k>0){ sfx('feat',0.5); toast('<b>'+Q.q.title.toUpperCase()+' · STEP '+(Q.k+1)+' OF '+Q.steps.length+'</b>',st.text,'#ffd35a',2.8); } }
+function questCleanup(Q){ for(const k of ['parcel','ern','bag']) if(Q[k]&&Q[k].qtag) qTake(Q[k]); for(const k of ['res','thief','mark']) qRelease(Q[k]); for(const n of Q.nb||[]) qRelease(n); }
 function questEnd(ok,why){ const Q=G.quest; if(!Q) return; G.quest=null; questCleanup(Q); const q=Q.q;
-  if(!ok){ toast('<b>JOB FAILED</b>',q.task+' · '+why,'#ff8aa0',3); sfx('glitch',0.5); return; }
+  if(!ok){ toast('<b>QUEST FAILED</b>',q.title+' · '+why+'. Talk to '+q.who+' to try again.','#ff8aa0',3.6); sfx('glitch',0.5); return; }
   G.questDone.add(q.id); PROF.quests=PROF.quests||{}; PROF.quests[q.id]=(PROF.quests[q.id]||0)+1; saveProfile();
   G.dollas+=Q.pay; G.life=Math.min(Math.max(240,G.life),G.life+8); G.stats.jobs=(G.stats.jobs||0)+1;
-  if(Q.n&&Q.n.alive){ say(Q.n,q.done,3); pop(vadd(Q.n.pos,V(0,2.2,0)),'+Ð'+Q.pay,'#ffd35a'); }
+  if(Q.n&&Q.n.alive){ say(Q.n,q.done,3.6); pop(vadd(Q.n.pos,V(0,2.2,0)),'+Ð'+Q.pay,'#ffd35a'); }
   sfx('cash'); sfx('feat',0.6); const all=QUESTS.every(x=>PROF.quests[x.id]);
-  toast('<b>JOB DONE · +Ð '+Q.pay.toLocaleString()+'</b>',q.who+': “'+q.done+'” · +8 s'+(all?' · every odd job done!':''),'#ffd35a',3.6); }
-function questProgress(Q){ const q=Q.q, P=G.player;
-  if(q.type==='stat') return (questStat(q.stat)-Q.base)/q.n;
-  if(q.type==='air') return (G.qAir||0)/q.n;
-  if(q.type==='knock'){ let c=0; for(const o of G.props) if(o.knocked&&q.kinds.includes(o.k)&&!Q.seen.has(o)) c++; return c/q.n; }
-  if(q.type==='fetch'){ for(let i=0;i<G.props.length;i++){ const o=G.props[i]; if(!o.alive||!q.kinds.includes(o.k)||Q.seen.has(o)) continue; if(hlen(vsub(o.pos,Q.n.pos))<2.4){ if(P.held===i) P.held=-1; o.held=false; o.alive=false; return 1; } } return 0; }
-  if(q.type==='deliver'){ const o=Q.parcel; if(!o||!o.alive){ questEnd(false,'the parcel got wrecked'); return 0; } return hlen(vsub(o.pos,Q.dest))<2.3?1:0; }
-  if(q.type==='bounty'){ const t=Q.target; if(!t||!t.alive) return 0; if(t.state==='rag') return 1; if(npcUp(t)&&t.state!=='flee'&&t.startleCd<=0&&hlen(vsub(t.pos,P.pos))<9) startle(t,P.pos); return 0; }
-  if(q.type==='reach'){ const w=W.tower; return w&&P.pos.y>w.y-1.6&&P.pos.x>w.x0-1&&P.pos.x<w.x1+1&&P.pos.z>w.z0-1&&P.pos.z<w.z1+1?1:0; }
-  if(q.type==='race'){ const cp=Q.cps[Q.k]; if(cp&&hlen(vsub(P.pos,cp))<2.6){ Q.k++; sfx('pickup'); if(Q.k<Q.cps.length) pop(vadd(P.pos,V(0,1.6,0)),'CHECKPOINT '+Q.k+'/'+Q.cps.length,'#ffd35a'); } return Q.cps.length?Q.k/Q.cps.length:1; }
-  return 0; }
-function questUpdate(dt){ if(!G||G.attract||G.state!=='play'||!G.questDone) return; const P=G.player; let near=null, nd=2.6;
-  for(const n of G.npcs){ if(!n.alive||n.role!=='quest'||!npcUp(n)||n.state==='flee') continue; const d=hlen(vsub(n.pos,P.pos)); if(d<nd&&Math.abs(n.pos.y-P.pos.y)<1.5){ nd=d; near=n; }
-    if(d<8&&n.talkCd<=0&&!G.questDone.has(QUESTS[n.qi].id)&&!(G.quest&&G.quest.n===n)){ say(n,pick(QUEST_HAIL),2.2); n.talkCd=rand(9,15); } }
+  toast('<b>QUEST COMPLETE · +Ð '+Q.pay.toLocaleString()+'</b>',q.title+' · +8 s'+(all?' · all five quests done!':''),'#ffd35a',3.8); }
+function questUpdate(dt){ if(!G||G.attract||G.state!=='play'||!G.questDone) return; const P=G.player; let near=null, nd=3.2;
+  for(const n of G.npcs){ if(!n.alive||!(n.role==='quest'||n.role==='qnpc')||!npcUp(n)) continue; const d=hlen(vsub(n.pos,P.pos)); if(d<nd&&Math.abs(n.pos.y-P.pos.y)<1.7){ nd=d; near=n; }
+    if(n.role==='quest'&&d<9&&n.talkCd<=0&&!G.questDone.has(QUESTS[n.qi].id)&&!G.quest){ say(n,pick(QUEST_HAIL),2.2); n.talkCd=rand(10,16); } }
   G.nearQuest=P.ragdoll?null:near;
-  if(near&&!PROF.qHint){ PROF.qHint=1; saveProfile(); toast('<b>ODD JOBS</b>','People with a gold $ over their heads have work. Press '+(IS_TOUCH?'GRAB':'E')+' to talk.','#ffd35a',4); }
-  const Q=G.quest; if(!Q) return;
-  if(Q.q.time&&G.t-Q.t0>Q.q.time){ questEnd(false,'out of time'); return; }
-  Q.pr=questProgress(Q); if(G.quest===Q&&Q.pr>=1) questEnd(true); }
-// where the job happens: what to fetch or knock over, the address, the mark, the next checkpoint, the nearest condemned house
-function questTarget(Q){ const q=Q.q, P=G.player, near=f=>{ let b=null, bd=1e9; for(const o of G.props){ if(!o.alive||!f(o)) continue; const d=hlen(vsub(o.pos,P.pos)); if(d<bd){ bd=d; b=o.pos; } } return b; };
-  if(q.type==='fetch'){ const h=P.held>=0?G.props[P.held]:null; return h&&q.kinds.includes(h.k)?Q.n.pos:near(o=>q.kinds.includes(o.k)&&!o.held&&!Q.seen.has(o)); }
-  if(q.type==='knock') return near(o=>q.kinds.includes(o.k)&&!o.knocked);
-  if(q.type==='deliver') return Q.dest; if(q.type==='bounty') return Q.target&&Q.target.alive?Q.target.pos:null; if(q.type==='race') return Q.cps[Q.k]||null;
-  if(q.type==='reach') return W.tower?V((W.tower.x0+W.tower.x1)/2,W.tower.y,(W.tower.z0+W.tower.z1)/2):null;
-  if(q.type==='stat'){ if(q.stat==='booms') return near(o=>o.k==='propane'); if(q.stat==='alarms') return near(o=>o.k==='car');
-    if(q.stat==='bounces'){ let b=null, bd=1e9; for(const s of W.solids) if(s.bouncy){ const c=V((s.x0+s.x1)/2,s.y1,(s.z0+s.z1)/2), d=hlen(vsub(c,P.pos)); if(d<bd){ bd=d; b=c; } } return b; }
-    if(q.stat==='roofs'||q.stat==='fires'){ let b=null, bd=1e9; for(const it of W.interiors) if(it.house&&W.condemned.has(it.bld)){ const c=V((it.x0+it.x1)/2,0,(it.z0+it.z1)/2), d=hlen(vsub(c,P.pos)); if(d<bd){ bd=d; b=c; } } return b; }
-    if(q.stat==='drones') return G.drone&&!G.drone.dead?G.drone.pos:null; }
-  return null; }
+  if(near&&!PROF.qHint){ PROF.qHint=1; saveProfile(); toast('<b>QUESTS</b>','People with a gold ! over their heads need help. Walk up and press '+(IS_TOUCH?'GRAB':'E')+' to talk.','#ffd35a',4.5); }
+  const Q=G.quest; if(!Q) return; const st=Q.steps[Q.k]; if(!st) return;
+  if(st.time&&G.t-Q.st0>st.time){ questEnd(false,'Out of time'); return; }
+  if(st.turnIn||!st.check) return; const r=st.check(Q);
+  if(typeof r==='string'&&r.slice(0,5)==='fail:'){ questEnd(false,r.slice(5)); return; }
+  if(r===true&&G.quest===Q) questAdvance(Q); }
+function questTarget(Q){ const st=Q.steps[Q.k]; if(!st) return null; if(st.turnIn) return Q.n.pos; return st.target?st.target(Q):null; }
 function questHUD(){ const el=$('quest'); if(!el) return; const Q=G&&!G.attract&&G.state==='play'?G.quest:null; if(!Q){ if(!el.hidden) el.hidden=true; return; }
-  if((G.qHudT||0)>G.t&&!el.hidden) return; G.qHudT=G.t+0.15; const q=Q.q, tgt=questTarget(Q); let dir='';
+  if((G.qHudT||0)>G.t&&!el.hidden) return; G.qHudT=G.t+0.15; const st=Q.steps[Q.k]; if(!st) return; const tgt=questTarget(Q); let dir='';
   if(tgt){ const rel=vsub(tgt,G.player.pos), d=hlen(rel), a=Math.atan2(vdot(rel,rightOf(G.cam.yaw)),vdot(rel,fwd(G.cam.yaw))); dir=' · '+'↑↗→↘↓↙←↖'[((Math.round(a/(PI/4))%8)+8)%8]+' '+Math.round(d)+' m'; }
-  const prog=q.type==='stat'||q.type==='knock'?` (${Math.min(q.n,Math.floor(Math.max(0,Q.pr)*q.n+1e-6)).toLocaleString()}/${q.n.toLocaleString()})`:q.type==='race'?` (${Q.k}/${Q.cps.length})`:q.type==='air'?` (best ${(G.qAir||0).toFixed(1)} s)`:'';
-  const tl=q.time?` · ${Math.max(0,Math.ceil(q.time-(G.t-Q.t0)))} s left`:'';
-  el.innerHTML=`<b>ODD JOB · ${q.who}</b><br>${q.task}${prog}<br><span>Ð ${Q.pay.toLocaleString()}${tl}${dir}</span>`; if(el.hidden) el.hidden=false; }
-// a light column over the address, the next checkpoint and the mark
-function questDraw(B,T){ const Q=G.quest; if(!Q||G.attract) return; const q=Q.q; let p=null;
-  if(q.type==='deliver') p=Q.dest; else if(q.type==='race') p=Q.cps[Q.k]; else if(q.type==='bounty'&&Q.target&&Q.target.alive) p=Q.target.pos;
-  if(!p) return; const a=0.14+0.06*Math.sin(G.t*4), gy=groundAt(p.x,p.z,0.3,p.y+1); bpush(T.cyl,p.x,gy+7,p.z,QI,0.5,7,0.5,[1,0.83,0.35],a,1); bpush(T.cyl,p.x,gy+0.05,p.z,QI,1.2,0.03,1.2,[1,0.83,0.35],0.32,1); }
-// a gold $ over everyone with work (a ? over your current boss), and a pointer to the job's target when it's off screen
-function questOverlay(v){ if(!G.questDone) return; ov.textAlign='center';
-  for(const n of G.npcs){ if(!n.alive||n.role!=='quest') continue; const q=QUESTS[n.qi], act=!!(G.quest&&G.quest.n===n); if(G.questDone.has(q.id)&&!act) continue;
-    const d=vlen(vsub(n.pos,v.pos)); if(d>45) continue; const pr=project(VP,vadd(n.pos,V(0,2.25*n.height+0.15+Math.sin(G.t*3+n.qi)*0.06,0))); if(!pr) continue;
-    const s=act?'?':'$'; ov.font='800 21px "Space Grotesk",system-ui,sans-serif'; ov.lineWidth=4; ov.strokeStyle='rgba(10,8,16,.8)'; ov.strokeText(s,pr.x,pr.y); ov.fillStyle=act?'#f3eefc':'#ffd35a'; ov.fillText(s,pr.x,pr.y);
-    if(d<12){ ov.font='700 11px "Space Mono",monospace'; ov.fillStyle='rgba(243,238,252,.85)'; ov.fillText(q.who+(act?' · your job':' · Ð '+questPay(q)),pr.x,pr.y+14); } }
-  const Q=G.quest; if(!Q) return; const tg=questTarget(Q); if(!tg) return; const pr=project(VP,vadd(tg,V(0,1.4,0))), d=hlen(vsub(tg,G.player.pos)), col='#ffd35a';
+  const pr=st.progress?' ('+st.progress(Q)+')':'', tl=st.time?' · '+Math.max(0,Math.ceil(st.time-(G.t-Q.st0)))+' s left':'';
+  el.innerHTML=`<b>${Q.q.title.toUpperCase()}</b><br>${Q.k+1}/${Q.steps.length} · ${st.turnIn?'Talk to '+Q.q.who:st.text}${pr}<br><span>Ð ${Q.pay.toLocaleString()}${tl}${dir}</span>`; if(el.hidden) el.hidden=false; }
+// light column on the place you're headed, and a ring on the ground around a search area
+function questDraw(B,T){ const Q=G.quest; if(!Q||G.attract) return; const st=Q.steps[Q.k]; if(!st) return; const gold=[1,0.83,0.35], a=0.13+0.06*Math.sin(G.t*4);
+  const ar=st.area?st.area(Q):null; if(ar){ const gy=groundAt(ar.x,ar.z,0.3,2); for(let k=0;k<24;k++){ const an=k/24*TAU, sx=ar.x+Math.cos(an)*11, sz=ar.z+Math.sin(an)*11; bpush(T.cube,sx,groundAt(sx,sz,0.3,0.45)+0.06,sz,qyaw(-an),0.18,0.03,1.45,gold,0.55,1); } bpush(T.cyl,ar.x,gy+5,ar.z,QI,0.35,5,0.35,gold,a*0.8,1); return; }
+  if(!st.beam&&!st.turnIn) return; const p=questTarget(Q); if(!p) return; const gy=groundAt(p.x,p.z,0.3,(p.y||0)+1); bpush(T.cyl,p.x,gy+7,p.z,QI,0.5,7,0.5,gold,a,1); bpush(T.cyl,p.x,gy+0.05,p.z,QI,1.2,0.03,1.2,gold,0.32,1); }
+// a gold ! over people with a quest, a ? over whoever you need to talk to next, an "E · Talk" tag on whoever is in reach,
+// and a pointer to the current step when it's off screen
+function questOverlay(v){ if(!G.questDone) return; ov.textAlign='center'; const Q=G.quest, st=Q&&Q.steps[Q.k];
+  for(const n of G.npcs){ if(!n.alive||!(n.role==='quest'||n.role==='qnpc')) continue; let s=null, col='#ffd35a';
+    if(n.role==='quest'){ const q=QUESTS[n.qi]; if(Q&&Q.n===n){ if(st&&st.turnIn) s='?'; } else if(!Q&&!G.questDone.has(q.id)) s='!'; }
+    else if(st&&st.talk&&((Q.nb&&Q.nb.includes(n)&&!n.qdone)||n===Q.res)){ s='?'; col='#f3eefc'; }
+    const d=vlen(vsub(n.pos,v.pos)); if(d>55) continue; const pr=project(VP,vadd(n.pos,V(0,2.25*n.height+0.2+Math.sin(G.t*3+(n.qi||0))*0.06,0))); if(!pr) continue;
+    if(s){ const fs=Math.round(clamp(30-d*0.32,14,27)); ov.globalAlpha=d>24?clamp(1-(d-24)/45,0.5,1):1; ov.font='900 '+fs+'px "Space Grotesk",system-ui,sans-serif'; ov.lineWidth=fs>20?5:4;
+      ov.strokeStyle='rgba(10,8,16,.85)'; ov.strokeText(s,pr.x,pr.y); ov.fillStyle=col; ov.fillText(s,pr.x,pr.y);
+      if(d>=12&&n!==G.nearQuest){ const t=Math.round(d)+'m'; ov.font='700 10px "Space Mono",monospace'; ov.lineWidth=3; ov.strokeText(t,pr.x,pr.y+12); ov.fillStyle='rgba(243,238,252,.92)'; ov.fillText(t,pr.x,pr.y+12); } ov.globalAlpha=1; }
+    if(n===G.nearQuest){ const label=(IS_TOUCH?'GRAB':'E')+' · Talk'; ov.font='800 14px "Space Grotesk",system-ui,sans-serif'; const w=ov.measureText(label).width+18, y=pr.y+(s?10:-6);
+      ov.fillStyle='rgba(16,14,24,.82)'; ov.beginPath(); ov.roundRect?ov.roundRect(pr.x-w/2,y,w,24,7):ov.rect(pr.x-w/2,y,w,24); ov.fill(); ov.strokeStyle='#ffd35a'; ov.lineWidth=1.5; ov.stroke(); ov.fillStyle='#ffd35a'; ov.fillText(label,pr.x,y+17); }
+    else if(d<12&&n.role==='quest'&&s){ ov.font='700 11px "Space Mono",monospace'; ov.fillStyle='rgba(243,238,252,.85)'; ov.fillText(QUESTS[n.qi].who,pr.x,pr.y+14); } }
+  if(!Q) return; const tg=questTarget(Q); if(!tg) return; const pr=project(VP,vadd(tg,V(0,1.4,0))), d=hlen(vsub(tg,G.player.pos)), col='#ffd35a';
   if(pr&&pr.x>0&&pr.x<VW&&pr.y>0&&pr.y<VH){ if(d<4) return; ov.font='800 15px "Space Grotesk",system-ui,sans-serif'; ov.lineWidth=3; ov.strokeStyle='rgba(10,8,16,.8)'; ov.strokeText('◆ '+Math.round(d)+'m',pr.x,pr.y); ov.fillStyle=col; ov.fillText('◆ '+Math.round(d)+'m',pr.x,pr.y); return; }
   const pr2=project(VP,tg); let sx,sy; if(pr2){ sx=pr2.x-VW/2; sy=pr2.y-VH/2; } else { const rel=vsub(tg,v.pos), rt=rightOf(G.cam.yaw); sx=-vdot(rel,rt); if(Math.abs(sx)<1) sx=1; sy=-Math.abs(sx)*0.3; }
   const a=Math.atan2(sy,sx), mg=46, t=Math.min((VW/2-mg)/Math.max(1e-6,Math.abs(Math.cos(a))),(VH/2-mg)/Math.max(1e-6,Math.abs(Math.sin(a)))), ax=VW/2+Math.cos(a)*t, ay=VH/2+Math.sin(a)*t;
   ov.save(); ov.translate(ax,ay); ov.rotate(a); ov.fillStyle=col; ov.globalAlpha=0.95; ov.beginPath(); ov.moveTo(17,0); ov.lineTo(-9,-11); ov.lineTo(-3,0); ov.lineTo(-9,11); ov.closePath(); ov.fill(); ov.restore(); ov.globalAlpha=1;
-  ov.font='700 10px "Space Mono",monospace'; ov.fillStyle=col; ov.fillText('JOB '+Math.round(d)+'m',ax-Math.cos(a)*26,ay-Math.sin(a)*26+4); }
+  ov.font='700 10px "Space Mono",monospace'; ov.fillStyle=col; ov.fillText('QUEST '+Math.round(d)+'m',ax-Math.cos(a)*26,ay-Math.sin(a)*26+4); }
 // first-run tutorial: six short steps, shown above the controls line, skippable from the pause menu
 const TUT=[['Move around',()=>G.tut.moved>4],['Jump, then press it again in the air to double jump',()=>G.tut.jumped],['Tackle something',()=>G.tut.tackled],
   ['Grab a prop',()=>G.player.held>=0],['Throw it',()=>G.tut.threw],['Your clock is draining. Follow a light beam to a stash and walk into it',()=>G.stats.doses>0]];

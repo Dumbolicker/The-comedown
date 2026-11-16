@@ -31,6 +31,7 @@ Requested on 15 Nov 2026:
 - [x] Grass stays off paving: every flat gray decal (driveways, walks, slabs) and every mulch bed is recorded as paved, and blades skip it (21,200 blades, 0 on paving in `tests/feat12.py`)
 - [x] Houses rebuilt from real references (below)
 - [x] Street details: cobra-head street lights over the road, stop signs at residential corners, continental crosswalks around downtown, lane dashes at the real 10 ft / 30 ft rhythm, and car paint in real proportions
+- [x] Trailers rebuilt as lived-in single-wides you can walk into (below)
 - [ ] R2 models (character style previews are in: try all 15 styles with K, see below)
 - [ ] R3 map ×5
 - [ ] R4 events, people and items
@@ -75,3 +76,17 @@ back), pick one under Settings → "Characters (preview, not saved)", or open th
 world look: `#cinematic+film`). Ids: `real`, `film`, `upgraded`, `dolls`, `vinyl`, `claymen`, `ink`, `felt`, `caricature`,
 `anime`, `faceted`, `retro`, `voxels`, `paperfolk`, `shadows`. The previews restyle today's characters at draw time
 (proportions, faces, materials, outlines, shape swaps, stop-motion poses); the full remodel for the style you choose is R2.
+
+## Trailers (16 Nov 2026)
+
+The five trailers in the park were boxes on the ground. Now each one sits on its chassis with the floor 0.75 m up behind
+skirting, under a low-pitched roof. The aluminium siding runs in three bands (body, a color stripe, body) with framed
+windows and awnings. The tow hitch is an A-frame tongue with a coupler and a jack stand, two tall propane tanks sit on a
+slab at the other end, and there is a window AC unit out back and another on the roof. A wooden deck with stair
+handrails (or, at the Ripperdoc's, a two-step metal stoop) leads up to the door, and a gravel pad keeps the grass back.
+Inside: a living room at the hitch end (couch, TV on a stand, a rug), a galley kitchen along the back wall (base
+cabinets, counter and sink under the window, fridge, a table and stools under the front window) and a bedroom at the far
+end (bed under the end window, nightstand and lamp), lit by a ceiling light. The roof, its trim and the rooftop AC hide
+in the cutaway view when you're inside. `tests/feat12.py` walks into every trailer from its steps.
+Pictures: `screenshots/q2/trailers.jpg`, and `screenshots/q2/trailers_before_after.jpg` for the same views before and
+after.

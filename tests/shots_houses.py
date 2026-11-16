@@ -1,4 +1,4 @@
-"""Screenshots of the rebuilt houses, the street details and an odd job, all from one page load (Rapier takes a while to
+"""Screenshots of the rebuilt houses, the street details and a quest, all from one page load (Rapier takes a while to
 compile in CI). Writes screenshots/houses_*.png. Usage: python tests/shots_houses.py [scale]"""
 import asyncio, os, pathlib, sys
 from playwright.async_api import async_playwright
@@ -20,7 +20,7 @@ AERIAL = r"""(arg) => { DEMO_INPUT=null; const I=%s, P=G.player, b=W.blocks.filt
   for(let i=0;i<40;i++) update(1/60,I()); return 'aerial'; }""" % I
 STREET = r"""(arg) => { DEMO_INPUT=null; const I=%s, P=G.player; G.clock=arg[0]; const b=W.blocks.find(b=>b.kind==='down'); P.pos=V(b.x0-1.0,0,b.z0-7.5); P.vel=V(); P.yaw=0.75;
   G.cam.yaw=0.75; G.cam.pitch=0.16; G.cam.dist=G.cam.cur=6; G.cam.focus=vadd(P.pos,V(0,1.4,0)); for(let i=0;i<40;i++) update(1/60,I()); return 'street'; }""" % I
-JOB = r"""() => { DEMO_INPUT=null; const I=%s, P=G.player; G.clock=16.2; const n=G.npcs.find(n=>n.role==='quest'&&QUESTS[n.qi].id==='gnome'); P.pos=vadd(n.home.p,V(2.4,0,1.6)); P.vel=V();
+JOB = r"""() => { DEMO_INPUT=null; const I=%s, P=G.player; G.clock=16.2; const n=G.npcs.find(n=>n.role==='quest'&&QUESTS[n.qi].id==='ernesto'); P.pos=vadd(n.home.p,V(2.4,0,1.6)); P.vel=V();
   const yaw=Math.atan2(n.pos.x-P.pos.x,n.pos.z-P.pos.z); P.yaw=yaw; G.cam.yaw=yaw+0.25; G.cam.pitch=0.18; G.cam.dist=G.cam.cur=4.6; G.cam.focus=vadd(P.pos,V(0,1.4,0));
   for(let i=0;i<20;i++) update(1/60,I()); questTalk(n); for(let i=0;i<30;i++) update(1/60,I()); syncHUD(1/60); return document.getElementById('quest').textContent; }""" % I
 
