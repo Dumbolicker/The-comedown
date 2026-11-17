@@ -81,6 +81,7 @@ body{background:var(--ground);color:var(--ink);font-family:var(--font-d);overflo
 #bFlop{right:calc(110px + env(safe-area-inset-right,0px));bottom:calc(122px + env(safe-area-inset-bottom,0px));width:58px;height:58px;color:var(--hot);border-color:rgba(255,79,216,.5)}
 #bYell{right:calc(116px + env(safe-area-inset-right,0px));bottom:calc(194px + env(safe-area-inset-bottom,0px));width:50px;height:50px;font-size:10px}
 #bCharge{right:calc(184px + env(safe-area-inset-right,0px));bottom:calc(108px + env(safe-area-inset-bottom,0px));width:62px;height:62px;font-size:10px;color:#ff8a3c;border-color:rgba(255,138,60,.6)}
+#bAlt{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(266px + env(safe-area-inset-bottom,0px));width:56px;height:56px;font-size:9px;color:var(--amber);border-color:rgba(255,182,60,.45)}
 #bPoop{right:calc(196px + env(safe-area-inset-right,0px));bottom:calc(40px + env(safe-area-inset-bottom,0px));width:54px;height:54px;font-size:10px;color:#d39a5a;border-color:rgba(211,154,90,.55)}
 .tbtn:focus-visible,.btn:focus-visible,.bet:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 .screen{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;touch-action:pan-y;text-align:center;
@@ -173,6 +174,8 @@ h1.logo{font:700 clamp(46px,13vw,104px)/.92 var(--font-d);letter-spacing:-.02em;
 #clockwrap{position:relative}
 #pauseBtn{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:9px;border:1px solid var(--panelborder);background:rgba(255,255,255,.06);color:var(--ink);font:700 11px/1 var(--font-m);cursor:pointer;pointer-events:auto;padding:0}
 #pauseBtn:active{transform:translateY(1px)}
+#viewBtn{position:absolute;top:6px;right:40px;width:30px;height:30px;border-radius:9px;border:1px solid var(--panelborder);background:rgba(255,255,255,.06);color:var(--ink);font:700 10px/1 var(--font-m);cursor:pointer;pointer-events:auto;padding:0}
+#viewBtn:active{transform:translateY(1px)}
 #settings,#records{z-index:30} #warn{z-index:40}
 .setp{pointer-events:auto;width:min(580px,100%);text-align:left;padding:18px;display:flex;flex-direction:column;gap:12px;background:rgba(16,14,24,.92);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
 #pause{background:rgba(8,7,12,.62)}
@@ -213,7 +216,7 @@ body.calm #stars.seen i.on{animation:none;background:#5b8cff}
 <canvas id="ov"></canvas>
 
 <div id="hud" aria-hidden="true" hidden>
-  <div id="topleft"><div id="clockwrap" class="panel"><button id="pauseBtn" type="button" aria-label="Pause" title="Pause (Esc)">II</button><span class="clabel" id="clockLbl">Time left</span><div id="clock">30.0</div>
+  <div id="topleft"><div id="clockwrap" class="panel"><button id="pauseBtn" type="button" aria-label="Pause" title="Pause (Esc)">II</button><button id="viewBtn" type="button" aria-label="First person view" title="First / third person (X)">1P</button><span class="clabel" id="clockLbl">Time left</span><div id="clock">30.0</div>
     <div id="lifebar"><div id="lifefill"></div></div><div id="drain"></div></div></div>
   <div id="topright">
     <div id="score" class="stat panel"><span class="clabel">Chaos</span><span class="statval" id="scoreval">0</span><span class="pbval" id="pbval"></span></div>
@@ -236,6 +239,7 @@ body.calm #stars.seen i.on{animation:none;background:#5b8cff}
   <button class="tbtn" id="bYell" type="button">YELL</button>
   <button class="tbtn" id="bPoop" type="button">POOP</button>
   <button class="tbtn" id="bCharge" type="button" hidden>CHARGE</button>
+  <button class="tbtn" id="bAlt" type="button" hidden>ALT</button>
   <button class="tbtn" id="bJump" type="button">JUMP</button>
   <button class="tbtn" id="bTackle" type="button">TACKLE</button>
 </div>
@@ -377,8 +381,8 @@ const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:J
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } } };
 const REDUCE_MOTION=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 const QUALITY={ low:{scale:0.6,shadows:false,lights:2}, medium:{scale:0.8,shadows:true,lights:4}, high:{scale:1,shadows:true,lights:8} };
-const BIND_DEF={up:['w','arrowup'],down:['s','arrowdown'],left:['a','arrowleft'],right:['d','arrowright'],sprint:['shift'],jump:[' '],tackle:['f'],grab:['e'],flop:['q'],holler:['h'],poop:['p'],charge:['c'],voice:['v'],restart:['r']};
-const SET_DEF={quality:'auto',scale:1,shadows:true,lights:8,master:0.8,sfx:1,music:0.6,voices:1,sens:1,padSens:1,invertY:false,rumble:true,hints:true,breaks:true,assist:true,
+const BIND_DEF={up:['w','arrowup'],down:['s','arrowdown'],left:['a','arrowleft'],right:['d','arrowright'],sprint:['shift'],jump:[' '],tackle:['f'],grab:['e'],flop:['q'],holler:['h'],poop:['p'],charge:['c'],voice:['v'],restart:['r'],view:['x'],alt:['g']};
+const SET_DEF={quality:'auto',view:'third',fpFov:64,fpBody:'full',scale:1,shadows:true,lights:8,master:0.8,sfx:1,music:0.6,voices:1,sens:1,padSens:1,invertY:false,rumble:true,hints:true,breaks:true,assist:true,
   flash:REDUCE_MOTION?'reduced':'full',shake:REDUCE_MOTION?0.25:1,warned:false};
 const SET=Object.assign({},SET_DEF,store.get('bt_settings',{}));
 SET.binds=Object.assign(JSON.parse(JSON.stringify(BIND_DEF)),SET.binds||{});
@@ -756,6 +760,7 @@ const W={solids:[],spots:[],rings:[],copSpawns:[],lamps:[],props:[],spawn:V(),sp
   lights:[],interiors:[],tq:[],glass:[],slotsB:[],fixtures:[],casinoNpcs:[],billboard:null,marquee:null};
 const C={ asph:hex(0x2f2e36), walk:hex(0xa9a59c), grass:hex(0x56873b), dirt:hex(0x8b6b48), conc:hex(0x8f8c86), lot:hex(0x3c3c44),
   glass:hex(0xd8c890), wood:hex(0x9c7a4b), metal:hex(0x9aa0a6), dark:hex(0x2a2a2e), trunk:hex(0x5b4030), lampPole:hex(0x3a3d42), yellow:hex(0xe8c84a) };
+function fpTag(k,x){ const s=W.solids[W.solids.length-1]; s.fp=k; if(x) Object.assign(s,x); return s; }   /* furniture first person can use */
 function solid(x0,y0,z0,x1,y1,z1,col,draw=true,glow=0){ W.solids.push({x0,y0,z0,x1,y1,z1,ramp:0,launch:false,hidden:!draw});
   if(draw) bpush(STATIC.cube,(x0+x1)/2,(y0+y1)/2,(z0+z1)/2,QI,(x1-x0)/2,(y1-y0)/2,(z1-z0)/2,col,1,glow); }
 function rampS(x0,y0,z0,x1,y1,z1,dir,col,launch=false){ W.solids.push({x0,y0,z0,x1,y1,z1,ramp:dir,launch,hidden:false});
@@ -1079,7 +1084,7 @@ function gen_down(l){ const f=()=>hex(pick([0x9c5a45,0xc9b79c,0x7d8a99,0x5a6b7d,
 function gen_gas(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
   { const gb=++BLD; customBrk(brk(cx-7,4.5,cz-10,cx+7,5.0,cz-1,'metal',hex(0xe9e6df),{bld:gb,kind:'canopy',roof:true}),{densK:0.12});
     for(const [px,pz] of [[cx-5.8,cz-9],[cx+5.8,cz-9],[cx-5.8,cz-2],[cx+5.8,cz-2]]) brk(px-0.22,0,pz-0.22,px+0.22,4.5,pz+0.22,'metal',hex(0xd8d5ce),{bld:gb,hpK:1.4}); }
-  for(const px of [cx-2.6,cx+2.6]){ solid(px-0.6,0,cz-7,px+0.6,0.2,cz-4,hex(0xb5b1a8)); solid(px-0.35,0.2,cz-5.8,px+0.35,1.6,cz-5.2,hex(0xc8312e)); sdeco(px,1.3,cz-5.17,0.22,0.14,0.02,hex(0x9fe0ff),0.6); }
+  for(const px of [cx-2.6,cx+2.6]){ solid(px-0.6,0,cz-7,px+0.6,0.2,cz-4,hex(0xb5b1a8)); solid(px-0.35,0.2,cz-5.8,px+0.35,1.6,cz-5.2,hex(0xc8312e)); fpTag('pump'); sdeco(px,1.3,cz-5.17,0.22,0.14,0.02,hex(0x9fe0ff),0.6); }
   { // "Gulp & Go" mini-mart: brick walls, a glass storefront, a concrete roof you can still climb onto, aisles and a cooler inside
     const bld=++BLD, t=0.25, sx0=cx-6, sx1=cx+6, sz0=cz+3, sz1=cz+10.5, H=3.9, bc=hex(0xe0dacb);
     wallRun('x',sx0,sx1,sz0,sz0+t,0,H,[{u0:cx-2.9,u1:cx-1.3,y0:0,y1:2.3,door:1},{u0:cx-1.0,u1:cx+5.2,y0:0.5,y1:2.5}],'brick',bc,bld,2.6);
@@ -1089,8 +1094,8 @@ function gen_gas(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
     W.interiors.push({x0:sx0+t,z0:sz0+t,x1:sx1-t,z1:sz1-t,y1:H,bld,cut:bld,shop:true});
     texDeco('tile',V(cx,0.03,(sz0+sz1)/2),V(6-t,0,0),V(0,0,-(3.75-t)),[0,0,1,1],{su:8,sv:5,far:70});
     for(const ax of [cx-1.6,cx+1.6]) prop('shelf2',ax,0,cz+7.0,0);
-    solid(cx-4.6,0,sz1-t-0.75,cx+4.6,2.2,sz1-t,hex(0xcfd6dc)); sdeco(cx,1.15,sz1-t-0.77,4.5,0.95,0.02,hex(0xbfe6ff),0.55);
-    solid(cx-5.7,0,cz+4.0,cx-3.9,1.0,cz+4.8,hex(0x7a4a2a)); sdeco(cx-4.6,1.12,cz+4.4,0.18,0.12,0.15,hex(0x2a2a2e));
+    solid(cx-4.6,0,sz1-t-0.75,cx+4.6,2.2,sz1-t,hex(0xcfd6dc)); fpTag('cooler'); sdeco(cx,1.15,sz1-t-0.77,4.5,0.95,0.02,hex(0xbfe6ff),0.55);
+    solid(cx-5.7,0,cz+4.0,cx-3.9,1.0,cz+4.8,hex(0x7a4a2a)); fpTag('register'); sdeco(cx-4.6,1.12,cz+4.4,0.18,0.12,0.15,hex(0x2a2a2e));
     light(cx,H-0.4,(sz0+sz1)/2,10,[1.1,1.15,1.25],{brk:rf.id});
     W.fixtures.push({p:V(cx-2,H-0.08,cz+6.8),r:0.45,c:[0.95,0.97,1],brk:rf.id},{p:V(cx+2,H-0.08,cz+6.8),r:0.45,c:[0.95,0.97,1],brk:rf.id});
     spot(cx+3.5,0,cz+8.5); }
@@ -1128,12 +1133,12 @@ function casino(l,cx,cz){ const bld=++BLD, x0=l.x0+0.8, x1=l.x1-0.8, z0=l.z0+0.5
   const zc=cz-2.7; for(let i=0;i<5;i++){ slotMachine(cx-3.0+i*1.0,zc-0.31,PI,bld); slotMachine(cx-3.0+i*1.0,zc+0.31,0,bld); }
   sdeco(cx-1.0,1.58,zc,2.55,0.025,0.06,gold,0.4);
   // the bar along the west wall
-  const bx=x0+t; solid(bx,0,cz-8.4,bx+0.75,1.08,cz-1.6,hex(0x3a1e14)); sdeco(bx+0.38,1.1,cz-5,0.4,0.03,3.45,hex(0x1a0f0a));
+  const bx=x0+t; solid(bx,0,cz-8.4,bx+0.75,1.08,cz-1.6,hex(0x3a1e14)); fpTag('bar'); sdeco(bx+0.38,1.1,cz-5,0.4,0.03,3.45,hex(0x1a0f0a));
   sdeco(bx+0.08,2.2,cz-5,0.06,0.9,3.3,hex(0x24121a)); for(let k=0;k<14;k++) scyl(bx+0.12,1.62+(k%2)*0.6,cz-8+k*0.48,0.05,0.14,hsv(k*0.13,0.6,0.9),0.6);
   for(let k=0;k<5;k++) prop('bottle',bx+0.4,1.1,cz-7.6+k*1.4,rand(0,6));
   for(let k=0;k<5;k++) prop('stool',bx+1.25,0,cz-7.8+k*1.45,0);
   // cashier cage, back east corner
-  const kx0=cx+4.2, kx1=x1-t, kz=z0+t+2.2; solid(kx0,0,kz-0.6,kx1,1.15,kz,hex(0x3a2a20)); for(let x=kx0+0.15;x<kx1;x+=0.32) scyl(x,1.85,kz-0.3,0.02,0.7,brass);
+  const kx0=cx+4.2, kx1=x1-t, kz=z0+t+2.2; solid(kx0,0,kz-0.6,kx1,1.15,kz,hex(0x3a2a20)); fpTag('cage'); for(let x=kx0+0.15;x<kx1;x+=0.32) scyl(x,1.85,kz-0.3,0.02,0.7,brass);
   sdeco((kx0+kx1)/2,2.58,kz-0.3,(kx1-kx0)/2,0.04,0.32,brass); texDeco('atlas',V((kx0+kx1)/2,3.05,kz+0.01),V(1.1,0,0),V(0,0.55,0),AT.cashier,{g:0.5});
   prop('ctable',cx+5.2,0,cz-6.2,0); prop('ctable',cx+6,0,cz-1.6,0);
   for(const [x,z] of [[cx+4.1,cz-6.4],[cx+6.3,cz-6.4],[cx+5.2,cz-5.0],[cx+4.9,cz-1.6],[cx+7.1,cz-1.6]]) prop('stool',x,0,z,0);
@@ -1187,9 +1192,9 @@ function gen_trailer(l){ const cx=(l.x0+l.x1)/2, cz=(l.z0+l.z1)/2;
     sdeco(tx-1.4,2.79,fz+0.07,1.8,0.23,0.04,hex(0x14121c)); neonText('RIPPERDOC',tx-1.4,2.81,fz+0.12,0.065,hex(0xff4fd8)); sdeco(tx-1.4,2.6,fz+0.1,1.7,0.015,0.02,hex(0x37e6ff),1);
     sdeco(tx+3.55,2.4,fz+0.1,0.06,0.2,0.03,hex(0x7cff9b),1); sdeco(tx+3.55,2.4,fz+0.1,0.2,0.06,0.03,hex(0x7cff9b),1);
     sdeco(tx+2.0,2.97,fz+0.75,1.15,0.04,0.75,hex(0x2a2e36)); scyl(tx+0.9,1.48,fz+1.45,0.03,1.48,hex(0x55585e)); scyl(tx+3.1,1.48,fz+1.45,0.03,1.48,hex(0x55585e));
-    const chx=tx-2.6, chz=fz+1.5; solid(chx-0.35,0,chz-0.85,chx+0.35,0.5,chz+0.85,hex(0x3a3f48)); sdeco(chx,0.58,chz+0.15,0.34,0.07,0.7,hex(0x2f8a9a)); sdeco(chx,0.95,chz-0.8,0.34,0.42,0.07,hex(0x2f8a9a),0,qx(0.45));
+    const chx=tx-2.6, chz=fz+1.5; solid(chx-0.35,0,chz-0.85,chx+0.35,0.5,chz+0.85,hex(0x3a3f48)); fpTag('docchair'); sdeco(chx,0.58,chz+0.15,0.34,0.07,0.7,hex(0x2f8a9a)); sdeco(chx,0.95,chz-0.8,0.34,0.42,0.07,hex(0x2f8a9a),0,qx(0.45));
     scyl(chx+0.75,1.0,chz-0.7,0.035,1.0,hex(0x8a9096)); sdeco(chx+0.42,2.0,chz-0.7,0.36,0.03,0.03,hex(0x8a9096)); scyl(chx+0.08,1.95,chz-0.7,0.02,0.05,hex(0x8a9096)); sball(chx+0.08,1.86,chz-0.7,0.17,0.07,0.17,hex(0xe8f6ff),1);
-    solid(tx+3.7,0,fz+0.55,tx+4.5,0.9,fz+1.2,hex(0x6a7078)); for(let k=0;k<4;k++) scyl(tx+3.85+k*0.18,1.0,fz+0.88,0.035,0.09,hex([0x37e6ff,0xff4fd8,0x7cff9b,0xffb63c][k]),1);
+    solid(tx+3.7,0,fz+0.55,tx+4.5,0.9,fz+1.2,hex(0x6a7078)); fpTag('vials'); for(let k=0;k<4;k++) scyl(tx+3.85+k*0.18,1.0,fz+0.88,0.035,0.09,hex([0x37e6ff,0xff4fd8,0x7cff9b,0xffb63c][k]),1);
     W.doc={pos:V(tx+1.55,0,fz+1.2),yaw:0}; solid(tx+1.3,0,fz+0.95,tx+1.8,1.9,fz+1.45,C.dark,false);
     light(chx+0.08,1.75,chz-0.7,5,[0.85,1.05,1.25]); light(tx-1.4,2.7,fz+0.9,5.5,[1.1,0.3,0.95],{flick:6}); }
   const jx=cx+4.5, jz=cz+1;
@@ -1657,7 +1662,7 @@ function rubPlayer(){ const R=RUB.R, w=RUB.world, p=G.player; if(!w||!p) return;
   if(!RUB.player||RUB.pr!==PR||RUB.ph!==PH){ if(RUB.player){ RUB.byCol.delete(RUB.pc.handle); w.removeRigidBody(RUB.player); }
     const b=w.createRigidBody(R.RigidBodyDesc.kinematicPositionBased().setTranslation(p.pos.x,p.pos.y+PH/2,p.pos.z)); const c=w.createCollider(R.ColliderDesc.capsule(Math.max(0.05,PH/2-PR),PR).setCollisionGroups(PLAYER_GRP),b);
     RUB.player=b; RUB.pc=c; RUB.pr=PR; RUB.ph=PH; RUB.byCol.set(c.handle,{player:true}); }
-  const at={x:p.pos.x,y:p.pos.y+PH/2,z:p.pos.z}; if(RUB.teleport){ RUB.player.setTranslation(at,true); RUB.teleport=false; } else RUB.player.setNextKinematicTranslation(at); }
+  const at={x:p.pos.x,y:p.pos.y+PH/2-(p.seat?8:0),z:p.pos.z};   /* seated: the capsule steps out of the couch's way */ if(RUB.teleport){ RUB.player.setTranslation(at,true); RUB.teleport=false; } else RUB.player.setNextKinematicTranslation(at); }
 function rubBody(c,q,v,av,cd,rec){ const R=RUB.R, w=RUB.world; rubEnsure(c.x,c.z);
   const bd=R.RigidBodyDesc.dynamic().setTranslation(c.x,c.y,c.z).setRotation(q).setLinvel(v.x,v.y,v.z).setAngvel(av).setLinearDamping(0).setAngularDamping(0.3); // no fake air drag: free fall stays exact
   if(vlen(v)>12&&(rec.slab||(rec.h&&rec.h.x*rec.h.y*rec.h.z>0.002))) bd.setCcdEnabled(true); const body=w.createRigidBody(bd), cl=w.createCollider(cd,body); rec.body=body; rec.cl=cl; rec.t=V(c.x,c.y,c.z); rec.q=q; rec.lv=v; RUB.byCol.set(cl.handle,rec); return rec; }
@@ -1894,7 +1899,7 @@ function doorCenter(d){ return d.axis==='x'?V((d.u0+d.u1)/2,0,d.tm):V(d.tm,0,(d.
 function doorsUpdate(dt){ const P=G.player, ps=Math.hypot(P.vel.x,P.vel.z);
   for(const d of W.doors){ if(d.broken) continue; const c=doorCenter(d); let near=null, nd=1.9;
     const yb=d.yb||0, chk=p=>{ const dd=Math.hypot(p.x-c.x,p.z-c.z); if(dd<nd&&p.y<yb+d.h&&p.y>yb-1.3){ nd=dd; near=p; } }; chk(P.pos); for(const n of G.npcs) if(n.alive&&n.state!=='rag') chk(n.pos);
-    if(near){ if(d.open<0.08) d.side=Math.sign(d.axis==='x'?near.z-d.tm:near.x-d.tm)||1; d.hold=1.1; } else d.hold-=dt;
+    d.shut=(d.shut||0)-dt; if(near&&!(d.shut>0)){ if(d.open<0.08) d.side=Math.sign(d.axis==='x'?near.z-d.tm:near.x-d.tm)||1; d.hold=Math.max(d.hold,1.1); } else d.hold-=dt;
     // kicked in: a charge or a sprint into a shut door of a condemned building
     if(near===P.pos&&nd<1.0&&d.open<0.5&&(ps>8.5||P.charge>0)&&canWreck()&&W.condemned.has(d.bld)&&G.state==='play'){ doorKick(d,P.vel); continue; }
     const tgt=d.hold>0?1:0; d.open+=(tgt-d.open)*Math.min(1,dt*(tgt?6:3)); d.s.gone=d.open>0.12; } }
@@ -1973,18 +1978,18 @@ function trailerShell(tx,tz,body,stripe,o={}){ const bld=++BLD, t=0.08, x0=tx-4.
 function trailerFurnish(tx,tz,ix0,iz0,ix1,iz1,FL,top,hs,roof){ const X=u=>tx+u*hs, xs=(a,b)=>[Math.min(X(a),X(b)),Math.max(X(a),X(b))], bz=(iz0+iz1)/2, wood=hex(0x8a6a48),
     cab=hex(pick([0xe8e2d4,0x9a7a56,0x7a8a7e,0xcfd6cf])), ctop=hex(pick([0xc9c2b0,0x8a8478,0xb8a98c])), rb=(roof.ceil||roof.A).id;
   // living room: couch on the back wall, TV on a low stand across from it, a rug
-  prop('couch',X(3.5),FL,iz0+0.5,0); { const [a,b]=xs(3.45,4.45); solid(a,FL,iz1-0.42,b,FL+0.48,iz1,wood); } prop('tv',X(3.95),FL+0.48,iz1-0.24,PI);
+  prop('couch',X(3.5),FL,iz0+0.5,0); { const [a,b]=xs(3.45,4.45); solid(a,FL,iz1-0.42,b,FL+0.48,iz1,wood); fpTag('tvstand'); } prop('tv',X(3.95),FL+0.48,iz1-0.24,PI);
   sdeco(X(3.5),FL+0.004,bz,0.95,0.004,0.8,hex(pick([0x8a2a3a,0x2a4a7a,0x6a5a2a,0x3a6a4a])));
   // galley: base cabinets with a counter and sink under the back window, fridge at the end, a table and stools under the front window
-  { const [a,b]=xs(-1.45,0.95); solid(a,FL,iz0,b,FL+0.8,iz0+0.6,cab); sdeco((a+b)/2,FL+0.82,iz0+0.31,(b-a)/2+0.02,0.02,0.32,ctop);
+  { const [a,b]=xs(-1.45,0.95); solid(a,FL,iz0,b,FL+0.8,iz0+0.6,cab); fpTag('counter',{sink:V(X(-0.2),FL+0.95,iz0+0.25)}); sdeco((a+b)/2,FL+0.82,iz0+0.31,(b-a)/2+0.02,0.02,0.32,ctop);
     sdeco(X(-0.2),FL+0.836,iz0+0.3,0.3,0.004,0.2,hex(0x8e969c)); scyl(X(-0.2),FL+0.95,iz0+0.07,0.015,0.12,hex(0xb8bcc0));
     for(let u=-1.15;u<0.9;u+=0.6) sdeco(X(u),FL+0.4,iz0+0.605,0.27,0.34,0.004,tone(cab,0.88)); }
   prop('fridge',X(1.55),FL,iz0+0.4,0); prop('table',X(-0.6),FL,iz1-0.5,0); prop('stool',X(-1.5),FL,iz1-0.55,0); prop('stool',X(0.3),FL,iz1-0.55,0);
   // bedroom: bed with its headboard on the end wall (under the end window), a nightstand and lamp
   { const ue=-4.62, [a,b]=xs(ue,ue+2.05), quilt=hex(pick([0x6a3a4a,0x3a5a7a,0x7a6a3a,0x4a6a4a]));
-    solid(a,FL,bz-0.72,b,FL+0.42,bz+0.72,wood); sdeco((a+b)/2,FL+0.5,bz,(b-a)/2-0.02,0.08,0.7,hex(0xece6da)); sdeco(X(ue+1.25),FL+0.6,bz,0.8,0.03,0.73,quilt);
+    solid(a,FL,bz-0.72,b,FL+0.42,bz+0.72,wood); fpTag('bed',{head:V(-hs,0,0)}); sdeco((a+b)/2,FL+0.5,bz,(b-a)/2-0.02,0.08,0.7,hex(0xece6da)); sdeco(X(ue+1.25),FL+0.6,bz,0.8,0.03,0.73,quilt);
     for(const pz of [-0.36,0.36]) sdeco(X(ue+0.3),FL+0.62,bz+pz,0.16,0.06,0.3,hex(0xf4f0e8)); sdeco(X(ue+0.03),FL+0.47,bz,0.03,0.47,0.76,wood);
-    const [c,d]=xs(ue,ue+0.45); solid(c,FL,bz+0.82,d,FL+0.55,bz+1.22,wood); sball(X(ue+0.22),FL+0.75,bz+1.02,0.12,0.14,0.12,hex(0xffe2a8),0.7); }
+    const [c,d]=xs(ue,ue+0.45); solid(c,FL,bz+0.82,d,FL+0.55,bz+1.22,wood); fpTag('nightstand'); sball(X(ue+0.22),FL+0.75,bz+1.02,0.12,0.14,0.12,hex(0xffe2a8),0.7); }
   light(X(0.2),top-0.5,bz,6.5,[1.2,1.0,0.76],{brk:rb}); W.fixtures.push({p:V(X(0.2),top-0.14,bz),r:0.14,c:[1,0.95,0.82],brk:rb});
   spot(X(-2.4),FL,bz); }
 // fences splinter into planks on a hard hit instead of bouncing like a crate
@@ -2254,7 +2259,8 @@ function playerUpdate(p,inp,dt,m,stands,camYaw,evs){ if(dt<=0) return;
   p.twT-=dt; const inten=1+G.effects.length*0.5+(G.effects.length>=3?1.2:0)+(m.shakes?1.5:0);
   if(p.twT<=0){ p.twT=rand(0.12,0.6)/inten; const k=Math.min(2.5,inten); p.twHead=V(rand(-0.25,0.25)*k,rand(-0.35,0.35)*k,rand(-0.2,0.2)*k); if(Math.random()<0.18) p.twBody=rand(-0.35,0.35); if(Math.random()<0.08) p.scratch=0.8; }
   p.twBody=lerp(p.twBody,0,smooth(6,dt)); p.scratch-=dt;
-  if(p.ragdoll){ ragUpdate(p,inp,dt,m,stands,evs); return; }
+  if(p.ragdoll){ if(p.seat) p.seat=null; ragUpdate(p,inp,dt,m,stands,evs); return; }
+  if(p.seat&&fpSeatUpdate(p,inp,dt)) return;
   if(m.object){ p.vel.x=0; p.vel.z=0; p.speed=0; p.charge=0; inp={...inp,mx:0,my:0,jump:false,flop:false}; }
   if(p.foldT>0){ p.vel.x*=Math.max(0,1-12*dt); p.vel.z*=Math.max(0,1-12*dt); p.charge=0; p.windT=0; inp={...inp,mx:0,my:0,jump:false,jumpHeld:false,flop:false}; }
   if(p.stuckT>0){ p.stuckT-=dt; p.vel.x=0; p.vel.z=0; p.speed=0; inp={...inp,mx:0,my:0,jump:false}; }
@@ -2281,7 +2287,7 @@ function playerUpdate(p,inp,dt,m,stands,camYaw,evs){ if(dt<=0) return;
     const dvx=target.x-p.vel.x, dvz=target.z-p.vel.z, dl=Math.hypot(dvx,dvz), mxd=acc*dt, k=dl>mxd?mxd/dl:1; p.vel.x+=dvx*k; p.vel.z+=dvz*k;
     if(m.jelly){ p.phase+=dt*3; p.vel.x+=Math.cos(G.t*5.3)*6*dt; p.vel.z+=Math.sin(G.t*4.1)*6*dt; } }
   p.speed=Math.hypot(p.vel.x,p.vel.z);
-  if(charging) p.yaw=Math.atan2(p.cdir.x,p.cdir.z); else if(m.focus>0.3&&!m.object) p.yaw=angDamp(p.yaw,camYaw,14,dt); else if(hlen(wish)>0.1) p.yaw=angDamp(p.yaw,Math.atan2(wish.x,wish.z),12,dt);
+  if(charging) p.yaw=Math.atan2(p.cdir.x,p.cdir.z); else if(fpLive()&&!(p.windT>0)) p.yaw=camYaw; else if(m.focus>0.3&&!m.object) p.yaw=angDamp(p.yaw,camYaw,14,dt); else if(hlen(wish)>0.1) p.yaw=angDamp(p.yaw,Math.atan2(wish.x,wish.z),12,dt);
   p.jbuf-=dt; p.coyote-=dt; if(inp.jump) p.jbuf=0.13;
   if(p.jbuf>0){ if(p.grounded||p.coyote>0){ p.vel.y=8.4*m.jump; p.grounded=false; p.coyote=0; p.jbuf=0; p.jumps=1; p.squash=-0.2; evs.push({t:'jump'}); }
     else if(p.jumps>0){ p.vel.y=7.6*m.jump; p.jumps=0; p.jbuf=0; evs.push({t:'djump'}); } }
@@ -2322,7 +2328,7 @@ function ragUpdate(p,inp,dt,m,stands,evs){ p.rt+=dt; const py=p.pos.y; p.vel.y=M
   const sp=vlen(p.vel); if(p.grounded&&sp<1) p.rstill+=dt; else p.rstill=0;
   const wants=(inp.flop||inp.jump||Math.hypot(inp.mx,inp.my)>0.3)&&p.rt>0.8&&p.grounded&&sp<3, auto=p.rstill>(p.rforced?1.3:3.5);
   if((wants||auto)&&!p.noGetup) getUp(p,evs); if(p.pos.y<-30){ p.pos={...W.spawn}; p.vel=V(); p.ragdoll=false; } }
-function playerPose(p){ const ch=Math.max(0.25,PH*0.3), off=PH*0.54;
+function playerPose(p){ const ch=Math.max(0.25,PH*0.3), off=PH*0.54; if(p.seat&&p.seat.lie&&!p.ragdoll) return [V(p.seat.pos.x,p.seat.pos.y,p.seat.pos.z),qmul(qyaw(p.seat.yaw),qx(-PI/2))];
   if(p.ragdoll){ const c=vadd(p.pos,V(0,ch,0)); return [vsub(c,qrot(p.rrot,V(0,off,0))),p.rrot]; }
   if(p.getupT>0){ const k=clamp(1-p.getupT/0.45,0,1), q=qnlerp(p.getupFrom,qyaw(p.yaw),k), c=vadd(p.pos,V(0,lerp(ch,off,k),0)); return [vsub(c,qrot(q,V(0,off,0))),q]; }
   return [V(p.pos.x+p.gx,p.pos.y,p.pos.z+p.gz),qyaw(p.yaw)]; }
@@ -2344,7 +2350,7 @@ function newGame(attract){
   genWorld();
   G={drone:null,airT:0,state:attract?'title':'play',attract,t:0,life:30,alive:0,score:0,dollas:0,combo:0,comboT:0,heat:0,heatPeak:0,seen:false,copT:0,stashT:0,
     props:W.props.map(makeProp),npcs:[],player:makePlayer(),effects:[],tol:{},tolDecay:{},comedown:0,stashes:[],parts:[],pops:[],geysers:[],
-    cam:{yaw:W.spawnYaw,pitch:0.32,dist:6.5,cur:6.5,focus:vadd(W.spawn,V(0,1.5,0)),fov:1.05},view:null,shake:0,clock:17.6,dying:0,evs:[],
+    cam:{yaw:W.spawnYaw,pitch:0.32,dist:6.5,cur:6.5,focus:vadd(W.spawn,V(0,1.5,0)),fov:1.05},view:null,fp:SET.view==='first',fpK:0,fpT:null,fpTimers:[],shake:0,clock:17.6,dying:0,evs:[],
     knocks:[],stats:{tackled:0,wrecked:0,booms:0,alarms:0,busts:0,doses:0,air:0},feats:FEATS.map(()=>false),newFeats:[],tried:{},nextAdren:2500,
     mods:null,rainbows:[],unicorns:[],formsSeen:{},zoo:null,decals:[],history:[],focusT:null,skyT:0,pity:0,parade:null,cyber:{},docLine:'',docLineT:0,docGreetCd:4,chargeHits:new Set(),bustFlash:0,heartT:0,sirenT:0,alarmT:0,tickLast:99};
   Object.assign(G,{collapse:[],chunkProps:0,inside:null,cutBld:0,camIn:0});
@@ -2408,24 +2414,27 @@ function dropHeld(v){ const p=G.player; if(p.held<0) return; const o=G.props[p.h
 function throwHeld(aim){ const p=G.player; if(p.held<0) return; const o=G.props[p.held]; p.held=-1; if(!o) return;
   const sp=clamp(19*Math.sqrt(G.mods.force)/Math.sqrt(Math.max(0.5,o.mass)),8,42); o.held=false; o.asleep=false; o.still=0;
   o.vel=vadd(vadd(vmul(vnorm(aim),sp),V(0,3,0)),vmul(p.vel,0.4)); o.ang=V(rand(-7,7),rand(-7,7),rand(-7,7)); o.thrown=3; o.throwFrom={...o.pos}; o.touched=0; sfx('throw'); }
-function actions(inp){ const p=G.player; if(p.ragdoll||G.dying>0){ if(p.ragdoll){ dropHeld(V()); if(p.poop) dropPoop(); } return; } if(G.mods.object||p.foldT>0) return; if(poopActions(inp)) return;
-  const cf=fwd(G.cam.yaw), el=clamp(0.42+(0.32-G.cam.pitch)*0.7,0.12,0.95), aim=vadd(vmul(cf,Math.cos(el)),V(0,Math.sin(el),0));
+function actions(inp){ const p=G.player; if(p.ragdoll||G.dying>0){ if(p.ragdoll){ dropHeld(V()); if(p.poop) dropPoop(); } return; } if(p.seat){ if(p.seat.hide) return; if(inp.tackle||inp.flop) fpStand(); else { if(p.seat.t>0.2){ if(inp.grab) fpUse(0); else if(inp.alt||(inp.charge&&!(FORMS[p.form]&&FORMS[p.form].horns))) fpUse(1); } return; } }
+  if(G.mods.object||p.foldT>0) return; if(poopActions(inp)) return;
+  const FP=fpLive(), cf=fwd(G.cam.yaw), el=clamp(0.42+(0.32-G.cam.pitch)*0.7,0.12,0.95), aim=FP?vnorm(vadd(fpDir(),V(0,0.1,0))):vadd(vmul(cf,Math.cos(el)),V(0,Math.sin(el),0));
   const FF=FORMS[p.form];
+  if(FP&&(inp.alt||(inp.charge&&!(FF&&FF.horns)))){ const r=fpUse(1); if(r&&r!=='far') return; }
   if(inp.charge&&FF&&FF.horns&&p.held<0&&!(p.hornCd>0)&&!(p.windT>0)&&p.charge<=0){ p.windT=0.3; p.hornCd=2.4;
     p.hornDir=vnorm(vflat(focusDir()||((p.speed>1.5||Math.hypot(inp.mx,inp.my)>0.2)?fwd(p.yaw):fwd(G.cam.yaw)))); noise('snort',0.9); playerSay(pick(HORN_LINES),1.6,true); }
   if(inp.tackle){ if(p.held>=0){ p.yaw=G.cam.yaw; throwHeld(focusAim(19)||assistThrow(19)||aim); }
     else if(FF&&FF.fire){ if(!(p.fireT>0)){ p.fireT=0.9; p.fireHit=new Set(); noise('pour',0.8); sfx('boom',0.35); heatAdd(0.25); } }
     else if(p.chargeCd<=0){ const d0=(p.speed>1.5||Math.hypot(inp.mx,inp.my)>0.2)?fwd(p.yaw):cf, at=SET.assist!==false?assistPick(d0,4.5,0.62):null, d=focusDir()||(at?vnorm(vflat(vsub(at.pos,p.pos))):d0); p.charge=FF&&FF.force>2.4?0.45:0.3; p.chargeCd=G.mods.jugg?0.2:0.5; p.cdir=d; G.chargeHits=new Set(); sfx('whoosh');
       if(FF&&FF.burn) partsBurst(vadd(vadd(p.pos,V(0,1,0)),vmul(d,0.6)),'fire',22,6,[1,0.6,0.15],0.22); } }
-  if(inp.grab){ if(G.nearSlots){ openSlots(); return; } if(G.nearDoc&&p.held<0){ openDoc(); return; } if(G.nearQuest){ questTalk(G.nearQuest); return; }
+  if(inp.grab){ if(FP){ const r=fpUse(0); if(r&&r!=='far') return; } if(G.nearSlots){ openSlots(); return; } if(G.nearDoc&&p.held<0){ openDoc(); return; } if(G.nearQuest){ questTalk(G.nearQuest); return; }
     if(p.held>=0){ dropHeld(vadd(p.vel,vmul(fwd(p.yaw),2))); sfx('grab'); }
     else { const i=grabCandidate(); if(i>=0){ const o=G.props[i]; p.held=i; o.held=true; o.asleep=false; o.vel=V(); o.ang=V(); o.touched=0; sfx('grab'); if(!o.knocked){ o.knocked=true; G.stats.wrecked++; addScore(o.d.pts/2,o.pos,'YOINK'); } } } }
   if(inp.holler&&p.hollerCd<=0){ const bark=FF&&FF.bark; p.holler=bark?pick(['WOOF! WOOF!','BARK BARK BARK!','ARF! ARF!','AWOOOOO!']):FF?pick(FORM_LINES[p.form]).toUpperCase():pick(HOLLERS); p.hollerT=1.8; p.hollerCd=2.2; sfx(bark?'bark':'holler'); speak(p.holler,'player');
     let sc=0; const R=bark?22:14; for(const n of G.npcs){ if(n.alive&&npcUp(n)&&n.kind==='civ'&&vlen(vsub(n.pos,p.pos))<R){ startle(n,p.pos); sc++; } } if(sc){ addScore(15*sc,vadd(p.pos,V(0,1,0)),bark?'BARK':'HOLLER'); G.stats.hollered=(G.stats.hollered||0)+sc; } } }
 function syncHeld(){ const p=G.player; if(p.held<0) return; const o=G.props[p.held]; if(!o||!o.alive){ p.held=-1; return; }
+  if(fpLive()){ const e=fpEye(), d=fpDir(), R=Math.max(o.half.x,o.half.y,o.half.z), dist=0.42+R*1.15; o.rot=qyaw(G.cam.yaw); o.pos=V(e.x+d.x*dist,e.y+d.y*dist-0.2-o.half.y*0.45,e.z+d.z*dist); o.vel={...p.vel}; return; }
   o.rot=qyaw(p.yaw); o.pos=vadd(V(p.pos.x,p.pos.y+PH+0.2+o.half.y,p.pos.z),vmul(fwd(p.yaw),0.1)); o.vel={...p.vel}; }
 function interactions(){ const p=G.player, m=G.mods, rag=p.ragdoll, r=rag?Math.max(0.2,PR*1.3):PR, feet=p.pos.y, head=feet+(rag?Math.max(0.3,PH*0.5):PH), pv=p.vel, charging=p.charge>0, knocked=[];
-  G.props.forEach((o,i)=>{ if(!o.alive||o.held) return; const dx=o.pos.x-p.pos.x, dz=o.pos.z-p.pos.z, reach=Math.max(o.half.x,o.half.z)+r+0.5; if(dx*dx+dz*dz>reach*reach) return;
+  G.props.forEach((o,i)=>{ if(!o.alive||o.held||p.seat) return; const dx=o.pos.x-p.pos.x, dz=o.pos.z-p.pos.z, reach=Math.max(o.half.x,o.half.z)+r+0.5; if(dx*dx+dz*dz>reach*reach) return;
     const ext=extY(o.rot,o.half), top=o.pos.y+ext, bot=o.pos.y-ext; if(bot>head-0.05||top<feet+0.05) return;
     if((o.d.stand||o.mass>=2.5)&&top<=feet+0.45) return;
     const c=circleVsProp(o,p.pos.x,p.pos.z,r); if(!c) return; const n3=V(c.nx,0,c.nz), toward=-vdot(pv,n3), heavy=o.anchored||o.mass>=5*Math.max(1,m.force);
@@ -2448,7 +2457,7 @@ function interactions(){ const p=G.player, m=G.mods, rag=p.ragdoll, r=rag?Math.m
       else { addScore(10,vadd(p.pos,V(0,1.7,0)),'BONK'); sfx('hit'); G.shake+=0.3; } p.charge=0; } }
   // bodies: walking into people
   const speed=Math.hypot(pv.x,pv.z);
-  G.npcs.forEach((n,i)=>{ if(!n.alive) return; const d=vflat(vsub(n.pos,p.pos)), dist=hlen(d); if(dist>PR+0.42||Math.abs(n.pos.y-p.pos.y)>Math.max(1.5,PH*0.8)) return;
+  G.npcs.forEach((n,i)=>{ if(!n.alive||p.seat) return; const d=vflat(vsub(n.pos,p.pos)), dist=hlen(d); if(dist>PR+0.42||Math.abs(n.pos.y-p.pos.y)>Math.max(1.5,PH*0.8)) return;
     const qp=n.role==='quest'||n.role==='qnpc';   /* quest people: a bump stops you, only a real tackle or a blast knocks them over */
     if(npcUp(n)){ if(!qp&&(speed>8.2||(rag&&speed>5)||m.jugg||(PH>3&&speed>2))&&n.hitCd<=0) knockNpcG(i,vadd(vmul(vflat(pv),0.9*Math.sqrt(m.force)),V(0,4,0)),true,false);
       else { const nr=dist>1e-4?vmul(d,1/dist):V(1,0,0), push=vmul(nr,(PR+0.42-dist)*0.5); if(qp) p.pos=vsub(p.pos,vmul(push,2)); else { n.pos=vadd(n.pos,push); p.pos=vsub(p.pos,push); } if(n.kind==='civ'&&n.talkCd<=0){ say(n,'Hey! Watch it!',1.5); n.talkCd=6; } } } });
@@ -2480,6 +2489,303 @@ function updateParts(dt,grav){ for(const q of G.parts){ q.life-=dt; const gk=q.k
   if(q.kind!=='smoke'&&q.kind!=='fire'){ const gy=groundAt(q.pos.x,q.pos.z,0.05,q.pos.y+0.3); if(q.pos.y<gy+0.02){ q.pos.y=gy+0.02; q.vel.y=-q.vel.y*0.3; q.vel.x*=0.6; q.vel.z*=0.6; if(q.kind==='water') q.life=Math.min(q.life,0.2); } } }
   G.parts=G.parts.filter(q=>q.life>0); }
 
+/* ---------------- first person ---------------- */
+// SET.view ('third' or 'first') is saved. X (rebindable), the 1P button on the clock, R3 on a controller, or scrolling all
+// the way in switches; scrolling out goes back. While you're a ragdoll the camera steps out behind you and comes back
+// when you're up. The crosshair picks what you look at and the label under it names it: E (Y, GRAB) does its main thing,
+// G (right-click, RB when you have no horns, ALT on touch) the other. Click or F still tackles, and throws what you hold
+// where you look. Jumping, flopping, hollering, horns, fire, wings and using what you pick up all work as before.
+const fpOn=()=>!!(G&&G.fp);
+function fpLive(){ const p=G&&G.player; return fpOn()&&!!p&&!p.ragdoll&&G.dying<=0&&!(p.getupT>0)&&!G.attract; }
+function setView(first,quiet){ if(!G) return; first=!!first; SET.view=first?'first':'third'; saveSettings();
+  const vb=$('viewBtn'); if(vb){ vb.textContent=first?'3P':'1P'; vb.setAttribute('aria-label',first?'Third person view':'First person view'); }
+  if(G.fp===first) return; G.fp=first; G.inside=undefined; BRK_DIRTY=true; const c=G.cam;
+  c.pitch=first?clamp(c.pitch>0.5?0.12:c.pitch,-1.45,1.45):clamp(c.pitch,-0.45,1.25); if(!first){ c.dist=Math.max(c.dist,3.4); c.cur=Math.min(c.cur,1.6); }
+  if(!quiet&&G.state==='play'&&!G.attract) toast(first?'<b>FIRST PERSON</b>':'<b>THIRD PERSON</b>',first?'Look at something to see what you can do with it. '+kb('view')+' or scroll out to switch back.':kb('view')+' or scroll all the way in for first person.','#37e6ff',2.6);
+  refreshHints(); }
+function fpDir(){ const c=G.cam, cp=Math.cos(c.pitch); return V(Math.sin(c.yaw)*cp,-Math.sin(c.pitch),Math.cos(c.yaw)*cp); }
+function fpEye(){ const p=G.player, F=FORMS[p.form], st=p.seat; if(st) return V(st.eye.x,st.eye.y,st.eye.z);
+  let h=p.objKind?Math.max(0.35,PH*0.75):PH*0.92; if(p.foldT>0) h-=PH*0.45*foldK(p); if(p.squatT>0) h-=PH*0.3;
+  const f=fwd(G.cam.yaw), off=F&&F.quad?PR*1.05:0.12+0.24*Math.max(0,Math.sin(G.cam.pitch)); return V(p.pos.x+(p.gx||0)+f.x*off,p.pos.y+h,p.pos.z+(p.gz||0)+f.z*off); }
+const fpBobOn=()=>SET.fpBob===undefined?!REDUCE_MOTION:!!SET.fpBob;   /* no choice saved: follow the device's reduced-motion setting */
+const vmix=(a,b,k)=>V(lerp(a.x,b.x,k),lerp(a.y,b.y,k),lerp(a.z,b.z,k));
+function fpCamera(dt){ const live=fpLive(); G.fpK=dt>0?lerp(G.fpK||0,live?1:0,Math.min(1,dt*10)):(live?1:0); const k=G.fpK; if(k<0.002) return;
+  const p=G.player, v=G.view, m=G.mods, d=fpDir(), e=fpEye(), rt=rightOf(G.cam.yaw);
+  // head bob: two dips a stride, scaled by speed, and a dip when you land
+  if(fpBobOn()&&p.grounded&&!p.seat){ const sp=Math.min(1,p.speed/7); e.y-=(1-Math.cos(2*p.phase))*0.5*0.045*sp; const sw=Math.sin(p.phase)*0.018*sp; e.x+=rt.x*sw; e.z+=rt.z*sw; }
+  if(p.squash>0) e.y-=p.squash*0.3;
+  // shake turns the view a little instead of throwing the camera around; HENNY sways it
+  const tr=Math.min(1,G.shake*0.4+m.shake*0.09), s=0.05*tr*tr*SET.shake; let dd=d;
+  if(s>0.0005){ const t=G.t*26; dd=vnorm(vadd(d,V(s*Math.sin(t*1.13),s*Math.sin(t*1.71+2.1),s*Math.sin(t*1.29+4.2)))); }
+  const dr=m.drunk*SET.shake; if(dr>0) dd=vnorm(vadd(dd,vadd(vmul(rt,Math.sin(G.t*0.9)*0.08*dr),V(0,Math.sin(G.t*1.7)*0.04*dr,0))));
+  const roll=m.wobble*0.3*SET.shake*Math.sin(G.t*0.8)+dr*0.12*Math.sin(G.t*1.25), up=vnorm(vadd(vmul(V(0,1,0),Math.cos(roll)),vmul(rt,Math.sin(roll))));
+  const fov=clamp((SET.fpFov||64)*PI/180+m.fov+(p.speed>8?0.05:0),0.6,1.8), tgt=vadd(e,dd);
+  if(k>0.995){ G.view={pos:e,target:tgt,up,fovy:fov,near:0.05,fp:true}; return; }
+  // switching: slide from behind your head to your eyes
+  G.view={pos:vmix(v.pos,e,k),target:vmix(v.target,tgt,k),up:vnorm(vmix(v.up,up,k)),fovy:lerp(v.fovy,fov,k),near:lerp(0.15,0.05,k),fp:k>0.6}; }
+
+// what the crosshair is on: props, people, Doc, stashes, doors, walls and windows, furniture and machines, the ground
+function rayBox(o,d,mn,mx,tmax){ let t0=0, t1=tmax; for(const a of ['x','y','z']){ const D=d[a], O=o[a];
+    if(Math.abs(D)<1e-9){ if(O<mn[a]||O>mx[a]) return -1; continue; } let ta=(mn[a]-O)/D, tb=(mx[a]-O)/D; if(ta>tb){ const q=ta; ta=tb; tb=q; } if(ta>t0) t0=ta; if(tb<t1) t1=tb; if(t0>t1) return -1; }
+  return t0>0?t0:-1; }
+function fpPick(maxD){ maxD=maxD||6; const p=G.player, e=fpEye(), d=fpDir(), R2=(maxD+2.5)*(maxD+2.5); let best=null;
+  const take=(t,k,x)=>{ if(t>0&&t<maxD&&(!best||t<best.d)) best=Object.assign({k,d:t,pt:vadd(e,vmul(d,t))},x); };
+  const far=(x,z)=>(x-e.x)*(x-e.x)+(z-e.z)*(z-e.z)>R2;
+  for(let i=0;i<G.props.length;i++){ const o=G.props[i]; if(!o.alive||o.held||far(o.pos.x,o.pos.z)) continue;
+    const ci=qconj(o.rot), lo=qrot(ci,vsub(e,o.pos)), ld=qrot(ci,d), h=o.half, g=o.k==='coin'?0.1:0.04; take(rayBox(lo,ld,V(-h.x-g,-h.y-g,-h.z-g),V(h.x+g,h.y+g,h.z+g),maxD),'prop',{i,o}); }
+  G.npcs.forEach((n,i)=>{ if(!n.alive||far(n.pos.x,n.pos.z)) return;
+    if(npcUp(n)){ const H=1.8*(n.height||1); take(rayBox(e,d,V(n.pos.x-0.33,n.pos.y,n.pos.z-0.33),V(n.pos.x+0.33,n.pos.y+H,n.pos.z+0.33),maxD),'npc',{n,i}); }
+    else { const c=npcCenter(n); take(rayBox(e,d,V(c.x-0.6,c.y-0.4,c.z-0.6),V(c.x+0.6,c.y+0.4,c.z+0.6),maxD),'npc',{n,i}); } });
+  if(W.doc){ const c=W.doc.pos; take(rayBox(e,d,V(c.x-0.35,c.y,c.z-0.35),V(c.x+0.35,c.y+1.9,c.z+0.35),maxD),'doc',{}); }
+  G.stashes.forEach((s,i)=>{ const c=vadd(s.pos,V(0,0.85,0)); take(rayBox(e,d,V(c.x-0.45,c.y-0.7,c.z-0.45),V(c.x+0.45,c.y+0.6,c.z+0.45),maxD),'stash',{s,i}); });
+  for(const dr of W.doors){ if(dr.broken) continue; const s=dr.s; if(far((s.x0+s.x1)/2,(s.z0+s.z1)/2)) continue; take(rayBox(e,d,V(s.x0,s.y0,s.z0),V(s.x1,s.y1,s.z1),maxD),'door',{door:dr}); }
+  const seen=new Set(); for(let s=0;s<=maxD+0.01;s+=1.5){ const q=vadd(e,vmul(d,s)); for(const si of cellAt(q.x,q.z)){ if(seen.has(si)) continue; seen.add(si); const S=W.solids[si];
+      if(S.gone||S.door||(S.hidden&&!S.fp)) continue; const t=rayBox(e,d,V(S.x0,S.y0,S.z0),V(S.x1,S.y1,S.z1),maxD); if(t<0) continue;
+      if(S.brk!==undefined){ const b=BRK[S.brk]; if(b&&b.alive) take(t,'panel',{b,s:S}); } else take(t,'solid',{s:S}); } }
+  if(d.y<-0.25){ const gy=groundAt(e.x+d.x*1.2,e.z+d.z*1.2,0.1,e.y-0.5), t=(gy-e.y)/d.y; if(t>0&&t<3) take(t,'ground',{gy}); }
+  return best; }
+
+// names
+const FP_MAT={wood:'wall',brick:'brick wall',metal:'metal wall',conc:'concrete',roof:'roof',glass:'window'};
+const FP_SOLID={bed:'bed',counter:'kitchen counter',tvstand:'TV stand',nightstand:'nightstand',bar:'bar',cage:'cashier cage',pump:'gas pump',cooler:'drinks cooler',register:'counter',docchair:'operating chair',vials:'cart of glowing vials'};
+function fpName(t){ if(!t) return ''; const p=G.player;
+  if(t.k==='prop'){ const o=t.o; return o.d.name+(o.k==='tv'||o.k==='floorlamp'?o.fpOff?' (off)':' (on)':'')+(o.k==='grill'&&o.fpLit>0?' (lit)':''); }
+  if(t.k==='npc'){ const n=t.n; return (n.qname||(n.kind==='cop'?'Police officer':n.role==='bouncer'?'Bouncer':'Stranger'))+(npcUp(n)?'':' (down)'); }
+  if(t.k==='doc') return 'Doc Suture'; if(t.k==='stash') return t.s.sub.name+(t.s.golden?' (golden)':'');
+  if(t.k==='door') return (t.door.glass?'Glass door':'Door')+(W.condemned.has(t.door.bld)?' (condemned)':'');
+  if(t.k==='panel'){ const b=t.b; return b.kind==='slot'?'Slot machine':(FP_MAT[b.mat]||'wall')+(W.condemned.has(b.bld)?' (condemned)':''); }
+  if(t.k==='solid'){ const s=t.s; return s.bouncy?'trampoline':FP_SOLID[s.fp]||(s.y1-s.y0<0.4?'curb':'wall'); }
+  return t.k==='ground'?'ground':''; }
+
+// the verbs: [main, other] for what you're looking at; 'take' only shows when you could lift it
+const PROPV={trash:['rummage','take'],wheelie:['rummage','take'],dumpster:['rummage','kick'],bag:['take','rip'],crate:['take','smash'],barrel:['take','kick'],
+  cone:['take','wear'],mailbox:['mail','take'],bench:['sit','take'],fence:['take','kick'],gnome:['take','rub'],flamingo:['take','kick'],ball:['take','kick'],
+  cart:['take','shove'],tv:['power','take'],couch:['sit','cushions'],chair:['sit','take'],propane:['take','valve'],car:['honk','cardoor'],potty:['potty','shove'],
+  picnic:['sit','flip'],grill:['grill','kick'],tire:['take','kick'],hydrant:['hydrant','kick'],newsbox:['read','take'],poop:['take','kick'],bottle:['take','smash'],
+  saltbag:['take','crumple'],table:['take','flip'],stool:['sit','take'],fridge:['fridge','shove'],shelf:['book','shove'],floorlamp:['power','take'],
+  shelf2:['shoplift','shove'],ctable:['cards','flip'],parcel:['take','shake'],coin:['coin','flip'],chunk:['take','kick'],vending:['vend','shakevend']};
+const SOLIDV={bed:['lie','sitbed'],counter:['wash','tap'],bar:['bar','barchat'],cage:['cashier','rattle'],pump:['pump','punch'],cooler:['cooler','punch'],register:['hotdog','bell'],docchair:['doc','inspect'],vials:['inspect',null],tvstand:['inspect','punch'],nightstand:['inspect','punch']};
+const BIN={trash:1,wheelie:1,dumpster:1};
+function fpCanTake(o){ const lim=G.mods.jugg?12:PH<0.8?1.2:PH>3?40:3.2; return !!o&&o.alive&&!o.held&&!o.anchored&&(o.d.grab||G.mods.jugg)&&o.mass<=lim; }
+const SEATV={sit:1,lie:1,sitbed:1,sitground:1,lieground:1,potty:1,bounce:1,door:1,take:0};
+function fpVerbs(t){ const p=G.player, st=p.seat; if(!st) return fpVerbsFree(t); if(st.hide) return [null,null];
+  const v=fpVerbsFree(t).map(id=>id&&!SEATV[id]&&t&&fpReach(id,t)&&!(t.o&&t.o===st.o)&&!(t.s&&t.s===st.s)?id:null); return [v[0]||'getup',v[1]]; }
+function fpVerbsFree(t){ const p=G.player, held=p.held>=0?G.props[p.held]:null;
+  if(held){ if(!t) return ['drop','useheld'];
+    if(t.k==='npc'&&npcUp(t.n)) return ['give','useheld']; if(t.k==='prop'&&BIN[t.o.k]) return ['bin','useheld'];
+    return [fpTop(t)?'place':'drop','useheld']; }
+  if(!t) return [null,null];
+  if(t.k==='prop'){ const o=t.o, pv=PROPV[o.k]||['take','kick'], can=fpCanTake(o); let a=pv[0], b=pv[1];
+    if(a==='take'&&!can) a=o.d.stand||o.mass>=2.5?'shove':'inspect'; if(b==='take'&&!can) b=o.anchored?null:'kick'; if(o.k==='coin') return ['coin','flip'];
+    return [a,b]; }
+  if(t.k==='npc'){ const n=t.n; if(!npcUp(n)) return ['helpup','pockets']; return n.role==='quest'||n.role==='qnpc'?['talk','wave']:['talk','shove']; }
+  if(t.k==='doc') return ['doc','docchat']; if(t.k==='stash') return ['stash',null]; if(t.k==='door') return ['door','knock'];
+  if(t.k==='panel'){ const b=t.b; return b.kind==='slot'?['slot','kick']:b.mat==='glass'?['knock','punch']:['inspect','punch']; }
+  if(t.k==='solid'){ const s=t.s; if(s.bouncy) return ['bounce','inspect']; return SOLIDV[s.fp]||['inspect','punch']; }
+  if(t.k==='ground') return ['sitground','lieground']; return [null,null]; }
+// placing needs a flat top: the ground, or the top face of what you look at
+function fpTop(t){ if(!t||t.d>3) return false; if(t.k==='ground') return true;
+  if(t.k==='solid'||t.k==='panel'){ const s=t.s; return !s.ramp&&Math.abs(t.pt.y-s.y1)<0.06; }
+  if(t.k==='prop'){ const o=t.o; return (o.d.stand||o.mass>=2.5)&&Math.abs(t.pt.y-(o.pos.y+extY(o.rot,o.half)))<0.08; } return false; }
+
+// small helpers the verbs share
+const pk=a=>a[Math.floor(Math.random()*a.length)];
+function fpLine(text,t){ playerSay(text,Math.min(4.2,1.6+text.length*0.035),true); return text; }
+function fpPop(t,text,col){ pop(t&&t.pt?vadd(t.pt,V(0,0.25,0)):vadd(G.player.pos,V(0,PH,0)),text,col); }
+function fpLook(){ const d=fpDir(); return vnorm(V(d.x,0,d.z)); }
+function fpLater(t,fn){ (G.fpTimers||(G.fpTimers=[])).push({t,fn}); }
+function fpStrike(kind){ const p=G.player; p.strike=kind; p.strikeT=0.32; }
+function fpNearRaj(){ return G.npcs.find(n=>n.alive&&n.role==='quest'&&QUESTS[n.qi]&&QUESTS[n.qi].id==='shoplifter'&&hlen(vsub(n.pos,G.player.pos))<16); }
+function grabProp(i){ const p=G.player, o=G.props[i]; if(!o||!fpCanTake(o)) return false; p.held=i; o.held=true; o.asleep=false; o.vel=V(); o.ang=V(); o.touched=0; sfx('grab');
+  if(!o.knocked){ o.knocked=true; G.stats.wrecked++; addScore(o.d.pts/2,o.pos,'YOINK'); } return true; }
+function fpHand(kind){ const p=G.player; dropHeld(V()); const e=fpEye(), d=fpDir(); tossProp(kind,vadd(e,vmul(d,0.6)),V()); const i=G.props.length-1, o=G.props[i]; o.knocked=true; return grabProp(i)?o:null; }
+function fpCoin(t,n){ G.dollas+=n; sfx('cash',0.5); fpPop(t,'+Ð'+n,'#ffd35a'); return n; }
+function fpKick(t,f){ const o=t.o, i=t.i, L=fpLook(), k=(f||9)*Math.sqrt(G.mods.force)/Math.sqrt(Math.max(0.4,o.mass)); fpStrike('kick');
+  if(o.k==='fence'){ splinterFence(i); return 'splintered'; } if(o.k==='hydrant'){ burstHydrant(i,L); return 'geyser'; }
+  if(o.d.car){ alarm(i); sfx('hit'); return fpLine(pk(['Ow. My foot.','That was a mistake.','Car: 1, foot: 0.'])); }
+  o.asleep=false; o.still=0; o.vel=vadd(vadd(o.vel,vmul(L,Math.min(22,k))),V(0,2.5+Math.min(4,k*0.12),0)); o.ang=V(rand(-8,8),rand(-8,8),rand(-8,8)); o.touched=0; touchProp(i,k);
+  if(o.k==='grill'&&o.fpLit>0) partsBurst(o.pos,'fire',16,5,[1,0.6,0.15],0.2); sfx('hit'); return 'kicked'; }
+function fpShove(t,f){ const o=t.o, i=t.i, L=fpLook(), k=(f||6)*Math.sqrt(G.mods.force)/Math.sqrt(Math.max(0.6,o.mass)); fpStrike('push');
+  o.asleep=false; o.still=0; o.vel=vadd(vadd(o.vel,vmul(L,Math.min(14,k))),V(0,0.6,0)); o.touched=0; touchProp(i,k*0.7); sfx('whoosh',0.5); return 'shoved'; }
+function fpFlip(t){ const o=t.o, L=fpLook(), ax=vcross(V(0,1,0),L); o.asleep=false; o.still=0; o.vel=vadd(vmul(L,2.6),V(0,7.5/Math.sqrt(Math.max(1,o.mass/2.5)),0)); o.ang=vmul(ax,13); o.touched=0;
+  fpStrike('push'); noise('crack',0.7,o.pos); sfx('whoosh'); addScore(150,o.pos,'TABLE FLIP'); for(const n of G.npcs) if(n.alive&&npcUp(n)&&n.kind==='civ'&&hlen(vsub(n.pos,o.pos))<9&&n.talkCd<=0){ say(n,'Whoa!',1.4); n.talkCd=5; } return 'flipped'; }
+function fpLoot(t,where){ const o=t.o; if(o.fpLooted) return fpLine(pk(['Already went through this one.','Empty. You checked.','Nothing left but regret.'])); o.fpLooted=true; noise('crumble',0.35,o.pos);
+  const r=Math.random(); if(r<0.38) return fpCoin(t,randi(4,22))&&'coin'; if(r<0.62){ const h=fpHand('bottle'); fpLine('A bottle. Still has a label.'); return h?'bottle':'none'; }
+  if(r<0.78){ G.life=Math.min(240,G.life+3); fpPop(t,'+3s','#7cff9b'); return fpLine(pk(['Half a sandwich. Mostly sealed. +3s','A granola bar from 2019. Still crunchy. +3s'])); }
+  if(r<0.9){ G.fpStink=G.t+20; return fpLine(pk(['Ugh. Something leaked on you.','That smell is yours now.'])); } return fpLine(pk(['Just '+where+' stuff.','Nothing. Not even a coupon.'])); }
+const FP_CHAT=['Nice day for it.','Do I know you?','You look like you need a nap.','Are you lost?','My cousin said the casino has no clocks. That checks out.','I am not buying anything.','Is it Tuesday? It feels like a Tuesday.','Ever notice the gnomes move at night?'];
+const FP_COP=['Move along.','Keep it clean.','I have my eye on you.','Not today.'];
+const FP_SHOVED=['Hey!','Watch it!','What is your problem?','Do that again. I dare you.'];
+const FP_NEWS=['LOCAL MAN STILL AWAKE','MAYOR DENIES EVERYTHING, AGAIN','GNOME THEFTS UP 400%','CASINO CLOCKS "NEVER EXISTED," SAYS CASINO','HOT DOG AT GULP & GO RULED "TECHNICALLY FOOD"','TRAILER PARK TRAMPOLINE CLAIMS ANOTHER ROOF','POLICE DRONE FILES NOISE COMPLAINT','RIPPERDOC DENIES BUCKET IS "THE" BUCKET'];
+const FP_BOOKS=['"Chicken Soup for the Tweaker Soul"','"Feng Shui for Condemned Houses"','"The Art of the Comedown"','"Gnomes: A Field Guide"','"Fifty Shades of Beige Siding"','"How to Win Friends at the Casino (You Can\'t)"'];
+const FP_TV=['"...and in other news, a local man..."','"...stay tuned for more of this..."','"...call now, operators are bored..."','"...the weather: yes..."','"...back to you, Brenda..."'];
+const FP_KNOCK=['Go away!','Who is it?','We don\'t want any!','Not today!','We gave at the office!'];
+const FP_DOC=['Mind the bucket.','Everything here is sterile. Ish.','Chrome heals. Mostly.','You want an upgrade or a lecture?'];
+const FP_BAR=['House rule: no clocks, no refunds.','Tip jar is right there.','You look like a regular. That is not a compliment.'];
+function fpInspect(t){ if(t.k==='panel'){ const b=t.b; if(W.condemned.has(b.bld)) return fpLine('Condemned. The orange X says it\'s coming down anyway.');
+    return fpLine({wood:'Vinyl siding over particle board.',brick:'Brick. Not budging.',metal:'Aluminium skin, thin as a soda can.',conc:'Concrete. Very concrete.',roof:'Shingles. Someone should fix those.',glass:'A window. Don\'t lick it.'}[b.mat]||'A wall.'); }
+  if(t.k==='solid'){ const s=t.s; return fpLine(s.bouncy?'A trampoline with a history.':{vials:'Glowing vials. Do not drink.',tvstand:'A TV stand. The TV is the best thing in the house.',nightstand:'A nightstand with a lamp that works.',pump:'Pump 4. Out of order since forever.',docchair:'The operating chair. Leather, mostly.'}[s.fp]||(s.y1-s.y0<0.4?'A curb.':'Solid wall. Not budging.')); }
+  if(t.k==='prop'){ const o=t.o; return fpLine(o.d.stand||o.mass>=2.5?'Too heavy to lift. You could shove it.':'Can\'t lift that right now.'); }
+  return fpLine('Huh.'); }
+function fpPunch(t){ fpStrike('punch'); const L=fpDir();
+  if(t.k==='panel'){ const b=t.b; if(b.kind==='slot'||canWreck()||W.condemned.has(b.bld)){ hitBrk(b.id,45*G.mods.force,t.pt,L); sfx('hit'); G.shake+=0.15; return b.alive?'damaged':'broke'; }
+    sfx('hit',0.6); fpPop(t,'THUD','#c9d1d9'); wallHint(); return fpLine(b.mat==='glass'?pk(['Thick glass. Your hand hurts.','The window wins this round.']):pk(['Ow.','My knuckles!','That wall won.'])); }
+  sfx('hit',0.6); fpPop(t,'THUD','#c9d1d9'); return fpLine(pk(['Ow.','Solid.','That did nothing.'])); }
+
+// sitting, lying down, and the porta-potty: your body sits where the seat is and the camera sits in your head
+function fpSit(o){ const p=G.player; dropHeld(V()); const s=Object.assign({t:0},o); s.stand=s.stand||V(p.pos.x,p.pos.y,p.pos.z);
+  if(!s.eye) s.eye=V(s.pos.x,s.seatY+0.8,s.pos.z); p.seat=s; p.vel=V(); p.charge=0; p.speed=0; RUB.teleport=true; return s.kind; }
+function fpStand(){ const p=G.player, s=p.seat; if(!s) return; p.seat=null; p.pos=V(s.stand.x,s.stand.y,s.stand.z); p.vel=V(); RUB.teleport=true; }
+function fpSeatProp(t,dz,dy,face){ const o=t.o, f=vmul(qrot(o.rot,V(0,0,1)),face||1), yaw=Math.atan2(f.x,f.z), at=vadd(o.pos,qrot(o.rot,V(0,0,dz||0))), top=o.pos.y+(dy===undefined?extY(o.rot,o.half)*0.25:dy);
+  const fl=groundAt(at.x,at.z,0.15,top-0.15); o.asleep=true; o.vel=V(); o.ang=V();
+  return fpSit({kind:o.k,o,pos:V(at.x,fl,at.z),yaw,seatY:top,stand:vadd(at,vadd(vmul(f,0.95),V(0,0,0))),eye:V(at.x+f.x*0.05,top+0.82,at.z+f.z*0.05)}); }
+function fpLie(head,yaw,top,kind){ const f=fwd(yaw), o=vadd(head,vmul(f,1.62)); return fpSit({kind,lie:true,pos:V(o.x,top+0.14,o.z),yaw,seatY:top,eye:V(head.x,top+0.3,head.z),stand:vadd(head,vmul(rightOf(yaw),0.8))}); }
+
+const FPV={
+  take:{l:'Pick up',r:2.8,run:t=>grabProp(t.i)?'took':fpLine('Too heavy.')},
+  getup:{l:'Get up',r:99,run:()=>{ fpStand(); return 'stood'; }},
+  drop:{l:'Drop',r:99,run:()=>{ dropHeld(vadd(G.player.vel,vmul(fpLook(),1.4))); sfx('grab'); return 'dropped'; }},
+  place:{l:'Put it here',r:3,run:t=>{ const p=G.player, o=G.props[p.held]; if(!o) return 'nothing'; o.pos=V(t.pt.x,t.pt.y+extY(o.rot,o.half)+0.02,t.pt.z); o.rot=qyaw(G.cam.yaw); dropHeld(V()); o.vel=V(); o.ang=V(); sfx('plop',0.6); return 'placed'; }},
+  give:{l:'Give it',r:2.6,run:t=>{ const p=G.player, o=G.props[p.held], n=t.n; if(!o) return 'nothing';
+    if(n.role==='quest'||n.role==='qnpc'){ dropHeld(V()); o.pos=V(n.pos.x,n.pos.y+0.6,n.pos.z); questTalk(n); return 'handed over'; }
+    if(o.qtag){ return fpLine('Better hang on to that.'); }
+    if(o.k==='poop'){ dropHeld(V()); say(n,'EW! WHY?!',2); startle(n,p.pos); addScore(120,n.pos,'GROSS'); return 'gross'; }
+    o.alive=false; p.held=-1; say(n,pk(['Uh... thanks?','Is this a gift? I don\'t want it.','Oh. Cool. Cool cool.']),2.2); const tip=randi(2,12); fpCoin({pt:vadd(n.pos,V(0,1.4,0))},tip); return 'gave'; }},
+  bin:{l:'Throw it away',r:2.6,run:t=>{ const p=G.player, o=G.props[p.held]; if(!o) return 'nothing'; if(o.qtag) return fpLine('Better not. Someone wants that.');
+    o.alive=false; p.held=-1; noise('crumble',0.4,t.o.pos); addScore(30,t.o.pos,'TIDY'); return 'binned'; }},
+  useheld:{l:t=>{ const o=G.props[G.player.held]; return o?({bottle:'Drink',ball:'Bounce it',propane:'Open the valve',coin:'Flip it',cone:'Wear it',gnome:'Rub its hat',parcel:'Shake it',saltbag:'Crumple it',tv:'Hit it',tire:'Spin it'}[o.k]||'Toss it up'):''; },r:99,run:()=>{
+    const p=G.player, i=p.held, o=G.props[i]; if(!o) return 'nothing'; const t={k:'prop',o,i,pt:o.pos};
+    if(o.k==='bottle') return fpLine(pk(['Empty. Of course.','One drop. Tastes like regret.']));
+    if(o.k==='propane'){ dropHeld(V()); return FPV.valve.run(t); } if(o.k==='coin'){ dropHeld(V()); return FPV.flip.run(t); }
+    if(o.k==='cone'){ return FPV.wear.run(t); } if(o.k==='gnome') return FPV.rub.run(t); if(o.k==='parcel') return FPV.shake.run(t); if(o.k==='saltbag') return FPV.crumple.run(t);
+    if(o.k==='tv'){ sfx('hit'); o.fpOff=!o.fpOff; return fpLine(o.fpOff?'It went dark. Classic.':'Percussive maintenance works.'); }
+    dropHeld(V(0,o.k==='ball'?9:5.5,0)); sfx('whoosh',0.5); return 'tossed'; }},
+  kick:{l:t=>t.k==='panel'?'Kick it':'Kick',r:2.4,run:t=>{ if(t.k==='panel'){ fpStrike('kick'); hitBrk(t.b.id,40*G.mods.force,t.pt,fpDir()); sfx('hit'); return t.b.alive?'dented':'broke'; } return fpKick(t,10); }},
+  shove:{l:'Shove',r:2.4,run:t=>{ if(t.k==='npc'){ const n=t.n, L=fpLook(); fpStrike('push'); n.pos=vadd(n.pos,vmul(L,0.55)); say(n,pk(n.kind==='cop'?['That\'s assault!','You\'re done.']:FP_SHOVED),1.6); n.talkCd=4;
+      if(n.kind==='cop'){ heatAdd(1); addScore(80,n.pos,'SHOVED A COP'); } else if(n.role!=='quest'&&n.role!=='qnpc'){ heatAdd(0.1); if(Math.random()<0.4) startle(n,G.player.pos); } sfx('whoosh',0.5); return 'shoved'; }
+    return fpShove(t,o_shove(t.o)); }},
+  rummage:{l:t=>t.o.k==='dumpster'?'Dig through it':'Rummage',r:2.4,run:t=>fpLoot(t,t.o.k==='dumpster'?'dumpster':'trash')},
+  rip:{l:'Rip it open',r:2.4,run:t=>{ const o=t.o; o.alive=false; fpStrike('push'); partsBurst(o.pos,'debris',16,4,[0.2,0.2,0.22],0.05); noise('crumble',0.5,o.pos); if(Math.random()<0.35) fpCoin(t,randi(2,9)); return 'ripped'; }},
+  smash:{l:'Smash it',r:2.4,run:t=>{ const o=t.o, i=t.i; fpStrike('punch'); if(o.k==='bottle'){ shatter(i); return 'shattered'; }
+    o.alive=false; for(let k=0;k<4;k++) spawnChunk(vadd(o.pos,V(rand(-0.2,0.2),rand(0,0.3),rand(-0.2,0.2))),V(0.4,0.04,0.12),qyaw(rand(0,6)),V(rand(-3,3),rand(2,5),rand(-3,3)),V(rand(-6,6),rand(-6,6),rand(-6,6)),'wood',tone(o.tint,rand(0.8,1)),false);
+    noise('crack',0.9,o.pos); addScore(60,o.pos,'SMASHED'); if(Math.random()<0.25) fpCoin(t,randi(5,20)); return 'smashed'; }},
+  wear:{l:'Put it on your head',r:2.4,run:t=>{ const p=G.player, o=t.o; if(p.cone) return fpLine('One cone at a time.'); if(G.player.held>=0&&G.props[G.player.held]===o) G.player.held=-1; o.alive=false; p.cone=true; addScore(40,null,''); sfx('pop'); return fpLine('Conehead.'); }},
+  mail:{l:'Open it',r:2.4,run:t=>{ const o=t.o; noise('creak',0.4,o.pos); if(!o.fpLooted&&Math.random()<0.25){ o.fpLooted=true; fpCoin(t,20); return fpLine('A birthday card with Ð 20. Happy birthday, Gary.'); } o.fpLooted=true;
+    return fpLine(pk(['Bills. Overdue. Not yours.','Coupons for a pizza place that closed.','A letter from the IRS. You put it back, carefully.'])); }},
+  sit:{l:'Sit',r:2.4,run:t=>{ const o=t.o; if(o.k==='picnic'){ const sd=qrot(qconj(o.rot),vsub(fpEye(),o.pos)).z>=0?1:-1; return fpSeatProp(t,0.62*sd,0.02,-sd); }   /* the bench on your side, facing the table */
+    return fpSeatProp(t,{couch:0.05,chair:0.02}[o.k]||0,{couch:0.12,bench:0.05,chair:-0.02,stool:0.36}[o.k]); }},
+  cushions:{l:'Search the cushions',r:2.4,run:t=>{ const o=t.o; if(o.fpLooted) return fpLine('Just crumbs now.'); o.fpLooted=true; if(Math.random()<0.7){ fpCoin(t,randi(8,40)); addScore(40,null,''); return fpLine('Couch money!'); } return fpLine('Lint. And a single earring.'); }},
+  rub:{l:'Rub its hat',r:2.4,run:t=>{ const o=t.o; if((o.fpCd||0)>G.t) return fpLine('Luck needs a minute to recharge.'); o.fpCd=G.t+30; G.combo+=1; G.comboT=3; partsBurst(vadd(o.pos,V(0,0.3,0)),'spark',10,2,[1,0.9,0.4],0.03); fpPop(t,'LUCKY','#7cff9b'); sfx('pickup',0.5); return 'lucky'; }},
+  power:{l:t=>t.o.fpOff?'Turn on':'Turn off',r:2.6,run:t=>{ const o=t.o; o.fpOff=!o.fpOff; sfx('click');
+    if(o.k==='tv'&&!o.fpOff){ noise('drill',0.2,o.pos); fpPop(t,pk(FP_TV),'#bfe6ff'); } return o.fpOff?'off':'on'; }},
+  valve:{l:'Open the valve',r:2.4,run:t=>{ const o=t.o; if(o.fuse>=0) return fpLine('It\'s already hissing. RUN.'); o.fuse=2.6; o.jet=2.6; o.asleep=false; noise('drill',0.7,o.pos); fpPop(t,'HISSSS','#ff8a3c'); return fpLine('That was a terrible idea.'); }},
+  honk:{l:'Honk the horn',r:2.6,run:t=>{ const o=t.o; sfx('honk',1,o.pos); fpLater(0.22,()=>sfx('honk',0.9,o.pos)); fpPop(t,'HONK!','#ffe14d'); let n0=0;
+    for(const n of G.npcs) if(n.alive&&npcUp(n)&&n.kind==='civ'&&hlen(vsub(n.pos,o.pos))<12&&n.startleCd<=0){ startle(n,o.pos); n0++; } if(Math.random()<0.15) alarm(t.i); addScore(20+15*n0,null,''); return 'honked'; }},
+  cardoor:{l:'Try the door',r:2.6,run:t=>{ const o=t.o; if(o.fpLooted) return fpLine('Already checked. Still a car.'); o.fpLooted=true;
+    if(Math.random()<0.65){ if(Math.random()<0.5) alarm(t.i); return fpLine('Locked.'); } fpCoin(t,randi(3,15)); return fpLine('Unlocked. Loose change in the cup holder.'); }},
+  potty:{l:'Use it',r:2.4,run:t=>{ const o=t.o, p=G.player; if((o.fpCd||0)>G.t) return fpLine('Occupied! (By the smell.)'); o.fpCd=G.t+30; noise('creak',0.5,o.pos);
+    const f=qrot(o.rot,V(0,0,1)); return fpSit({kind:'potty',o,hide:true,dur:2.6,pos:V(o.pos.x,groundAt(o.pos.x,o.pos.z,0.1,o.pos.y),o.pos.z),yaw:Math.atan2(f.x,f.z),seatY:o.pos.y,eye:V(o.pos.x,o.pos.y+0.5,o.pos.z),stand:vadd(o.pos,vmul(f,1.0)),
+      after:()=>{ noise('pour',0.8,o.pos); G.life=Math.min(240,G.life+3); pop(vadd(o.pos,V(0,1.4,0)),'+3s RELIEF','#7cff9b'); }}); }},
+  flip:{l:t=>t.o.k==='coin'?'Flip it':'Flip it over',r:2.4,run:t=>{ const o=t.o; if(o.k==='coin'){ o.asleep=false; o.vel=V(0,6,0); o.ang=V(40,0,0); sfx('pop'); fpLater(0.9,()=>fpPop({pt:o.pos},Math.random()<0.5?'HEADS':'TAILS','#ffd35a')); return 'flipped'; } return fpFlip(t); }},
+  grill:{l:t=>t.o.fpLit>0?'Turn it off':'Light it',r:2.4,run:t=>{ const o=t.o; if(o.fpLit>0){ o.fpLit=0; return 'off'; } o.fpLit=25; noise('drill',0.25,o.pos); partsBurst(vadd(o.pos,V(0,0.5,0)),'fire',10,2,[1,0.6,0.15],0.12); return fpLine('Smells like summer. And gas.'); }},
+  hydrant:{l:'Open the cap',r:2.4,run:t=>{ burstHydrant(t.i,fpLook()); return 'geyser'; }},
+  read:{l:'Read the paper',r:2.4,run:t=>{ noise('crack',0.15,t.o.pos); const h=pk(FP_NEWS); toast('<b>THE DAILY COMEDOWN</b>',h,'#e8e6f0',3.4); return h; }},
+  crumple:{l:'Crumple it',r:2.4,run:t=>{ const o=t.o; if(G.player.held>=0&&G.props[G.player.held]===o) G.player.held=-1; o.alive=false; sfx('pop',0.5); return 'crumpled'; }},
+  fridge:{l:'Open it',r:2.4,run:t=>{ const o=t.o; noise('creak',0.4,o.pos); if(o.fpLooted) return fpLine(pk(['Just condiments. And one olive.','Ketchup and despair.']));
+    o.fpLooted=true; G.life=Math.min(240,G.life+2); fpPop(t,'+2s','#7cff9b'); sfx('gulp'); return fpLine('Cold pizza. Perfect.'); }},
+  book:{l:'Read a book',r:2.4,run:t=>{ const b=pk(FP_BOOKS); toast('<b>YOU READ A PAGE OF</b>',b,'#e8e6f0',3); noise('crack',0.12,t.o.pos); return b; }},
+  shoplift:{l:'Take something',r:2.4,run:t=>{ const o=fpHand('bottle'); heatAdd(0.3); addScore(60,t.o.pos,'SHOPLIFTED'); const r=fpNearRaj(); if(r) say(r,'Hey! You gonna pay for that?',2.2); return o?'shoplifted':'none'; }},
+  cards:{l:'Play a hand (Ð 10)',r:2.6,run:t=>{ if(G.dollas<10) return fpLine('The dealer wants Ð 10.'); const win=Math.random()<0.5; G.dollas+=win?10:-10; sfx(win?'cash':'click');
+    fpPop(t,win?'+Ð10':'−Ð10',win?'#ffd35a':'#ff8aa0'); return win?'won':'lost'; }},
+  shake:{l:'Shake it',r:2.4,run:t=>fpLine(pk(['Something rattles. Fragile, probably.','It sloshes. Hm.']))},
+  coin:{l:'Pick it up',r:2.6,run:t=>{ const o=t.o; o.alive=false; fpCoin(t,o.coin||8); return 'coin'; }},
+  vend:{l:'Buy a soda (Ð 5)',r:2.4,run:t=>{ if(G.dollas<5) return fpLine('Ð 5 for a soda. You\'re short.'); G.dollas-=5; sfx('clang'); const f=qrot(t.o.rot,V(0,0,1)); tossProp('bottle',vadd(t.o.pos,vadd(vmul(f,0.6),V(0,-0.5,0))),vmul(f,1.2)); return 'soda'; }},
+  shakevend:{l:'Shake it',r:2.4,run:t=>{ const o=t.o, i=t.i, r=Math.random(); fpStrike('push'); sfx('clang',0.7);
+    if(r<0.3){ const f=qrot(o.rot,V(0,0,1)); tossProp('bottle',vadd(o.pos,vadd(vmul(f,0.6),V(0,-0.5,0))),vmul(f,1.5)); return fpLine('Free soda!'); }
+    if(r<0.42){ const P=G.player, toP=vnorm(vflat(vsub(P.pos,o.pos))), ax=vcross(V(0,1,0),toP); o.asleep=false; o.vel=vmul(toP,2.5); o.ang=vmul(ax,3.2); o.touched=0; touchProp(i,4);
+      fpLater(0.45,()=>{ if(hlen(vsub(G.player.pos,o.pos))<1.6&&!G.player.ragdoll){ startRagdoll(G.player,V(0,2,0),true); pop(vadd(G.player.pos,V(0,1.8,0)),'CRUSHED BY A VENDING MACHINE','#ff4d64'); } }); return fpLine('Uh oh.'); }
+    return fpLine('Nothing.'); }},
+  talk:{l:'Talk',r:4,run:t=>{ const n=t.n, p=G.player; if(n.role==='quest'||n.role==='qnpc'){ questTalk(n); return 'quest'; }
+    n.yaw=Math.atan2(p.pos.x-n.pos.x,p.pos.z-n.pos.z); n.talkCd=6;
+    if(n.kind==='cop') { say(n,G.heat>1?'Don\'t push it.':pk(FP_COP),2.2); return 'cop'; }
+    if(n.role==='qrun'){ say(n,'Back off!',1.6); startle(n,p.pos); return 'ran'; }
+    if(n.role==='bouncer'){ say(n,'No trouble in here.',2); return 'bouncer'; }
+    if(G.fpStink>G.t){ say(n,'Ugh, you smell like a dumpster.',2.2); return 'stink'; }
+    const s=G.stashes.slice().sort((a,b)=>hlen(vsub(a.pos,p.pos))-hlen(vsub(b.pos,p.pos)))[0];
+    if(s&&Math.random()<0.4){ const d=Math.round(hlen(vsub(s.pos,p.pos))); n.yaw=Math.atan2(s.pos.x-n.pos.x,s.pos.z-n.pos.z); say(n,'Saw something glowing about '+d+' m that way.',3); return 'hint'; }
+    say(n,pk(FP_CHAT),2.6); return 'chat'; }},
+  wave:{l:'Wave',r:8,run:t=>{ fpStrike('wave'); say(t.n,'Hey there!',1.6); return 'waved'; }},
+  helpup:{l:'Help them up',r:2.4,run:t=>{ const n=t.n; if(npcUp(n)) return 'up'; n.still=1; n.st=Math.max(n.st,2); n.vel=V(); say(n,'Thanks... I think.',2.2); addScore(50,n.pos,'GOOD SAMARITAN'); return 'helped'; }},
+  pockets:{l:'Check their pockets',r:2.4,run:t=>{ const n=t.n; if(n.fpLooted) return fpLine('Already checked. Lint.'); n.fpLooted=true; heatAdd(0.2);
+    if(n.kind==='cop') return fpLine('A handcuff key. You put it back. Slowly.'); fpCoin({pt:npcCenter(n)},randi(1,12)); return 'pockets'; }},
+  doc:{l:'Buy cyberware',r:3.2,run:()=>{ openDoc(); return 'doc'; }},
+  docchat:{l:'Chat',r:4,run:()=>{ docSay(pk(FP_DOC)); return 'chat'; }},
+  stash:{l:'Take it',r:2.8,run:t=>{ fpTakeStash(t.i); return 'stash'; }},
+  door:{l:t=>t.door.open>0.5?'Close it':'Open it',r:3,run:t=>{ const d=t.door, p=G.player; if(d.open>0.5){ d.hold=0; d.shut=4; noise('creak',0.4,doorCenter(d)); return 'closed'; }
+    d.shut=0; d.hold=6; d.side=Math.sign(d.axis==='x'?p.pos.z-d.tm:p.pos.x-d.tm)||1; noise('creak',0.4,doorCenter(d)); return 'opened'; }},
+  knock:{l:'Knock',r:2.6,run:t=>{ const c=t.pt, house=t.k==='door'&&W.houses.some(h=>h.bld===t.door.bld)&&!W.condemned.has(t.door.bld); fpStrike('knock');
+    for(let k=0;k<3;k++) fpLater(k*0.17,()=>sfx('knock',0.9,c)); if(house&&Math.random()<0.65) fpLater(1.0,()=>pop(vadd(c,V(0,0.6,0)),pk(FP_KNOCK),'#e8e6f0')); return 'knocked'; }},
+  inspect:{l:'Look closer',r:6,run:t=>fpInspect(t)},
+  punch:{l:'Punch it',r:2.2,run:t=>fpPunch(t)},
+  slot:{l:'Play',r:2.6,run:()=>{ openSlots(); return 'slots'; }},
+  bounce:{l:'Jump on',r:3,run:t=>{ const s=t.s, p=G.player; p.pos=V((s.x0+s.x1)/2,s.y1+0.05,(s.z0+s.z1)/2); p.vel=V(0,16,0); p.grounded=false; RUB.teleport=true; sfx('bounce'); return 'boing'; }},
+  lie:{l:'Lie down',r:2.6,run:t=>{ const s=t.s, hd=s.head||V(1,0,0), c=V((s.x0+s.x1)/2,0,(s.z0+s.z1)/2), len=Math.abs(hd.x)>0.5?(s.x1-s.x0):(s.z1-s.z0), head=vadd(c,vmul(hd,len/2-0.3));
+    const r=fpLie(head,Math.atan2(-hd.x,-hd.z),s.y1+0.08,'bed'); G.player.seat.s=s; return r; }},
+  sitbed:{l:'Sit on the edge',r:2.6,run:t=>{ const s=t.s, c=V((s.x0+s.x1)/2,0,(s.z0+s.z1)/2), e=fpEye(), to=vnorm(vflat(vsub(e,c))), at=vadd(c,vmul(to,0.45)); const yaw=Math.atan2(to.x,to.z);
+    return fpSit({kind:'bed',s,pos:V(at.x,groundAt(at.x+to.x*0.6,at.z+to.z*0.6,0.1,s.y1),at.z),yaw,seatY:s.y1+0.08,stand:vadd(at,vmul(to,0.8))}); }},
+  wash:{l:'Wash your hands',r:2.6,run:t=>{ const s=t.s, w=s.sink||t.pt; for(let k=0;k<3;k++) partsBurst(vadd(w,V(0,0.1,0)),'water',4,1,[0.7,0.85,1],0.03); noise('pour',0.6,w); return fpLine(pk(['Clean hands. First time today.','The soap is just a smell.'])); }},
+  tap:{l:'Drink from the tap',r:2.6,run:t=>{ if((G.fpTapT||0)>G.t) return fpLine('Any more and you\'ll slosh.'); G.fpTapT=G.t+20; sfx('gulp'); G.life=Math.min(240,G.life+1); fpPop(t,'+1s','#7cff9b'); return fpLine('Tastes like pennies.'); }},
+  bar:{l:'Order a HENNY (Ð 30)',r:3,run:()=>{ if(G.dollas<30) return fpLine('Bartender: "Cash first."'); G.dollas-=30; const s=SUBS.find(x=>x.id==='henny'); pickup({sub:s,pos:{...G.player.pos},laced:false}); return 'henny'; }},
+  barchat:{l:'Chat with the bartender',r:4,run:()=>fpLine('Bartender: "'+pk(FP_BAR)+'"')},
+  cashier:{l:'Cash out',r:3,run:()=>fpLine('"We cash in, not out." Your chrome bank: Ð '+(PROF.chrome||0).toLocaleString()+'.')},
+  rattle:{l:'Rattle the cage',r:2.6,run:t=>{ sfx('clang'); for(const n of G.npcs) if(n.alive&&n.role==='bouncer'&&npcUp(n)) say(n,'Hands off the cage.',2); return 'rattled'; }},
+  pump:{l:'Pump gas',r:2.6,run:()=>fpLine('Ð 4.89 a gallon. You don\'t even own a car.')},
+  cooler:{l:'Grab a cold drink',r:2.6,run:t=>{ const o=fpHand('bottle'); heatAdd(0.3); addScore(60,t.pt,'SHOPLIFTED'); const r=fpNearRaj(); if(r) say(r,'Hey! That\'s not free!',2.2); return o?'drink':'none'; }},
+  hotdog:{l:'Buy a hot dog (Ð 3)',r:3,run:t=>{ if(G.dollas<3) return fpLine('You can\'t afford a questionable hot dog.'); G.dollas-=3; G.life=Math.min(240,G.life+2); sfx('gulp'); fpPop(t,'+2s','#7cff9b'); return fpLine('Questionable. Delicious.'); }},
+  bell:{l:'Ring the bell',r:2.6,run:t=>{ sfx('ding',0.9,t.pt); const r=fpNearRaj(); if(r) say(r,'Be right with you.',1.8); return 'ding'; }},
+  sitground:{l:'Sit down',r:3,run:t=>{ const p=G.player, gy=t.gy!==undefined?t.gy:p.pos.y, f=fwd(G.cam.yaw); return fpSit({kind:'ground',floor:true,pos:V(p.pos.x,gy,p.pos.z),yaw:G.cam.yaw,seatY:gy+0.1,eye:V(p.pos.x-f.x*0.05,gy+0.92,p.pos.z-f.z*0.05)}); }},
+  lieground:{l:'Lie down',r:3,run:t=>{ const p=G.player, gy=t.gy!==undefined?t.gy:p.pos.y; return fpLie(V(p.pos.x,gy,p.pos.z),G.cam.yaw+PI,gy,'ground'); }},
+};
+// verbs that hand a value to fpShove: heavier pushes for the big stuff
+function o_shove(o){ return o.k==='car'?3:o.k==='dumpster'?5:7; }
+function fpShort(id,t){ return fpLabel(id,t).split(' (')[0].replace('Pick up','TAKE').toUpperCase().slice(0,10); }
+function fpReach(id,t){ const v=FPV[id]; return !!v&&(!t||t.d<=v.r); }
+function fpLabel(id,t){ const v=FPV[id]; if(!v) return ''; return typeof v.l==='function'?v.l(t):v.l; }
+function fpUse(slot){ const t=G.fpT, vb=fpVerbs(t), id=vb[slot]; if(!id) return null; if(!fpReach(id,t)) return 'far';
+  let r=null; try{ r=FPV[id].run(t||{}); }catch(e){ console.error('fp verb',id,e); r='error'; } G.fpLast={id,r,k:t&&t.k}; G.stats.fpVerbs=(G.stats.fpVerbs||0)+1; return r||id; }
+function fpTakeStash(i){ const s=G.stashes.splice(i,1)[0]; if(!s) return; if(s.golden&&!s.laced){ G.life=Math.min(Math.max(240,G.life),G.life+10); addScore(1000,vadd(s.pos,V(0,1.6,0)),'GOLDEN STASH +10s'); sfx('win',0.6); } pickup(s); }
+
+// every frame: the target, timers, propane rockets, lit grills, a cone falling off when you go down, and the seat
+function fpUpdate(dt){ const p=G.player; G.fpT=fpLive()?fpPick():null;
+  if(G.fpTimers&&G.fpTimers.length){ for(const tm of G.fpTimers) tm.t-=dt; const due=G.fpTimers.filter(tm=>tm.t<=0); G.fpTimers=G.fpTimers.filter(tm=>tm.t>0); for(const tm of due){ try{ tm.fn(); }catch(e){} } }
+  for(const o of G.props){ if(!o.alive) continue;
+    if(o.jet>0){ o.jet-=dt; o.asleep=false; o.still=0; const a=V(rand(-1,1),0.9,rand(-1,1)); o.vel=vadd(o.vel,vmul(vnorm(a),26*dt)); o.ang=vadd(o.ang,V(rand(-20,20)*dt,rand(-20,20)*dt,rand(-20,20)*dt)); if(Math.random()<dt*30) partsBurst(o.pos,'smoke',1,2,[0.8,0.8,0.8],0.08); }
+    if(o.fpLit>0){ o.fpLit-=dt; if(Math.random()<dt*10) partsBurst(vadd(o.pos,qrot(o.rot,V(0,0.45,0))),'fire',1,1.2,[1,0.62,0.18],0.09); } }
+  if(p.cone&&p.ragdoll){ p.cone=false; tossProp('cone',vadd(p.pos,V(0,PH*0.9,0)),V(rand(-2,2),4,rand(-2,2))); }
+  if(p.strikeT>0) p.strikeT-=dt; }
+// the seat holds you in place until you move, jump or press a button; the porta-potty lets you out on its own
+function fpSeatUpdate(p,inp,dt){ const s=p.seat; if(!s) return false; s.t+=dt;
+  if(s.hide){ if(s.t>=s.dur){ fpStand(); if(s.after) s.after(); return false; } }
+  else if(p.ragdoll||Math.hypot(inp.mx,inp.my)>0.45||inp.jump){ fpStand(); return false; }
+  if(p.seat){ p.pos=V(s.pos.x,s.pos.y,s.pos.z); p.vel=V(); p.speed=0; p.grounded=true; p.yaw=s.yaw; } return !!p.seat; }
+
+// the crosshair, the name of what you're looking at and its two verbs, the potty's darkness, and your own lines as subtitles
+function fpOverlay(v){ if(!v||!v.fp||G.attract||G.state!=='play') return; const p=G.player, cx=VW/2, cy=VH/2;
+  ov.save(); ov.textAlign='center';
+  if(p.seat&&p.seat.hide){ ov.fillStyle='rgba(6,6,8,0.92)'; ov.fillRect(0,0,VW,VH); ov.fillStyle='#e8e6f0'; ov.font='800 20px "Space Grotesk",system-ui,sans-serif'; ov.fillText('OCCUPIED',cx,cy); ov.restore(); return; }
+  const t=G.fpT, vb=fpVerbs(t), a=vb[0]&&fpReach(vb[0],t), b=vb[1]&&fpReach(vb[1],t);
+  ov.globalAlpha=0.92; ov.lineWidth=2; ov.strokeStyle='rgba(10,8,16,.8)'; ov.fillStyle='#ffffff'; ov.beginPath(); ov.arc(cx,cy,2.6,0,TAU); ov.stroke(); ov.fill();
+  if(a||b){ ov.strokeStyle='#ffd35a'; ov.lineWidth=2; ov.beginPath(); ov.arc(cx,cy,10,0,TAU); ov.stroke(); }
+  ov.globalAlpha=1;
+  const lines=[]; if(t&&t.d<6) lines.push(['800 15px "Space Grotesk",system-ui,sans-serif','#f3eefc',fpName(t)]);
+  const tch=LAST_INPUT==='touch', pad=LAST_INPUT==='pad', k1=pad?'Y':tch?'GRAB':kb('grab'), k2=pad?'RB':tch?'ALT':kb('alt');
+  const vt=[]; if(vb[0]) vt.push((a?'':'(far) ')+k1+' '+fpLabel(vb[0],t)); if(vb[1]) vt.push((b?'':'(far) ')+k2+' '+fpLabel(vb[1],t));
+  if(vt.length&&(t||p.held>=0||p.seat)) lines.push(['700 13px "Space Mono",monospace',a||b?'#ffd35a':'rgba(243,238,252,.6)',vt.join('   ·   ')]);
+  let y=cy+30; for(const [f,c,s] of lines){ ov.font=f; ov.lineWidth=4; ov.strokeStyle='rgba(10,8,16,.85)'; ov.strokeText(s,cx,y); ov.fillStyle=c; ov.fillText(s,cx,y); y+=20; }
+  const txt=p.hollerT>0?p.holler:p.lineT>0?p.line:''; if(txt){ ov.font='700 16px "Space Grotesk",system-ui,sans-serif'; const w=Math.min(VW-40,ov.measureText(txt).width+24), yy=VH-150;
+    ov.globalAlpha=Math.min(1,(p.hollerT>0?p.hollerT:p.lineT)/0.3); ov.fillStyle='rgba(16,14,24,.78)'; ov.beginPath(); ov.roundRect?ov.roundRect(cx-w/2,yy-20,w,30,8):ov.rect(cx-w/2,yy-20,w,30); ov.fill(); ov.fillStyle='#f3eefc'; ov.fillText(txt,cx,yy); }
+  ov.restore(); }
+
 /* ---------------- main update ---------------- */
 function update(dt,inp){ const g=G; g.t+=dt; g.mods=mods(); const m=g.mods; { const FF=FORMS[g.player.form]; PR=FF?FF.r:0.34; PH=FF?FF.h:1.75*CUSTOM.height; STEP=FF&&FF.step?FF.step:0.42; }
   if(g.state!=='play'){ attractUpdate(dt,inp); return; }
@@ -2493,10 +2799,11 @@ function update(dt,inp){ const g=G; g.t+=dt; g.mods=mods(); const m=g.mods; { co
   if(g.dying<=0){ g.life-=dt*m.drain; g.alive+=dt; if(g.life<=0){ g.life=0; beginDying(false); } } else { g.dying-=dt; if(g.dying<=0){ gameOver(); return; } }
   g.clock+=dt/90*(m.object||m.lapse?12:1); g.skyT=(g.skyT||0)+dt*(m.object||m.lapse?8:1);
   // camera input
-  g.cam.yaw-=inp.lookX; g.cam.pitch=clamp(g.cam.pitch+inp.lookY,-0.45,1.25); g.cam.dist=clamp(g.cam.dist-inp.zoom,2.5,14);
+  g.cam.yaw-=inp.lookX; if(inp.view) setView(!g.fp); else if(!g.fp&&inp.zoom>0&&g.cam.dist<=2.5001) setView(true); else if(g.fp&&inp.zoom<0) setView(false);
+  g.cam.pitch=g.fp?clamp(g.cam.pitch+inp.lookY,-1.45,1.45):clamp(g.cam.pitch+inp.lookY,-0.45,1.25); if(!g.fp) g.cam.dist=clamp(g.cam.dist-inp.zoom,2.5,14);
   let pi=g.dying>0?{mx:0,my:0}:{...inp};
   if(g.dying>0){ for(const k in inp) if(typeof inp[k]==='boolean') pi[k]=false; pi.lookX=0; pi.lookY=0; }
-  actions(pi);
+  fpUpdate(dt); actions(pi);
   const stands=standSurfaces();
   playerUpdate(g.player,pi,pdt,m,stands,g.cam.yaw,g.evs);
   useUpdate(g.player,pdt); poopUpdate(dt,pi); G.focusT=m.focus>0.3?findFocus():null; formUpdate(dt); paradeUpdate(dt); foldUpdate(dt); docUpdate(dt); poopAuraUpdate(dt); fireUpdate(pdt); voiceUpdate(dt);
@@ -2680,7 +2987,7 @@ const GAMBLER_LINES=['Come on, come on, come on...','One more spin. Then I leave
 const BOUNCER_LINES=['No horns past this point. Please.','Gamble responsibly. Or at least quietly.','I am watching you. I am also watching that gnome.','Sir, this is a casino. Pants recommended.'];
 const BOUNCER_HELLO=['Welcome to the Lucky Liver. No clocks, no windows, no refunds.','Evening. Or morning. We do not do clocks in here.','Step right in. Time is not real in here.'];
 function interiorAt(p){ for(const it of W.interiors) if(p.x>it.x0&&p.x<it.x1&&p.z>it.z0&&p.z<it.z1&&p.y<it.y1-0.3) return it; return null; }
-function insideUpdate(){ const g=G, ins=interiorAt(g.player.pos); if(ins===g.inside) return; g.inside=ins; const cb=ins&&ins.cut?ins.bld:0; if(cb!==g.cutBld){ g.cutBld=cb; BRK_DIRTY=true; }
+function insideUpdate(){ const g=G, ins=interiorAt(g.player.pos); if(ins===g.inside) return; g.inside=ins; const cb=ins&&ins.cut&&!g.fp?ins.bld:0;   /* first person keeps the roof on */ if(cb!==g.cutBld){ g.cutBld=cb; BRK_DIRTY=true; }
   if(ins&&ins.casino) for(const n of g.npcs) if(n.alive&&n.role==='bouncer'&&npcUp(n)){ say(n,pick(BOUNCER_HELLO),2.6); n.talkCd=8; } }
 let NOISEBUF=null;
 function noise(kind,vol=1,pos){ if(!AC||!G||G.attract) return; try{ const t=AC.currentTime; if(_sl['n'+kind]!==undefined&&t-_sl['n'+kind]<0.05) return; _sl['n'+kind]=t;
@@ -2953,7 +3260,7 @@ function cameraUpdate(dt){ const p=G.player, cam=G.cam, m=G.mods;
   const dr=m.drunk*SET.shake; if(dr>0){ const r0=rightOf(cam.yaw), swy=Math.sin(G.t*0.9)*0.45*dr; pos.x+=r0.x*swy; pos.z+=r0.z*swy; pos.y+=Math.sin(G.t*1.7)*0.18*dr; }
   const roll=m.wobble*0.3*SET.shake*Math.sin(G.t*0.8)+dr*0.16*Math.sin(G.t*1.25), rt=rightOf(cam.yaw), up=vnorm(vadd(vmul(V(0,1,0),Math.cos(roll)),vmul(rt,Math.sin(roll))));
   cam.fov=lerp(cam.fov,clamp(1.05+m.fov+(p.speed>8?0.06:0)+dr*0.06*Math.sin(G.t*1.1),0.6,1.6),smooth(5,dt));
-  G.view={pos,target:cam.focus,up,fovy:cam.fov}; }
+  G.view={pos,target:cam.focus,up,fovy:cam.fov}; fpCamera(dt); }
 
 /* ---------------- rendering ---------------- */
 let VP=null;
@@ -2976,7 +3283,7 @@ function sunDir(h){ const a=(h-6.5)/12.5*PI, sd=vnorm(V(Math.cos(a)*0.85,Math.ma
   return vnorm(vadd(vmul(sd,1-n),vmul(md,n))); }
 function render(){ if(!G.view) return; SH.on=!!SH.ok&&QUAL.shadows; const g=G, v=g.view, m=g.mods, sky=skyAt(g.clock), ld=sunDir(g.clock), night=sky.night;
   resetBatches(); if(BRK_DIRTY||(BRK_SOFT&&performance.now()-BRK_LAST>120)) rebuildBrk();
-  const asp=VW/Math.max(1,VH), fy=Math.min(1.65,Math.max(v.fovy,2*Math.atan(Math.tan(0.62)/asp))); const PM=perspective(fy,asp,0.15,600); if(v.lens){ PM[8]=-v.lens[0]; PM[9]=-v.lens[1]; } VP=m4mul(PM,lookAt(v.pos,v.target,v.up));
+  const asp=VW/Math.max(1,VH), fy=Math.min(1.65,Math.max(v.fovy,2*Math.atan(Math.tan(0.62)/asp))); const PM=perspective(fy,asp,v.near||0.15,600); if(v.lens){ PM[8]=-v.lens[0]; PM[9]=-v.lens[1]; } VP=m4mul(PM,lookAt(v.pos,v.target,v.up));
   const camF=vnorm(vsub(v.target,v.pos)), cullCos=Math.cos(Math.min(1.55,Math.atan(Math.tan(fy/2)*Math.sqrt(1+asp*asp))+0.15));
   const vis=(c,r)=>{ const d=vsub(c,v.pos), l=vlen(d); if(l-r>150) return false; if(l<r+1) return true; return vdot(d,camF)/l>=cullCos-Math.min(1,r/l)*1.2; };
   const B=DYN, T=TRN, BLOB=SH.on?0.45:1;
@@ -3092,14 +3399,14 @@ function drawHuman(B,R){ const o=R.o, q=R.q, s=R.s||1, a=R.a===undefined?1:R.a, 
   if(L.chest) part('sph',T(V(0,0.3*ht,0.07*gw)),V(0.2*gw,0.11,0.08*gw),tq,L.chest);
   const hq=qmul(tq,qmul(qyaw(P.hy),qmul(qx(P.hp),qz(P.hr)))), hl=T(V(0,0.62*ht+0.03+(HS-1)*0.11,0.03)); out.hq=hq; out.hl=hl;
   const farFace=!!(G&&G.view)&&Math.abs(o.x-G.view.pos.x)+Math.abs(o.z-G.view.pos.z)>25;
-  out.hp=(mesh,l,h,lq,col,g=g0)=>{ if(farFace&&l.z>0.085&&h.x<0.036&&h.y<0.036&&h.z<0.036) return; const k=faceK(mesh,l,h,o); if(k<=0) return; part(mesh,vadd(hl,qrot(hq,k===1&&HS===1?l:V(l.x*HS*(1+(k-1)*0.25),l.y*HS,l.z*HS+(k-1)*0.012))),k*HS===1?h:vmul(h,k*HS),lq?qmul(hq,lq):hq,col,g); };
+  out.hp=(mesh,l,h,lq,col,g=g0)=>{ if(R.noHead) return; if(farFace&&l.z>0.085&&h.x<0.036&&h.y<0.036&&h.z<0.036) return; const k=faceK(mesh,l,h,o); if(k<=0) return; part(mesh,vadd(hl,qrot(hq,k===1&&HS===1?l:V(l.x*HS*(1+(k-1)*0.25),l.y*HS,l.z*HS+(k-1)*0.012))),k*HS===1?h:vmul(h,k*HS),lq?qmul(hq,lq):hq,col,g); };
   out.mouth=vadd(hl,qrot(hq,V(0,-0.075*HS,0.15*HS))); out.nose=vadd(hl,qrot(hq,V(0,0,0.17*HS)));
   const arm=(sd,sh,sz,el,ik)=>{ const S=T(V(0.235*sd*gw,0.42*ht,0)); let E,Hd;
     if(ik) [E,Hd]=ik2(S,ik,0.3*ht*al,0.29*ht*al,V(0.8*sd,-1,-0.4));
     else { const uq=qmul(tq,qmul(qz(sz),qx(sh))); E=vadd(S,qrot(uq,V(0,-0.3*ht*al,0))); Hd=vadd(E,qrot(qmul(uq,qx(-el)),V(0,-0.29*ht*al,0))); }
     ball(S,0.078*gw,L.shoulder||L.top); limb(S,E,0.064*gw,0.057,L.upper||L.top); ball(E,0.056,L.sleeve||L.top); limb(E,Hd,0.054,0.046,L.sleeve||L.top); ball(Hd,0.052*HN,L.hand||L.skin); return Hd; };
   out.handL=arm(1,P.shL,P.szL,P.elL,R.ikL?R.ikL(out):null); out.handR=arm(-1,P.shR,P.szR,P.elR,R.ikR?R.ikR(out):null);
-  limb(T(V(0,0.5*ht,0.01)),vadd(hl,qrot(hq,V(0,-0.12*HS,-0.01))),0.056,0.05,L.neck||L.skin);
+  if(!R.noHead) limb(T(V(0,0.5*ht,0.01)),vadd(hl,qrot(hq,V(0,-0.12*HS,-0.01))),0.056,0.05,L.neck||L.skin);
   if(C_.sweat&&Math.sin(G.t*2.3+o.x*1.7)>0.55) out.hp('sph',V(0.135,0.06,0.07),V(0.018,0.028,0.018),null,[0.62,0.85,1],0.35);   // caricature sweat drop
   return out; }
 const LOOK_PLAYER={skin:hex(0xe6c3a8),top:hex(0x6f7350),pants:hex(0x3e4a61),shoe:hex(0xd8d4c8),hair:hex(0x3a2c22),bags:hex(0x9a7480),cap:hex(0xb8322c),teeth:hex(0xe3d58a)};
@@ -3362,23 +3669,27 @@ function itemInHand(kind,id,reach,q){
   if(kind==='tab') return {off:V(0,0.01,0.03),q:qmul(q,qx(-1.2)),sc:0.2};
   if(kind==='smoke') return {off:V(0.02,0,0.05),q:qmul(q,qyaw(PI/2+0.3)),sc:0.32};
   return {off:V(0,0,0.035),q:qmul(q,qx(-0.9)),sc:0.24}; }
-function drawPlayer(B,p,a){ if(p.objKind){ drawObject(B,p); return; } const F=FORMS[p.form]; if(F&&F.quad) drawCreature(B,p,a,p.form); else drawPlayerHuman(B,p,a,p.form); }
-function drawPlayerHuman(B,p,a,f){ const F=FORMS[f], [o,q]=playerPose(p), sz=F?F.size:1, mvS=p.speed/sz;
+function drawPlayer(B,p,a){ const fpv=!!(G.view&&G.view.fp); if(p.seat&&p.seat.hide) return; if(fpv&&(p.objKind||SET.fpBody==='none'||(FORMS[p.form]&&FORMS[p.form].quad))) return; if(p.objKind){ drawObject(B,p); return; } const F=FORMS[p.form]; if(F&&F.quad) drawCreature(B,p,a,p.form); else drawPlayerHuman(B,p,a,p.form); }
+function drawPlayerHuman(B,p,a,f){ const F=FORMS[f], [o,q]=playerPose(p), sz=F?F.size:1, mvS=p.speed/sz, fpv=!!(G.view&&G.view.fp);
   const mv=Math.min(1,mvS/6), run=clamp((mvS-6.5)/3,0,1), air=!p.grounded&&!p.ragdoll;
   const using=p.useT>0&&!p.ragdoll, uk=using?1-p.useT/p.useMax:0, reach=using?(uk<0.25?uk/0.25:uk>0.78?Math.max(0,(1-uk)/0.22):1):0, hold=using&&uk>=0.25&&uk<=0.78, kind=p.useKind;
   const T=walkPose(p.phase,mv,run);
-  if(air) Object.assign(T,{hipL:-0.7,hipR:0.25,knL:1.1,knR:0.5,shL:-2.3+Math.sin(G.t*18)*0.35,shR:-2.1+Math.cos(G.t*21)*0.35,szL:0.55,szR:-0.55,elL:0.4,elR:0.4,lean:0.05,bob:0});
+  if(air) Object.assign(T,{hipL:-0.7,hipR:0.25,knL:1.1,knR:0.5,shL:(fpv?-0.9:-2.3)+Math.sin(G.t*18)*0.35,shR:(fpv?-0.8:-2.1)+Math.cos(G.t*21)*0.35,szL:0.55,szR:-0.55,elL:0.4,elR:0.4,lean:0.05,bob:0});
   if(p.charge>0) Object.assign(T,{shL:-1.45,shR:-1.45,szL:0.15,szR:-0.15,elL:0.2,elR:0.2,lean:0.55});
   if(p.horn) Object.assign(T,{shL:0.7,shR:0.7,szL:0.35,szR:-0.35,elL:0.35,elR:0.35,lean:0.85});
   if(p.windT>0) Object.assign(T,{lean:0.62,bob:-0.14,shL:0.45,shR:0.45,szL:0.55,szR:-0.55,elL:0.7,elR:0.7,hipL:-0.3+Math.sin(G.t*24)*0.4,knL:0.7,hipR:0.25,knR:0.35});
   if(p.stuckT>0) Object.assign(T,{lean:0.75,shL:-0.4+Math.sin(G.t*30)*0.5,shR:-0.4-Math.sin(G.t*30)*0.5,szL:0.6,szR:-0.6,elL:0.4,elR:0.4});
   if(air&&F&&F.fly&&!p.ragdoll){ const fw=clamp(p.speed/12,0,1); Object.assign(T,{hipL:0.28+Math.sin(G.t*3)*0.1,hipR:0.42+Math.cos(G.t*3)*0.1,knL:0.35,knR:0.55,shL:0.35,shR:0.35,szL:0.38,szR:-0.38,elL:0.25,elR:0.25,lean:0.12+0.55*fw,bob:0}); }
   if(p.foldT>0&&!p.ragdoll){ const k=foldK(p); Object.assign(T,{lean:0.25+1.35*k,bob:-0.1*k,hipL:-0.25*k,hipR:-0.25*k,knL:0.55*k+0.1,knR:0.55*k+0.1,shL:-0.3-0.9*k,shR:-0.3-0.9*k,szL:0.12,szR:-0.12,elL:0.15,elR:0.15}); }
-  if(p.held>=0) Object.assign(T,{shL:-2.95,shR:-2.95,szL:0.25,szR:-0.25,elL:0.15,elR:0.15});
+  if(p.held>=0) Object.assign(T,fpv?{shL:-1.2,shR:-1.2,szL:0.3,szR:-0.3,elL:0.55,elR:0.55}:{shL:-2.95,shR:-2.95,szL:0.25,szR:-0.25,elL:0.15,elR:0.15});
+  if(p.strikeT>0){ const k=Math.sin(clamp(1-p.strikeT/0.32,0,1)*PI); if(p.strike==='kick') Object.assign(T,{hipR:-1.35*k,knR:0.25*(1-k)}); else if(p.strike==='wave') Object.assign(T,{shR:-2.9,szR:-0.4+Math.sin(G.t*18)*0.35,elR:0.5});
+    else if(p.strike==='knock') Object.assign(T,{shR:-1.5,szR:-0.1,elR:1.1-0.6*k}); else Object.assign(T,{shR:-1.55*k-0.1,szR:-0.1,elR:1.3*(1-k)+0.05},p.strike==='push'?{shL:-1.55*k-0.1,szL:0.1,elL:1.3*(1-k)+0.05}:{}); }
+  if(p.seat&&!p.ragdoll){ const st=p.seat; if(st.lie) Object.assign(T,{hipL:0.02,hipR:-0.02,knL:0.08,knR:0.08,shL:0.1,shR:0.1,szL:0.12,szR:-0.12,elL:0.15,elR:0.15,lean:-0.08,bob:0});
+    else { Object.assign(T,st.floor?{hipL:-1.45,hipR:-1.45,knL:0.25,knR:0.3,shL:0.45,shR:0.45,szL:0.25,szR:-0.25,elL:0.1,elR:0.1,lean:-0.2}:{hipL:-1.5,hipR:-1.45,knL:1.5,knR:1.45,shL:-0.35,shR:-0.35,szL:0.18,szR:-0.18,elL:0.7,elR:0.7,lean:-0.13}); T.bob=st.seatY+0.06-p.pos.y-0.93*CUSTOM.height*(CST.leg||1); } }
   if(p.hollerT>0&&p.held<0) Object.assign(T,{shL:-0.2,shR:-0.2,szL:1.9+Math.sin(G.t*25)*0.4,szR:-1.9-Math.sin(G.t*27)*0.4,elL:0.5,elR:0.5});
   if(p.ragdoll){ const w=Math.sin(G.t*9); Object.assign(T,{szL:1.3+w*0.4,szR:-1.3-w*0.4,shL:-0.5+w*0.3,shR:0.4-w*0.3,hipL:-0.5-w*0.3,hipR:0.4+w*0.3,knL:0.8,knR:0.6,elL:0.6,elR:0.6,bob:0}); if(p.rig&&p.rig.pose) Object.assign(T,p.rig.pose); }
-  if(p.scratch>0&&!air&&!p.ragdoll&&p.hollerT<=0&&p.held<0&&p.charge<=0&&!using) Object.assign(T,{shR:-2.6,szR:-0.7+Math.sin(G.t*30)*0.2,elR:1.6});
-  if(using&&kind==='pour') Object.assign(T,{shL:lerp(T.shL,-2.85,reach),shR:lerp(T.shR,-2.85,reach),szL:lerp(T.szL,0.42,reach),szR:lerp(T.szR,-0.42,reach),elL:lerp(T.elL,0.3,reach),elR:lerp(T.elR,0.3,reach)});
+  if(p.scratch>0&&!fpv&&!air&&!p.ragdoll&&p.hollerT<=0&&p.held<0&&p.charge<=0&&!using) Object.assign(T,{shR:-2.6,szR:-0.7+Math.sin(G.t*30)*0.2,elR:1.6});
+  if(using&&kind==='pour') Object.assign(T,{shL:lerp(T.shL,fpv?-1.5:-2.85,reach),shR:lerp(T.shR,fpv?-1.5:-2.85,reach),szL:lerp(T.szL,0.42,reach),szR:lerp(T.szR,-0.42,reach),elL:lerp(T.elL,0.3,reach),elR:lerp(T.elR,0.3,reach)});
   if(p.squatT>0) Object.assign(T,{hipL:-1.25,hipR:-1.25,knL:2.1,knR:2.1,lean:0.45,bob:-0.4,shL:-0.6,shR:-0.6,elL:1.2,elR:1.2});
   T.lean+=0.08+(f==='skinwalker'?0.38:0); T.roll=p.twBody*0.4+(p.lurch>0?p.lurchDir*0.42*(p.lurch/0.45):0);
   T.hy=p.twHead.y; T.hr=p.twHead.z; T.hp=p.twHead.x*0.6+(!using?0:(kind==='drink'||kind==='pour')?-0.6*reach:kind==='sniff'?(uk>0.5&&uk<0.8?-0.35:0.1*reach):-0.15*reach);
@@ -3387,11 +3698,12 @@ function drawPlayerHuman(B,p,a,f){ const F=FORMS[f], [o,q]=playerPose(p), sz=F?F
   let look=LOOK_PLAYER, girth=1, height=1, armLen=1, g=-0.18;
   if(f==='angel'){ look=LOOK_ANGEL; g=0.1; } else if(f==='demon') look=LOOK_DEMON; else if(f==='minotaur'){ look=LOOK_MINO; girth=1.35; height=1.12; } else if(f==='skinwalker'){ look=LOOK_SKIN; girth=0.7; height=1.18; armLen=1.3; }
   const human=!f||f==='giant'||f==='angel'||f==='demon'; if(human){ girth=CUSTOM.build; height=CUSTOM.height; }
-  const ikR=using&&kind!=='pour'?out=>{ const S=out.T(V(-0.235*girth,0.42*height,0)), rest=vadd(S,V(0,-0.56*height*armLen,0.06)), goal=kind==='drink'?vadd(out.mouth,V(-0.02,0.1,0.2)):kind==='sniff'?vadd(out.nose,V(-0.03,-0.03,0.1)):vadd(out.mouth,V(-0.02,-0.01,0.09));
+  const ikR=using&&kind!=='pour'?out=>{ const S=out.T(V(-0.235*girth,0.42*height,0)), rest=vadd(S,V(0,-0.56*height*armLen,0.06)), goal=fpv?vadd(out.mouth,V(-0.05,-0.18,0.42)):kind==='drink'?vadd(out.mouth,V(-0.02,0.1,0.2)):kind==='sniff'?vadd(out.nose,V(-0.03,-0.03,0.1)):vadd(out.mouth,V(-0.02,-0.01,0.09));   /* first person: up into view, not into the camera */
     return V(lerp(rest.x,goal.x,reach),lerp(rest.y,goal.y,reach),lerp(rest.z,goal.z,reach)); }:p.brushW?()=>vmul(qrot(qconj(q),vsub(p.brushW,o)),1/(sz*(1-p.squash*0.2))):null;
-  const out=drawHuman(B,{o,q,s:sz*(1-p.squash*0.2),a,g,P,look,girth,height,armLen,ikR}); out.gw=girth; out.ht=height;
-  if(f==='minotaur') bullHead(out); else if(f==='skinwalker') skullHead(out);
+  const out=drawHuman(B,{o,q,s:sz*(1-p.squash*0.2),a,g,P,look,girth,height,armLen,ikR,noHead:fpv}); out.gw=girth; out.ht=height;
+  if(fpv){} else if(f==='minotaur') bullHead(out); else if(f==='skinwalker') skullHead(out);
   else playerHead(out,p,{...look,open:p.hollerT>0?0.035+Math.abs(Math.sin(G.t*30))*0.02:(hold&&kind!=='sniff')?0.04:0.01,eyesGlow:f==='demon'});
+  if(p.cone) out.hp('cone',V(0,0.27,-0.01),V(0.13,0.2,0.13),null,hex(0xff6a1a));
   if(f==='angel') angelExtras(B,out,p,air); else if(f==='demon') demonExtras(B,out,p,air); else if(f==='minotaur') minoExtras(B,out,p); else if(f==='skinwalker') skinExtras(B,out,p);
   if(!f||f==='giant') topCloth(B,out,p,sz); if(human) cyberBody(out,girth,height);
   if(using){ if(kind==='pour') drawItem(B,TRN,p.useId,out.W(vadd(out.hl,qrot(out.tq,V(0,0.5,0.08)))),qmul(q,qx(PI*0.9*reach)),0.62*sz,0);
@@ -3644,8 +3956,9 @@ function drawOverlay(){ ov.clearRect(0,0,VW,VH); if(!VP||G.attract) return; cons
   const bubble=(txt,pr,a,cop)=>{ const w=ov.measureText(txt).width+16, x=pr.x-w/2, y=pr.y-30; ov.globalAlpha=a; ov.fillStyle=cop?'rgba(220,232,255,.94)':'rgba(255,255,255,.92)'; ov.beginPath(); ov.roundRect?ov.roundRect(x,y,w,24,8):ov.rect(x,y,w,24); ov.fill();
     ov.beginPath(); ov.moveTo(pr.x-6,y+24); ov.lineTo(pr.x+6,y+24); ov.lineTo(pr.x,y+31); ov.fill(); ov.fillStyle='#16131f'; ov.fillText(txt,pr.x,y+16); ov.globalAlpha=1; };
   for(const n of G.npcs){ if(n.bubbleT<=0||vlen(vsub(n.pos,v.pos))>35) continue; const pr=project(VP,vadd(n.pos,V(0,2.3,0))); if(pr) bubble(n.bubble,pr,Math.min(1,n.bubbleT/0.3),n.kind==='cop'); }
-  const P=G.player, ptxt=P.hollerT>0?P.holler:P.lineT>0?P.line:''; if(ptxt&&!G.zoo){ const pr=project(VP,vadd(P.pos,V(0,PH+0.55,0))); if(pr) bubble(ptxt,pr,Math.min(1,(P.hollerT>0?P.hollerT:P.lineT)/0.3),false); }
+  const P=G.player, ptxt=P.hollerT>0?P.holler:P.lineT>0?P.line:''; if(ptxt&&!G.zoo&&!v.fp){ const pr=project(VP,vadd(P.pos,V(0,PH+0.55,0))); if(pr) bubble(ptxt,pr,Math.min(1,(P.hollerT>0?P.hollerT:P.lineT)/0.3),false); }
   if(W.doc&&G.docLineT>0&&vlen(vsub(W.doc.pos,v.pos))<30){ const pr=project(VP,vadd(W.doc.pos,V(0,2.35,0))); if(pr) bubble(G.docLine,pr,Math.min(1,G.docLineT/0.3),false); }
+  fpOverlay(v);
   // score popups
   for(const p of G.pops){ const k=p.t/1.2, pr=project(VP,vadd(p.pos,V(0,(1-k)*1.5,0))); if(!pr) continue; ov.globalAlpha=Math.min(1,k*1.5); ov.font='700 17px "Space Mono",monospace'; ov.lineWidth=3; ov.strokeStyle='rgba(10,8,16,.75)'; ov.strokeText(p.text,pr.x,pr.y); ov.fillStyle=p.col; ov.fillText(p.text,pr.x,pr.y); }
   ov.globalAlpha=1;
@@ -3675,7 +3988,7 @@ function syncHUD(dt){ const g=G, tl=g.life, clk=$('clock'), noClock=!!(g.inside&
   const st=$('stars').children; for(let i=0;i<5;i++) st[i].classList.toggle('on',g.heat>=i+1); $('stars').classList.toggle('seen',g.seen); { const FFh=FORMS[g.player.form], hb=!(FFh&&FFh.horns), bc=$('bCharge'); if(bc.hidden!==hb) bc.hidden=hb; }
   const near=!!(g.player&&!g.player.ragdoll&&nearSlot(g.player))&&!(g.nearQuest&&hlen(vsub(g.nearQuest.pos,g.player.pos))<1.6); g.nearSlots=near;
   const nearDoc=!near&&!!W.doc&&hlen(vsub(g.player.pos,W.doc.pos))<2.9&&!g.player.ragdoll&&!g.player.objKind&&!(g.player.foldT>0); g.nearDoc=nearDoc;
-  let pm=''; if(near) pm=IS_TOUCH?'Tap SLOTS to gamble your dollas':'Press E to gamble your dollas';
+  let pm=''; const fv=fpLive()?fpVerbs(G.fpT):null; if(fv&&(G.fpT||g.player.held>=0||g.player.seat)) pm=''; else if(near) pm=IS_TOUCH?'Tap SLOTS to gamble your dollas':'Press E to gamble your dollas';
   else if(nearDoc) pm=IS_TOUCH?'Tap DOC to buy cyberware':'Press E: ripperdoc cyberware';
   else if(g.nearQuest) pm=questPrompt(g.nearQuest);
   else if(g.mods.object&&g.player.objKind) pm=`You are a ${OBJECTS[g.player.objKind].name}. Wait it out.`;
@@ -3685,7 +3998,8 @@ function syncHUD(dt){ const g=G, tl=g.life, clk=$('clock'), noClock=!!(g.inside&
   else if(g.player.held>=0) pm=IS_TOUCH?'TACKLE throws · GRAB drops':'Click to throw · E to drop';
   else if(g.player.ragdoll) pm=IS_TOUCH?'Move or JUMP to get up':'Q, Space or move to get up';
   else { const i=grabCandidate(); if(i>=0) pm=(IS_TOUCH?'GRAB the ':'E: grab the ')+G.props[i].d.name; }
-  setT('promptmsg',pm); $('prompt').classList.toggle('on',!!pm); setT('bGrab',near?'SLOTS':g.nearDoc?'DOC':g.nearQuest?'TALK':g.player.held>=0?'DROP':'GRAB');
+  setT('promptmsg',pm); $('prompt').classList.toggle('on',!!pm); setT('bGrab',fv&&fv[0]?fpShort(fv[0],G.fpT):near?'SLOTS':g.nearDoc?'DOC':g.nearQuest?'TALK':g.player.held>=0?'DROP':'GRAB');
+  { const ba=$('bAlt'), s2=fv&&fv[1]; if(ba&&ba.hidden!==!s2) ba.hidden=!s2; if(s2) setT('bAlt',fpShort(fv[1],G.fpT)); const vb=$('viewBtn'), vl=g.fp?'3P':'1P'; if(vb&&vb.textContent!==vl) vb.textContent=vl; }
   setS('hint','opacity',g.alive<22&&!(VW<1100&&$('effects').childElementCount)?'1':'0'); // never sit on top of the effect pills
   hudT-=dt; if(hudT>0) return; hudT=0.1; let h='';
   if(g.player.form){ const FF=FORMS[g.player.form]; h+=`<div class="fx" style="color:#ffb63c"><span class="dot"></span><span class="nm">${g.parade?'PARADE · '+FF.name+' · '+(g.parade.i+1)+'/'+PARADE.length:FF.name+' · '+Math.ceil(g.player.formT)+'s'}</span></div>`; }
@@ -3706,7 +4020,7 @@ function applyAudio(){ if(!AC) return; MASTER.gain.value=0.16*SET.master; SFXB.g
 const SFX={pickup:[520,1046,.22,'triangle'],hit:[170,80,.1,'square'],bighit:[120,45,.25,'square'],jump:[260,620,.15,'sine'],bounce:[180,640,.25,'sine'],land:[110,50,.15,'square'],
   whoosh:[300,120,.18,'sawtooth'],throw:[400,160,.2,'sawtooth'],grab:[420,900,.07,'sine'],glitch:[900,120,.06,'square'],boom:[90,30,.9,'sawtooth'],busted:[760,1020,.6,'square'],
   siren:[620,1100,.6,'sine'],alarm:[880,660,.3,'square'],feat:[784,1568,.5,'triangle'],heart:[60,48,.2,'sine'],tick:[1500,1500,.03,'sine'],comedown:[420,110,.9,'sine'],
-  splash:[1200,400,.4,'sawtooth'],gulp:[190,95,.13,'sine'],pop:[700,1300,.06,'square'],bark:[420,240,.14,'square'],plop:[180,70,.22,'sine'],holler:[230,180,.45,'sawtooth'],win:[440,1320,.5,'triangle'],spin:[200,600,.5,'sawtooth'],click:[900,900,.03,'sine'],holyA:[523,523,.9,'sine'],holyB:[659,659,.9,'sine'],holyC:[784,784,.9,'sine'],hell:[98,49,.7,'sawtooth'],fold:[220,90,1.2,'sine'],cash:[1320,1980,.12,'square'],drill:[1400,2300,.5,'square'],clang:[540,330,.35,'square']};
+  splash:[1200,400,.4,'sawtooth'],gulp:[190,95,.13,'sine'],pop:[700,1300,.06,'square'],bark:[420,240,.14,'square'],plop:[180,70,.22,'sine'],holler:[230,180,.45,'sawtooth'],win:[440,1320,.5,'triangle'],spin:[200,600,.5,'sawtooth'],click:[900,900,.03,'sine'],holyA:[523,523,.9,'sine'],holyB:[659,659,.9,'sine'],holyC:[784,784,.9,'sine'],hell:[98,49,.7,'sawtooth'],fold:[220,90,1.2,'sine'],cash:[1320,1980,.12,'square'],drill:[1400,2300,.5,'square'],clang:[540,330,.35,'square'],honk:[392,370,.3,'sawtooth'],knock:[150,110,.05,'square'],ding:[1568,1560,.4,'sine']};
 const _sl={};
 function sfx(kind,vol=1,pos){ if(!AC||!G||G.attract) return; try{ const s=SFX[kind]; if(!s) return; const t=AC.currentTime; if(_sl[kind]!==undefined&&t-_sl[kind]<0.035) return; _sl[kind]=t;
   const o=AC.createOscillator(), g=AC.createGain(); o.connect(g); vol*=sfxOut(g,pos);
@@ -4018,15 +4332,16 @@ function settle(out,fin){ spinning=false; $('spinBtn').disabled=false; let msg,c
 
 /* ---------------- input ---------------- */
 const keys={}, pressed={}; let lookDX=0, lookDY=0, wheel=0, locked=false, dragging=false, dragMoved=0, mouseDown=false;
-const tbtn={jump:false,tackle:false,grab:false,flop:false,holler:false,poop:false,charge:false};
+const tbtn={jump:false,tackle:false,grab:false,flop:false,holler:false,poop:false,charge:false,view:false,alt:false};
 addEventListener('keydown',e=>{ const k=e.key.toLowerCase(); if(REBIND){ e.preventDefault(); finishRebind(k); return; } noteInput('kbm');
   if(!keys[k]) pressed[k]=true; keys[k]=true; if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k)&&G&&G.state==='play') e.preventDefault();
   if(k==='escape'){ backOut(); return; }
   if(bound('voice',k)&&$('settings').hidden) toggleVoice(); if(k==='l'&&$('settings').hidden&&!REBIND) cycleLook(e.shiftKey?-1:1); if(k==='k'&&$('settings').hidden&&!REBIND) cycleCharStyle(e.shiftKey?-1:1); if(bound('restart',k)&&G&&(G.state==='play'||G.state==='over')) startGame(); });
 addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
 addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; });
-glc.addEventListener('mousedown',e=>{ unlock(); noteInput('kbm'); mouseDown=true; dragMoved=0; if(G&&G.state==='play'&&!locked&&glc.requestPointerLock){ try{ const r=glc.requestPointerLock(); if(r&&r.catch) r.catch(()=>{}); }catch(err){} } });
-addEventListener('mouseup',e=>{ if(mouseDown&&dragMoved<6&&G&&G.state==='play') pressed['mouse0']=true; mouseDown=false; });
+glc.addEventListener('mousedown',e=>{ unlock(); noteInput('kbm'); mouseDown=true; dragMoved=0; if(e.button===2&&G&&G.state==='play') pressed['mouse2']=true; if(G&&G.state==='play'&&!locked&&glc.requestPointerLock){ try{ const r=glc.requestPointerLock(); if(r&&r.catch) r.catch(()=>{}); }catch(err){} } });
+addEventListener('mouseup',e=>{ if(mouseDown&&dragMoved<6&&G&&G.state==='play'&&e.button!==2) pressed['mouse0']=true; mouseDown=false; });
+glc.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{ if(locked){ lookDX+=e.movementX; lookDY+=e.movementY; } else if(mouseDown){ lookDX+=e.movementX; lookDY+=e.movementY; dragMoved+=Math.abs(e.movementX)+Math.abs(e.movementY); } });
 document.addEventListener('pointerlockchange',()=>{ const was=locked; locked=document.pointerLockElement===glc; if(was&&!locked&&G&&G.state==='play'&&!G.attract&&G.dying<=0) openPause(); });
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&G&&G.state==='play'&&!G.attract) openPause(); });
@@ -4043,7 +4358,7 @@ function endT(e){ for(const t of e.changedTouches){ if(t.identifier===stick.id){
 glc.addEventListener('touchend',e=>{ e.preventDefault(); endT(e); },{passive:false}); glc.addEventListener('touchcancel',endT);
 function bindT(id,key){ const b=$(id); b.addEventListener('touchstart',e=>{ e.preventDefault(); unlock(); tbtn[key]=true; b.classList.add('down'); if(key==='jump') keys['_jumpheld']=true; if(key==='grab') keys['_grabheld']=true; },{passive:false});
   b.addEventListener('touchend',e=>{ e.preventDefault(); b.classList.remove('down'); if(key==='jump') keys['_jumpheld']=false; if(key==='grab') keys['_grabheld']=false; },{passive:false}); b.addEventListener('click',()=>{ tbtn[key]=true; }); }
-bindT('bJump','jump'); bindT('bTackle','tackle'); bindT('bGrab','grab'); bindT('bFlop','flop'); bindT('bYell','holler'); bindT('bPoop','poop'); bindT('bCharge','charge');
+bindT('bJump','jump'); bindT('bTackle','tackle'); bindT('bGrab','grab'); bindT('bFlop','flop'); bindT('bYell','holler'); bindT('bPoop','poop'); bindT('bCharge','charge'); bindT('bAlt','alt');
 const bound=(a,k)=>SET.binds[a].includes(k);
 function gatherInput(dt){ const H=a=>{ for(const k of SET.binds[a]) if(keys[k]) return true; return false; }, T=a=>{ for(const k of SET.binds[a]) if(pressed[k]) return true; return false; };
   let mx=0, my=0; if(H('up')) my+=1; if(H('down')) my-=1; if(H('right')) mx+=1; if(H('left')) mx-=1;
@@ -4051,7 +4366,7 @@ function gatherInput(dt){ const H=a=>{ for(const k of SET.binds[a]) if(keys[k]) 
   const P=padInput(dt||0.016)||{}; if(P.mx!==undefined){ mx+=P.mx; my+=P.my; lookDX+=P.lx; lookDY+=P.ly; wheel+=P.zoom; }
   const l=Math.hypot(mx,my); if(l>1){ mx/=l; my/=l; }
   const sens=0.0032*SET.sens, inv=SET.invertY?-1:1, inp={mx,my,sprint:!!(H('sprint')||(stick.id!==null&&Math.hypot(stick.dx,stick.dy)>0.92)||P.sprint),jump:!!(T('jump')||tbtn.jump||P.jump),jumpHeld:!!(H('jump')||keys['_jumpheld']||P.jumpHeld),
-    tackle:!!(pressed['mouse0']||T('tackle')||tbtn.tackle||P.tackle),grab:!!(T('grab')||tbtn.grab||P.grab),flop:!!(T('flop')||tbtn.flop||P.flop),holler:!!(T('holler')||tbtn.holler||P.holler),poop:!!(T('poop')||tbtn.poop||P.poop),charge:!!(T('charge')||tbtn.charge||P.charge),
+    tackle:!!(pressed['mouse0']||T('tackle')||tbtn.tackle||P.tackle),grab:!!(T('grab')||tbtn.grab||P.grab),flop:!!(T('flop')||tbtn.flop||P.flop),holler:!!(T('holler')||tbtn.holler||P.holler),poop:!!(T('poop')||tbtn.poop||P.poop),charge:!!(T('charge')||tbtn.charge||P.charge),view:!!(T('view')||tbtn.view||P.view),alt:!!(T('alt')||pressed['mouse2']||tbtn.alt||P.alt),
     grabHeld:!!(H('grab')||keys['_grabheld']||P.grabHeld),lookX:lookDX*sens,lookY:lookDY*sens*inv,zoom:wheel*0.8};
   for(const k in pressed) pressed[k]=false; for(const k in tbtn) tbtn[k]=false; lookDX=lookDY=0; wheel=0; LAST_INP=inp; return inp; }
 function unlock(){ audioInit(); if(AC&&AC.state==='suspended') AC.resume(); }
@@ -4074,7 +4389,7 @@ function padInput(dt){ const gp=getPad(); if(!gp){ if(PAD.on){ PAD.on=false; PAD
     if(edge(10)) PAD.latch=!PAD.latch; if(Math.hypot(lx,ly)<0.2) PAD.latch=false;
     if(edge(15)) toggleVoice();
     out={mx:lx,my:-ly,lx:cv(rx)*rate*1.15,ly:cv(ry)*rate*0.8,zoom:((down[13]?1:0)-(down[12]?1:0))*dt*6,
-      jump:edge(0),jumpHeld:down[0],tackle:edge(2)||edge(7),grab:edge(3),grabHeld:down[3],flop:edge(1),holler:edge(4),charge:edge(5),poop:edge(14),sprint:down[6]||PAD.latch}; }
+      jump:edge(0),jumpHeld:down[0],tackle:edge(2)||edge(7),grab:edge(3),grabHeld:down[3],flop:edge(1),holler:edge(4),charge:edge(5),poop:edge(14),view:edge(11),sprint:down[6]||PAD.latch}; }
   PAD.prev=down; return out; }
 function rumble(strong,weak,ms){ if(!SET.rumble||LAST_INPUT!=='pad') return; const gp=getPad(); try{ if(gp&&gp.vibrationActuator&&gp.vibrationActuator.playEffect) gp.vibrationActuator.playEffect('dual-rumble',{duration:ms,strongMagnitude:clamp(strong,0,1),weakMagnitude:clamp(weak,0,1)}); }catch(e){} }
 const SCREEN_ORDER=['warn','settings','records','pause','slots','doc','custom','gameover','title'];
@@ -4115,10 +4430,10 @@ const KEYNAME={' ':'Space',arrowup:'↑',arrowdown:'↓',arrowleft:'←',arrowri
 const keyName=k=>KEYNAME[k]||(k.length===1?k.toUpperCase():k[0].toUpperCase()+k.slice(1));
 const kb=a=>keyName(SET.binds[a][0]);
 const talkKey=()=>LAST_INPUT==='pad'?'Y':LAST_INPUT==='touch'?'TALK':kb('grab');   /* the key that talks to people, for whatever you're playing with */
-const PAD_HINT='<b>Left stick</b> move · <b>right stick</b> look · <b>A</b> jump · <b>X</b>/<b>RT</b> tackle or throw · <b>Y</b> grab · <b>B</b> flop · <b>LB</b> holler · <b>RB</b> horn charge · <b>LT</b>/<b>L3</b> sprint · <b>D-pad ←</b> poop · <b>D-pad ↑↓</b> zoom · <b>D-pad →</b> voices · <b>Start</b> pause';
+const PAD_HINT='<b>Left stick</b> move · <b>right stick</b> look · <b>A</b> jump · <b>X</b>/<b>RT</b> tackle or throw · <b>Y</b> grab · <b>B</b> flop · <b>LB</b> holler · <b>RB</b> horn charge · <b>LT</b>/<b>L3</b> sprint · <b>D-pad ←</b> poop · <b>D-pad ↑↓</b> zoom · <b>D-pad →</b> voices · <b>R3</b> first person · <b>Start</b> pause';
 function hintHTML(){ if(LAST_INPUT==='pad') return PAD_HINT;
-  if(LAST_INPUT==='touch') return '<b>Left thumb</b> move · <b>right thumb</b> look · <b>TACKLE</b> · <b>JUMP</b> · <b>GRAB</b> · <b>FLOP</b> · <b>YELL</b> · <b>POOP</b> · <b>CHARGE</b> when you have horns · <b>II</b> pause';
-  return `<b>${kb('up')}${kb('left')}${kb('down')}${kb('right')}</b> move · <b>mouse</b> look · <b>${kb('sprint')}</b> sprint · <b>${kb('jump')}</b> jump (twice!) · <b>Click/${kb('tackle')}</b> tackle or throw · <b>${kb('grab')}</b> grab · <b>${kb('flop')}</b> flop · <b>${kb('holler')}</b> holler · <b>${kb('poop')}</b> poop · <b>${kb('charge')}</b> horn charge · <b>Esc</b> pause`; }
+  if(LAST_INPUT==='touch') return '<b>Left thumb</b> move · <b>right thumb</b> look · <b>TACKLE</b> · <b>JUMP</b> · <b>GRAB</b> · <b>FLOP</b> · <b>YELL</b> · <b>POOP</b> · <b>CHARGE</b> when you have horns · <b>1P</b> first person · <b>II</b> pause';
+  return `<b>${kb('up')}${kb('left')}${kb('down')}${kb('right')}</b> move · <b>mouse</b> look · <b>${kb('sprint')}</b> sprint · <b>${kb('jump')}</b> jump (twice!) · <b>Click/${kb('tackle')}</b> tackle or throw · <b>${kb('grab')}</b> grab · <b>${kb('flop')}</b> flop · <b>${kb('holler')}</b> holler · <b>${kb('poop')}</b> poop · <b>${kb('charge')}</b> horn charge · <b>${kb('view')}</b> first person${G&&G.fp?` · <b>${kb('alt')}</b>/right-click other action`:''} · <b>Esc</b> pause`; }
 function ctrlHTML(){ return LAST_INPUT==='pad'?PAD_HINT:LAST_INPUT==='touch'?'Tap <b>II</b> on the clock to pause.':hintHTML()+` · <b>${kb('voice')}</b> voices · <b>${kb('restart')}</b> restart`; }
 function refreshHints(){ const h=$('hint'); if(h&&G&&!G.attract&&(G.state==='play'||G.state==='pause')) h.innerHTML=SET.hints?hintHTML():''; const pc=$('pauseCtrls'); if(pc&&!$('pause').hidden) pc.innerHTML=ctrlHTML(); }
 // auto quality: drop the 3D resolution in steps while frames run slow, raise it again when there is headroom
@@ -4129,7 +4444,7 @@ function qualityGovernor(dt){ if(!QUAL.auto||!(dt>0)||dt>0.25||G.state!=='play')
 function applyComfort(){ document.body.classList.toggle('calm',CALM()); }
 
 const STABS=[['gfx','Graphics'],['audio','Audio'],['ctrl','Controls'],['comfort','Comfort']];
-const ACTIONS=[['up','Move forward'],['down','Move back'],['left','Move left'],['right','Move right'],['sprint','Sprint'],['jump','Jump'],['tackle','Tackle or throw'],['grab','Grab'],['flop','Flop'],['holler','Holler'],['poop','Poop'],['charge','Horn charge'],['voice','Voices'],['restart','Restart']];
+const ACTIONS=[['up','Move forward'],['down','Move back'],['left','Move left'],['right','Move right'],['sprint','Sprint'],['jump','Jump'],['tackle','Tackle or throw'],['grab','Grab'],['flop','Flop'],['holler','Holler'],['poop','Poop'],['charge','Horn charge'],['view','First / third person'],['alt','Other action (first person)'],['voice','Voices'],['restart','Restart']];
 let sTab='gfx', REBIND=null, SET_FROM=null;
 function openSettings(from){ unlock(); SET_FROM=from||null; $('settings').hidden=false; renderSettings(); padFocusFirst($('settings')); }
 function closeSettings(){ REBIND=null; $('settings').hidden=true; saveSettings(); const back=SET_FROM&&$(SET_FROM); padFocus(null); if(back&&!back.hidden) padFocusFirst(back); refreshHints(); }
@@ -4162,6 +4477,7 @@ function renderSettings(){ const tabs=$('setTabs'), body=$('setBody'); tabs.inne
     seg('Invert look up and down','',onoff,()=>SET.invertY,v=>SET.invertY=v);
     seg('Controller rumble','',onoff,()=>SET.rumble,v=>SET.rumble=v);
     seg('Aim assist','A gentle pull toward the person you are tackling or throwing at.',onoff,()=>SET.assist!==false,v=>SET.assist=v);
+    seg('Camera','First person puts the camera in your eyes, and anything you look at can be used. X switches in game.',[['third','Third person'],['first','First person']],()=>G&&!G.attract?(G.fp?'first':'third'):SET.view,v=>{ SET.view=v; if(G&&!G.attract) setView(v==='first',true); });
     seg('Control hints','The line of controls at the bottom of the screen.',onoff,()=>SET.hints,v=>SET.hints=v);
     for(const [a,lab] of ACTIONS){ const c=row(lab,SET.binds[a].length>1?'Also: '+SET.binds[a].slice(1).map(keyName).join(', '):''), b=document.createElement('button'); b.type='button'; b.className='opt'+(REBIND===a?' wait':''); b.textContent=REBIND===a?'Press a key…':keyName(SET.binds[a][0]);
       b.onclick=()=>{ REBIND=a; renderSettings(); }; c.appendChild(b); }
@@ -4170,6 +4486,9 @@ function renderSettings(){ const tabs=$('setTabs'), body=$('setBody'); tabs.inne
   if(sTab==='comfort'){
     seg('Flashing','Reduced swaps the police strobe, glitch bars and pulsing vignettes for steady tints, and slows color cycling.',[['full','Full'],['reduced','Reduced']],()=>SET.flash,v=>SET.flash=v);
     rng('Camera shake and sway','Explosions, the shakes and the drunk sway.',0,1,0.05,()=>SET.shake,v=>SET.shake=v,pct);
+    rng('First-person field of view','How much you see in first person, top to bottom. Wider can feel calmer.',50,95,1,()=>SET.fpFov||64,v=>SET.fpFov=v,v=>Math.round(v)+'°');
+    seg('First-person head bob','The view dips a little with each step.',onoff,()=>fpBobOn(),v=>SET.fpBob=v);
+    seg('Your body in first person','See your arms and legs when you look down, or hide them.',[['full','Show it'],['none','Hide it']],()=>SET.fpBody||'full',v=>SET.fpBody=v);
     seg('Break reminder','A short note after each hour of play.',onoff,()=>SET.breaks,v=>SET.breaks=v);
     const n=document.createElement('p'); n.className='chint'; n.style.marginTop='8px'; n.textContent='Your device asks for reduced motion: '+(REDUCE_MOTION?'yes, so flashing starts reduced.':'no.'); body.appendChild(n); }
   $('setNote').textContent=store.set('bt_probe',1)?'Saved on this device.':'This browser is blocking storage, so settings last only until you close the page.'; }
@@ -4208,7 +4527,7 @@ function gameOver(){ G.state='over'; if(document.exitPointerLock&&locked) docume
 $('startBtn').addEventListener('click',()=>{ unlock(); startGame(); });
 $('customBtn').addEventListener('click',openCustom); $('cDone').addEventListener('click',closeCustom); $('cRandom').addEventListener('click',randomLook);
 document.querySelectorAll('.ctab').forEach(t=>t.addEventListener('click',()=>{ cTab=t.dataset.tab; renderCustomTab(); })); $('leaveDoc').addEventListener('click',closeDoc); $('voiceBtn').addEventListener('click',toggleVoice); $('voiceBtn').textContent='Voices: '+VOICE_LABEL[VOICE.mode]; $('againBtn').addEventListener('click',()=>{ unlock(); startGame(); });
-$('goTitleBtn').addEventListener('click',quitToTitle); $('pauseBtn').addEventListener('click',e=>{ e.stopPropagation(); openPause(); });
+$('goTitleBtn').addEventListener('click',quitToTitle); $('pauseBtn').addEventListener('click',e=>{ e.stopPropagation(); openPause(); }); $('viewBtn').addEventListener('click',e=>{ e.stopPropagation(); if(G&&G.state==='play') setView(!G.fp); });
 $('resumeBtn').addEventListener('click',closePause); $('pSettingsBtn').addEventListener('click',()=>openSettings('pause')); $('pRestartBtn').addEventListener('click',()=>{ recordRun(); closePause(); startGame(); }); $('pQuitBtn').addEventListener('click',quitToTitle);
 $('settingsBtn').addEventListener('click',()=>openSettings('title')); $('recordsBtn').addEventListener('click',openRecords); $('setDone').addEventListener('click',closeSettings); $('recDone').addEventListener('click',closeRecords);
 $('setReset').addEventListener('click',()=>{ const keep={warned:SET.warned,binds:SET.binds,flash:SET.flash,shake:SET.shake}; Object.assign(SET,JSON.parse(JSON.stringify(SET_DEF)),keep); setVoiceMode('fried'); setChanged(); renderSettings(); });

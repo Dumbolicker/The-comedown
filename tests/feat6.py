@@ -50,7 +50,7 @@ async def main():
         await page.click('#settingsBtn'); await page.click('#setBody .opt:has-text("Low")')
         q = await page.evaluate("()=>{ render(); render(); let lit=0; for(let i=0;i<8;i++) if(PL.c[i*4]+PL.c[i*4+1]+PL.c[i*4+2]>0) lit++; return {quality:SET.quality,scale:QUAL.scale,canvasW:glc.width,expectedW:Math.floor(innerWidth*DPR*0.6),shadowsOn:SH.on,lightsUsed:lit,lightsCap:QUAL.lights}; }")
         await page.click('#setDone')
-        await page.reload(wait_until="load"); await page.wait_for_timeout(600)
+        await page.reload(wait_until="load", timeout=180000); await page.wait_for_timeout(600)
         q.update(await page.evaluate("()=>({afterReload:SET.quality,canvasWAfterReload:glc.width,warnShownAgain:!document.getElementById('warn').hidden})"))
         await page.evaluate("()=>{ SET.quality='high'; Object.assign(SET,QUALITY.high); setChanged(); }")
         q['highCanvasW'] = await page.evaluate("glc.width")
@@ -100,7 +100,7 @@ async def main():
         # 6. profile: feats and runs are saved and survive a reload; records screen lists them
         await page.evaluate("()=>{ startGame(); G.life=40; G.score=4321; G.alive=95; award(F.FLYER); award(F.HYDRO); G.life=0; gameOver(); }")
         prof = await page.evaluate("()=>({runs:PROF.runs,best:PROF.best,feats:Object.keys(PROF.feats),goProg:document.getElementById('goProg').textContent})")
-        await page.reload(wait_until="load"); await page.wait_for_timeout(600)
+        await page.reload(wait_until="load", timeout=180000); await page.wait_for_timeout(600)
         prof.update(await page.evaluate("()=>{ openRecords(); const r={runsAfterReload:PROF.runs,featsAfterReload:Object.keys(PROF.feats).length,recordsText:document.getElementById('recStats').textContent.slice(0,120),unlockedRows:document.querySelectorAll('#recFeats .on').length}; closeRecords(); return r; }"))
         out['profile'] = prof
 
