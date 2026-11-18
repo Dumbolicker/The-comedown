@@ -6,6 +6,7 @@ This folder is the Unity 6 version of Borrowed Time (editor version 6000.3.8f1, 
 - Rubble with real Unity physics.
 - A third-person character who walks, sprints, double jumps and tackles.
 - The draining clock, plus stashes that buy you time.
+- First person (X, or scroll all the way in) with a crosshair. Look at a thing and it names its two verbs: rummage a trash can, sit on or search a couch, flip a table, open the fridge, honk a car or try its door, smash a crate into planks, knock on or punch a window, punch a wall. Pick up light things, put them down or throw them where you look. Everything works in third person too, within reach of you.
 
 The web version in `game/` is still the full game. It's also the version that opens from a link on phones and Discord. The Unity version catches up milestone by milestone, following `ROADMAP.md`.
 
@@ -35,6 +36,7 @@ The workflow uses your free Unity Personal license. Unity has to see that licens
    You can add secrets from the GitHub website on a phone too. Only the `.ulf` file needs the computer.
 4. Open **Actions → Unity build → Run workflow**. The first build takes 20 to 40 minutes, because it downloads the Unity image and imports the project. Later builds are faster, since the Library folder is cached.
 5. When it finishes, download **BorrowedTime-WebGL** or **BorrowedTime-StandaloneWindows64** from the run's Artifacts section.
+6. Builds on `main` also go on the web: the Pages workflow publishes the newest WebGL build at https://dumbolicker.github.io/The-comedown/unity/ (a placeholder page until the first one exists). Open it on a computer browser; Unity's WebGL runs on phones but isn't made for them.
 
 Secrets stay encrypted inside GitHub. The workflow passes them only to the pinned GameCI builder (`game-ci/unity-builder` v4.8.2, pinned by commit). Never paste them into a chat, an issue or a commit.
 
@@ -57,7 +59,11 @@ GameCI's activation guide: https://game.ci/docs/github/activation. Unity stopped
 | Look | Mouse (click to capture it, Esc to let go) |
 | Sprint | Left Shift |
 | Jump, double jump | Space |
-| Tackle | F or left click |
+| Tackle (or throw what you hold) | F or left click |
+| Use what you look at | E (main verb), G or right-click (the other one) |
+| Holding something | E puts it down, G or click throws it |
+| First person | X, or scroll all the way in (scroll out to leave) |
+| Get up from a couch | E, move or jump |
 | Zoom | Mouse wheel |
 | Restart | R |
 

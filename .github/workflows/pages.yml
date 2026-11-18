@@ -1,6 +1,7 @@
 # Publishes the phone/web build (pwa/) to GitHub Pages: https://dumbolicker.github.io/The-comedown/
 # One-time setup: repository Settings → Pages → Build and deployment → Source: "GitHub Actions".
-# Runs on pushes to main that touch pwa/, or by hand from the Actions tab.
+# Runs on pushes to main that touch pwa/, after each Unity build on main, or by hand from the Actions tab.
+# The latest successful Unity WebGL build on main (if there is one) is published next to it, at /unity/.
 name: Pages (web and phone build)
 
 on:
@@ -8,9 +9,14 @@ on:
   push:
     branches: [main]
     paths: ['pwa/**', '.github/workflows/pages.yml']
+  workflow_run:
+    workflows: [Unity build]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -26,9 +32,30 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Add the latest Unity WebGL build at /unity/
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p site && cp -r pwa/. site/
+          run=$(gh run list -R "$GITHUB_REPOSITORY" --workflow unity-build.yml --branch main --status success --limit 20 \
+                --json databaseId --jq '.[].databaseId' | while read -r id; do
+                  if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id/artifacts" --jq '.artifacts[].name' | grep -qx BorrowedTime-WebGL; then echo "$id"; break; fi
+                done)
+          if [ -n "$run" ] && gh run download "$run" -R "$GITHUB_REPOSITORY" -n BorrowedTime-WebGL -D unity-dl; then
+            index=$(find unity-dl -name index.html -print -quit)
+            mkdir -p site/unity && cp -r "$(dirname "$index")"/. site/unity/
+            echo "Published the Unity WebGL build from run $run at /unity/."
+          else
+            mkdir -p site/unity
+            printf '%s\n' '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' \
+              '<title>Borrowed Time (Unity)</title><body style="font:16px system-ui;background:#111;color:#eee;padding:24px">' \
+              '<h1>The Unity build is not out yet</h1><p>It appears here after the first Unity build on main. Steps: unity/README.md.</p>' \
+              '<p><a style="color:#7cf" href="../">Play the web version</a></p>' > site/unity/index.html
+            echo "::notice title=No Unity build yet::Published a placeholder at /unity/."
+          fi
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: pwa
+          path: site
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -40,6 +40,7 @@ namespace BorrowedTime
             var go = new GameObject("Player") { layer = 2 };
             go.AddComponent<CharacterController>();
             player = go.AddComponent<Player>();
+            go.AddComponent<Interact>();
             go.transform.position = new Vector3(0f, 0.2f, 4.5f);
         }
 
@@ -70,10 +71,11 @@ namespace BorrowedTime
             return go;
         }
 
-        GameObject Prop(string name, Vector3 c, Vector3 size, Material m, float mass, Transform parent = null)
+        GameObject Prop(string name, Vector3 c, Vector3 size, Material m, float mass, Transform parent = null, Kind kind = Kind.Plank)
         {
             var go = Box(name, c, size, m, true, parent);
             var rb = go.AddComponent<Rigidbody>(); rb.mass = mass; rb.interpolation = RigidbodyInterpolation.Interpolate;
+            go.AddComponent<Thing>().kind = kind;
             return go;
         }
 
@@ -89,8 +91,8 @@ namespace BorrowedTime
             {
                 float x = -60f + i * 24f;
                 Box("Lamp post", new Vector3(x, 3f, 7.2f), new Vector3(0.18f, 6f, 0.18f), Mat.Get(Mat.Hex(0x3a3d42), 0.4f, 0.6f));
-                Prop("Crate", new Vector3(x + 6f, 0.6f, 6.6f), new Vector3(0.9f, 0.9f, 0.9f), Mat.Get(Mat.Hex(0xa67c4a), 0.15f), 30f);
-                Prop("Trash can", new Vector3(x + 3f, 0.6f, -6.5f), new Vector3(0.62f, 1f, 0.62f), Mat.Get(Mat.Hex(0x6e757c), 0.5f, 0.4f), 12f);
+                Prop("Crate", new Vector3(x + 6f, 0.6f, 6.6f), new Vector3(0.9f, 0.9f, 0.9f), Mat.Get(Mat.Hex(0xa67c4a), 0.15f), 30f, null, Kind.Crate);
+                Prop("Trash can", new Vector3(x + 3f, 0.6f, -6.5f), new Vector3(0.62f, 1f, 0.62f), Mat.Get(Mat.Hex(0x6e757c), 0.5f, 0.4f), 12f, null, Kind.TrashCan);
             }
             Car(new Vector3(-12f, 0f, 2.6f), 90f); Car(new Vector3(18f, 0f, -2.6f), -90f);
             for (int i = 0; i < 4; i++) SpawnStash();
@@ -114,6 +116,7 @@ namespace BorrowedTime
             }
             var col = car.gameObject.AddComponent<BoxCollider>(); col.center = new Vector3(0f, -0.25f, 0f); col.size = new Vector3(1.9f, 1.0f, 4.2f);
             var rb = car.gameObject.AddComponent<Rigidbody>(); rb.mass = 1200f; rb.interpolation = RigidbodyInterpolation.Interpolate;
+            car.gameObject.AddComponent<Thing>().kind = Kind.Car;
         }
 
         struct Opening
@@ -140,9 +143,9 @@ namespace BorrowedTime
             b.Finish();
             Box("Floor", new Vector3(cx, 0.02f, cz), new Vector3(hw * 2f - 0.4f, 0.02f, hd * 2f - 0.4f), Mat.Get(Mat.Hex(0x9a6b42), 0.35f), false, root);
             float fd = frontNeg ? -1f : 1f, back = cz - fd * (hd - 0.65f);
-            Prop("Couch", new Vector3(cx - 0.9f, 0.46f, back), new Vector3(2f, 0.9f, 0.9f), Mat.Get(Pick(SofaCols), 0.1f), 90f, root);
-            Prop("Table", new Vector3(cx + hw * 0.45f, 0.41f, cz), new Vector3(1.2f, 0.8f, 0.8f), Mat.Get(Mat.Hex(0x8a6038), 0.3f), 25f, root);
-            Prop("Fridge", new Vector3(x1 - 0.6f, 0.91f, back), new Vector3(0.7f, 1.8f, 0.7f), Mat.Get(Mat.Hex(0xeef0f2), 0.6f), 70f, root);
+            Prop("Couch", new Vector3(cx - 0.9f, 0.46f, back), new Vector3(2f, 0.9f, 0.9f), Mat.Get(Pick(SofaCols), 0.1f), 90f, root, Kind.Couch);
+            Prop("Table", new Vector3(cx + hw * 0.45f, 0.41f, cz), new Vector3(1.2f, 0.8f, 0.8f), Mat.Get(Mat.Hex(0x8a6038), 0.3f), 25f, root, Kind.Table);
+            Prop("Fridge", new Vector3(x1 - 0.6f, 0.91f, back), new Vector3(0.7f, 1.8f, 0.7f), Mat.Get(Mat.Hex(0xeef0f2), 0.6f), 70f, root, Kind.Fridge);
             var lamp = new GameObject("Ceiling light").AddComponent<Light>();
             lamp.transform.SetParent(root, false); lamp.transform.position = new Vector3(cx, wh - 0.4f, cz);
             lamp.type = LightType.Point; lamp.range = 7f; lamp.intensity = 1.1f; lamp.color = new Color(1f, 0.85f, 0.65f);
@@ -216,9 +219,39 @@ namespace BorrowedTime
             if (spots.Count == 0) return;
             Vector3 p = spots[Random.Range(0, spots.Count)];
             Color col = Color.HSVToRGB(Random.value, 0.7f, 1f);
-            var go = Box("Stash", p + Vector3.up * 0.9f, Vector3.one * 0.35f, Mat.Get(col, 0.6f, 0f, col * 2.2f), false);
+            var go = Box("Stash", p + Vector3.up * 0.9f, Vector3.one * 0.35f, Mat.Get(col, 0.6f, 0f, col * 2.2f));
+            go.GetComponent<Collider>().isTrigger = true;   // you walk through it; the crosshair still finds it
+            go.AddComponent<Thing>().kind = Kind.Stash;
             var l = go.AddComponent<Light>(); l.type = LightType.Point; l.color = col; l.range = 4f; l.intensity = 1.5f;
             stashes.Add(go.transform);
+        }
+
+        public void Toast(string msg) { toast = msg; toastT = 1.5f; }
+        public void AddLife(float s, string msg) { life = Mathf.Min(240f, life + s); Toast(msg); }
+        public void AddDollas(int d, string msg) { dollas += d; Toast(msg + " +Ð " + d); }
+        public void AddChaos(int pts, string msg) { score += pts; Toast(msg + " +" + pts); }
+
+        public void TakeStash(Transform s)
+        {
+            int i = stashes.IndexOf(s);
+            if (i < 0) return;
+            life = Mathf.Min(240f, life + 12f); score += 50; Toast("STASH +12s");
+            Destroy(s.gameObject); stashes.RemoveAt(i);
+        }
+
+        /// <summary>A crate smashed by hand comes apart into four planks you can pick up and throw.</summary>
+        public void SmashCrate(Thing crate)
+        {
+            Vector3 c = crate.transform.position; Transform parent = crate.transform.parent;
+            Material m = crate.GetComponent<Renderer>().sharedMaterial;
+            Destroy(crate.gameObject);
+            for (int k = 0; k < 4; k++)
+            {
+                var plank = Prop("Plank", c + new Vector3((k % 2 - 0.5f) * 0.4f, 0.1f + k * 0.12f, (k / 2 - 0.5f) * 0.4f), new Vector3(0.9f, 0.06f, 0.2f), m, 2f, parent);
+                plank.transform.rotation = Quaternion.Euler(Random.Range(-20f, 20f), Random.Range(0f, 180f), Random.Range(-20f, 20f));
+                plank.GetComponent<Rigidbody>().AddForce(Random.insideUnitSphere * 2.5f + Vector3.up * 2f, ForceMode.VelocityChange);
+            }
+            AddChaos(30, "SMASH");
         }
 
         public void OnPanelBroken(Panel p, Vector3 at)
@@ -243,11 +276,7 @@ namespace BorrowedTime
                 s.Rotate(0f, 90f * Time.deltaTime, 0f);
                 s.position = new Vector3(s.position.x, 0.9f + Mathf.Sin(Time.time * 2.4f + i) * 0.12f, s.position.z);
                 float dx = s.position.x - pp.x, dz = s.position.z - pp.z;
-                if (dx * dx + dz * dz < 1.4f * 1.4f && Mathf.Abs(s.position.y - (pp.y + 0.9f)) < 1.6f)
-                {
-                    life = Mathf.Min(240f, life + 12f); score += 50; toast = "STASH +12s"; toastT = 1.5f;
-                    Destroy(s.gameObject); stashes.RemoveAt(i);
-                }
+                if (dx * dx + dz * dz < 1.4f * 1.4f && Mathf.Abs(s.position.y - (pp.y + 0.9f)) < 1.6f) TakeStash(s);
             }
             if (stashes.Count < 4) { stashT -= Time.deltaTime; if (stashT <= 0f) { SpawnStash(); stashT = 3f; } }
         }
@@ -279,7 +308,7 @@ namespace BorrowedTime
             GUI.Label(new Rect(24f, 14f, 240f, 50f), Clock(life), big);
             GUI.Label(new Rect(24f, 66f, 240f, 30f), $"Chaos {score:N0} · Ð {dollas:N0} · {broken} smashed", small);
             if (toastT > 0f) GUI.Label(new Rect(0f, 120f, w, 44f), toast, center);
-            GUI.Label(new Rect(16f, 720f - 34f, w - 32f, 30f), "WASD move · mouse look · Shift sprint · Space jump (twice) · Click/F tackle · R restart", small);
+            GUI.Label(new Rect(16f, 720f - 34f, w - 32f, 30f), "WASD move · mouse look · Shift sprint · Space jump · Click/F tackle or throw · E/G use · X first person · R restart", small);
             if (Over)
             {
                 GUI.Box(new Rect(w / 2f - 230f, 250f, 460f, 170f), GUIContent.none);

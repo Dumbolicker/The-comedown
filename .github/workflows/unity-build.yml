@@ -72,4 +72,4 @@ jobs:
         with:
           name: BorrowedTime-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}
-          retention-days: 14
+          retention-days: ${{ matrix.targetPlatform == 'WebGL' && 90 || 14 }}   # the web build stays on the Pages site
