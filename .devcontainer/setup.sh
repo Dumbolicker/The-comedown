@@ -37,7 +37,7 @@ sudo apt-get update -q
 sudo apt-get install -y -q --no-install-recommends \
   unityhub firefox \
   libgl1 libgl1-mesa-dri libglu1-mesa mesa-utils libvulkan1 \
-  libgtk-3-0 libnss3 libasound2 libxtst6 libxrandr2 libxcursor1 libxi6 libxinerama1 libcanberra-gtk3-module \
+  libgtk-3-0t64 libnss3 libasound2t64 libxtst6 libxrandr2 libxcursor1 libxi6 libxinerama1 libcanberra-gtk3-module \
   cpio p7zip-full xz-utils unzip desktop-file-utils
 sudo rm -rf /var/lib/apt/lists/*
 

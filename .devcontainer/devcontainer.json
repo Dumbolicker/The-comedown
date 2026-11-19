@@ -3,7 +3,8 @@
 // Steps for people: .devcontainer/README.md. Checked on GitHub's machines by .github/workflows/codespace-check.yml.
 {
   "name": "Borrowed Time: desktop in your browser",
-  "image": "mcr.microsoft.com/devcontainers/base:3.0.13-jammy@sha256:d6ce9cdf043d4ec162cf6e9671232a65e3ad22a339175a1cd4936a3ae67f8433",
+  // Ubuntu 24.04: today's Unity Hub needs its C library (glibc 2.39; 22.04 has 2.35).
+  "image": "mcr.microsoft.com/devcontainers/base:3.0.13-noble@sha256:48be4adec1c1ecbe030064700aef85382f5205786a8f82937fc44a7473717eae",
   "features": {
     // Fluxbox desktop + TigerVNC + noVNC (the desktop in a browser tab on port 6080). The VNC server only listens inside
     // the codespace; GitHub's private port forwarding is what keeps the desktop yours, so it needs no second password.

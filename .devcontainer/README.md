@@ -33,8 +33,8 @@ Use it for two things:
 2. **Open the desktop.** In that terminal type `bt-desktop` and press Enter. It opens the desktop in a new tab.
    (Or open the **Ports** tab, find **Desktop**, and click the globe icon.) Unity Hub is already open on it.
 3. **Sign in to Unity.** In Unity Hub, click **Sign in**. Firefox opens on the desktop with Unity's sign-in page. Sign
-   in, or create a free Unity account there. When Firefox asks whether to open Unity Hub, choose **Open link**. Hub
-   now shows you as signed in.
+   in, or create a free Unity account there. (The first time, Firefox shows its own welcome screen over the page; click
+   through it.) When Firefox asks whether to open Unity Hub, choose **Open link**. Hub now shows you as signed in.
 4. **Get the free license.** In Hub: the gear icon (**Preferences**), **Licenses**, **Add**, **Get a free personal
    license**, **Agree**.
 5. **Send it to GitHub.** Go back to the codespace tab (the one with the terminal, not the desktop) and run
@@ -43,7 +43,8 @@ Use it for two things:
    - asks you to sign in to GitHub with a one-time code (it opens github.com/login/device for you);
    - saves the license as the `UNITY_LICENSE` secret;
    - asks for your Unity email and password, which you type into your own codespace, and saves them as the
-     `UNITY_EMAIL` and `UNITY_PASSWORD` secrets;
+     `UNITY_EMAIL` and `UNITY_PASSWORD` secrets (if you sign in to Unity with Google or Apple, give your Unity account
+     a password first: **Forgot your password?** on Unity's sign-in page, with your email);
    - starts the Unity build again so it can use them.
 6. **Watch the build** under the repository's **Actions** tab, **Unity build** (20 to 40 minutes the first time). Tell
    Claude when it's finished or failed: Claude can read the build logs and fix what broke.
@@ -87,7 +88,7 @@ Use it for two things:
 
 | File | What it does |
 | --- | --- |
-| `devcontainer.json` | Ubuntu 22.04 (pinned), the desktop (Fluxbox, TigerVNC, noVNC on port 6080) and the GitHub CLI |
+| `devcontainer.json` | Ubuntu 24.04 (pinned), the desktop (Fluxbox, TigerVNC, noVNC on port 6080) and the GitHub CLI |
 | `setup.sh` | Installs Unity Hub from Unity's apt repository and Firefox from Mozilla's, sets which app opens which link, writes the desktop menu, starts Hub |
 | `bin/unity-hub` | Starts Hub the way a container needs (no Chromium sandbox, the sign-in kept on the desktop, a keyring for it) |
 | `bin/bt-desktop` | Prints and opens the desktop link |
