@@ -32,7 +32,7 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Unity build skipped::Add the UNITY_LICENSE, UNITY_EMAIL and UNITY_PASSWORD repository secrets. Steps are in unity/README.md."
+            echo "::notice title=Unity build skipped::Add the UNITY_LICENSE, UNITY_EMAIL and UNITY_PASSWORD repository secrets. Steps are in unity/README.md; with no computer of your own, use the codespace in .devcontainer/README.md."
           fi
 
   build:

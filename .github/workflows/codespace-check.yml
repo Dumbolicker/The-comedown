@@ -35,6 +35,7 @@ jobs:
         run: npx --yes "$DEVCONTAINER_CLI" exec --workspace-folder . bash tests/codespace_check.sh
 
       - name: Optional Unity editor install
+        if: success() || failure()
         continue-on-error: true
         run: npx --yes "$DEVCONTAINER_CLI" exec --workspace-folder . bash tests/codespace_check.sh editor
 
@@ -42,5 +43,5 @@ jobs:
         if: always()
         with:
           name: codespace-screenshots
-          path: .ci-shots
+          path: ci-shots
           retention-days: 14

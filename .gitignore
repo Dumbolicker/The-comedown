@@ -8,4 +8,4 @@ desktop/borrowed_time_desktop/dist/vendor/
 screenshots/characters/
 # raw renders from tests/shots_*.py at the top of screenshots/ (the contact sheets in the batch folders are kept)
 screenshots/*.png
-.ci-shots/
+ci-shots/

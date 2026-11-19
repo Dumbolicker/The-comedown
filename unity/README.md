@@ -20,6 +20,8 @@ The workflow uses your free Unity Personal license. Unity has to see that licens
 
 ### One-time setup (about 10 minutes, needs a computer)
 
+**No computer?** Use the free codespace instead: a Linux desktop in a browser tab with Unity Hub on it, which does steps 1 to 4 for you. Steps: [`.devcontainer/README.md`](../.devcontainer/README.md).
+
 1. On any Windows, Mac or Linux computer, install **Unity Hub**. Sign in with your Unity account and add a **Personal** license (Hub: Preferences → Licenses → Add → Get a free personal license). You don't have to install the editor.
 2. Find the license file Hub just wrote:
    - Windows: `C:\ProgramData\Unity\Unity_lic.ulf`

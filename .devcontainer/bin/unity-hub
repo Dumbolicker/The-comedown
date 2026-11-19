@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
 # Starts Unity Hub on the codespace desktop. Arguments go to Hub (a unityhub:// sign-in link, or --headless ...).
+# unity-hub --where prints the path of Hub's program.
 #
 # - --no-sandbox: Chromium's sandbox (Hub is built on it) needs kernel features a codespace container doesn't give it.
 # - BROWSER is cleared so Hub's "Sign in" opens Firefox here on the desktop. In a codespace terminal BROWSER points to
 #   your own browser tab, and the sign-in would then try to hand its unityhub:// link to your computer or phone.
 # - Hub keeps your Unity sign-in in a keyring. This unlocks (or creates) one with an empty password, so no keyring
 #   password prompt appears; the codespace itself is private to your GitHub account.
+hub_bin() {   # the program the unityhub package installed (its folder has changed between Hub versions)
+  local c
+  for c in /opt/unityhub/unityhub-bin /opt/unityhub/unityhub "/opt/Unity Hub/unityhub-bin" "/opt/Unity Hub/unityhub"; do
+    if [ -f "$c" ] && [ -x "$c" ]; then echo "$c"; return 0; fi
+  done
+  c="$(dpkg-query -L unityhub 2>/dev/null | grep -E '/unityhub(-bin)?$' | while read -r f; do [ -f "$f" ] && [ -x "$f" ] && echo "$f"; done | head -n 1)"
+  [ -n "$c" ] || c="$(readlink -f "$(command -v unityhub 2>/dev/null)" 2>/dev/null)"
+  [ -n "$c" ] && [ -x "$c" ] && echo "$c"
+}
+HUB="$(hub_bin)" || { echo "Unity Hub isn't installed. Run: bash .devcontainer/setup.sh" >&2; exit 1; }
+if [ "${1:-}" = --where ]; then echo "$HUB"; exit 0; fi
+
 unset BROWSER
 export DISPLAY="${DISPLAY:-:1}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-autolaunch:}"
@@ -13,4 +26,4 @@ if [ "${1:-}" != "--headless" ]; then
   printf '' | gnome-keyring-daemon --unlock --components=secrets >/dev/null 2>&1 || true
 fi
 case "${1:-}" in unityhub://*) echo "$(date -u +%FT%TZ) handed a unityhub:// link to Hub" >> /tmp/unity-hub-links.log ;; esac
-exec /opt/unityhub/unityhub --no-sandbox --disable-dev-shm-usage "$@"
+exec "$HUB" --no-sandbox --disable-dev-shm-usage "$@"

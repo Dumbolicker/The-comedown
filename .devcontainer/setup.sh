@@ -41,6 +41,15 @@ sudo apt-get install -y -q --no-install-recommends \
   cpio p7zip-full xz-utils unzip desktop-file-utils
 sudo rm -rf /var/lib/apt/lists/*
 
+say "Machine id"
+# Unity binds a license to the machine it was made on. GameCI's Unity images (what the GitHub builds run in) all use
+# this fixed machine id, so a license made here carries the same one.
+GAMECI_MACHINE_ID=576562626572264761624c65526f7578
+if [ "$(cat /etc/machine-id 2>/dev/null)" != "$GAMECI_MACHINE_ID" ]; then
+  echo "$GAMECI_MACHINE_ID" | sudo tee /etc/machine-id >/dev/null
+  sudo mkdir -p /var/lib/dbus && sudo ln -sf /etc/machine-id /var/lib/dbus/machine-id
+fi
+
 say "Linking the helper commands"
 for f in "$HERE"/bin/*; do sudo ln -sf "$f" "/usr/local/bin/$(basename "$f")"; done
 
@@ -86,7 +95,8 @@ sudo install -d /usr/local/etc/vscode-dev-containers
 bash "$HERE/bin/bt-desktop" --print | sudo tee /usr/local/etc/vscode-dev-containers/first-run-notice.txt >/dev/null
 
 say "Starting Unity Hub on the desktop"
-if [ -n "${DISPLAY:-}" ] && ! pgrep -f '/opt/unityhub/unityhub' >/dev/null; then
+echo "Unity Hub's program: $(/usr/local/bin/unity-hub --where)"
+if [ -n "${DISPLAY:-}" ] && ! pgrep -f "$(/usr/local/bin/unity-hub --where)" >/dev/null; then
   setsid /usr/local/bin/unity-hub >/tmp/unity-hub.log 2>&1 < /dev/null &
 fi
 
