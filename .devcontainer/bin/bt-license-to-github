@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Puts your Unity license and Unity sign-in into this repository's GitHub Actions secrets (UNITY_LICENSE, UNITY_EMAIL,
+# UNITY_PASSWORD), then starts the Unity build again so it can use them.
+#
+# The values go only from this codespace to GitHub: gh encrypts each one with the repository's public key before
+# sending it, nothing is printed, and nothing is written to a file. The GitHub sign-in this uses lives in a temporary
+# folder that is deleted when the script ends.
+#
+#   bt-license-to-github           do it
+#   bt-license-to-github --check   only look for the license file
+set -euo pipefail
+ROOT="$(git -C "$(dirname "$(readlink -f "$0")")" rev-parse --show-toplevel)"
+
+ULF=""
+for f in "$HOME/.local/share/unity3d/Unity/Unity_lic.ulf" "$HOME/.config/unity3d/Unity/Unity_lic.ulf"; do
+  if [ -s "$f" ]; then ULF="$f"; break; fi
+done
+[ -n "$ULF" ] || ULF="$(find "$HOME" -name Unity_lic.ulf -size +0 2>/dev/null | head -n 1 || true)"
+XML="$HOME/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml"
+
+if [ -z "$ULF" ]; then
+  if [ -s "$XML" ]; then
+    cat <<EOF
+Unity Hub activated a license, but saved it as
+  $XML
+and not as Unity_lic.ulf, which is the file GitHub's Unity builder reads. Tell Claude this happened (don't paste the
+file anywhere); there's another way to set the build up.
+EOF
+  else
+    if command -v unity >/dev/null; then echo "What the Unity CLI sees:"; unity license status 2>&1 | sed 's/^/  /' || true; echo; fi
+    cat <<EOF
+There's no Unity license in this codespace yet.
+  1. Open the desktop (run: bt-desktop) and Unity Hub on it.
+  2. Sign in to your Unity account.
+  3. Add the free Personal license (Hub offers it after you sign in; or Preferences > Licenses > Add).
+Then run bt-license-to-github again.
+EOF
+  fi
+  exit 1
+fi
+if ! grep -q '<License' "$ULF"; then echo "$ULF doesn't look like a Unity license file. Stopping." >&2; exit 1; fi
+echo "Found your Unity license: $ULF"
+[ "${1:-}" = "--check" ] && exit 0
+
+REPO="${GITHUB_REPOSITORY:-$(git -C "$ROOT" remote get-url origin | sed -E 's#^.*github\.com[:/]##; s#\.git$##')}"
+BRANCH="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)"
+
+# The codespace's own GitHub token can't save secrets, so this signs in to GitHub separately, in a throwaway folder.
+GH_CONFIG_DIR="$(mktemp -d)"; export GH_CONFIG_DIR
+trap 'rm -rf "$GH_CONFIG_DIR"' EXIT
+gh_() { env -u GITHUB_TOKEN -u GH_TOKEN gh "$@"; }
+cat <<EOF
+
+Next, sign in to GitHub so this can save secrets in $REPO.
+It shows a one-time code. Open the link it gives, type the code, and approve "GitHub CLI".
+EOF
+gh_ auth login --hostname github.com --web --git-protocol ssh --skip-ssh-key --insecure-storage
+
+gh_ secret set UNITY_LICENSE --repo "$REPO" < "$ULF"
+echo "Saved UNITY_LICENSE."
+
+have="$(gh_ secret list --repo "$REPO" --json name --jq '.[].name' 2>/dev/null || true)"
+keep=n
+if grep -qx UNITY_EMAIL <<<"$have" && grep -qx UNITY_PASSWORD <<<"$have"; then
+  read -r -p "UNITY_EMAIL and UNITY_PASSWORD are already saved. Keep them? [Y/n] " a
+  case "${a:-y}" in [nN]*) keep=n ;; *) keep=y ;; esac
+fi
+if [ "$keep" = n ]; then
+  read -r -p "Your Unity account email: " email
+  read -r -s -p "Your Unity password (typing stays hidden): " pw; echo
+  if [ -z "$email" ] || [ -z "$pw" ]; then echo "Email and password can't be empty. Run this again." >&2; exit 1; fi
+  printf '%s' "$email" | gh_ secret set UNITY_EMAIL --repo "$REPO"
+  printf '%s' "$pw" | gh_ secret set UNITY_PASSWORD --repo "$REPO"
+  unset pw email
+  echo "Saved UNITY_EMAIL and UNITY_PASSWORD."
+fi
+
+# Start the Unity build. A run that already exists for this branch is re-run (secrets are read when a job starts);
+# starting one from scratch only works once the workflow is on the default branch.
+run="$(gh_ run list --repo "$REPO" --workflow unity-build.yml --branch "$BRANCH" --limit 1 --json databaseId --jq '.[0].databaseId // empty' 2>/dev/null || true)"
+[ -n "$run" ] || run="$(gh_ run list --repo "$REPO" --branch "$BRANCH" --limit 50 --json databaseId,workflowName \
+  --jq 'map(select(.workflowName == "Unity build"))[0].databaseId // empty' 2>/dev/null || true)"
+if [ -n "$run" ] && gh_ run rerun "$run" --repo "$REPO" >/dev/null 2>&1; then
+  echo "Started the Unity build again (run $run)."
+elif gh_ workflow run unity-build.yml --repo "$REPO" --ref "$BRANCH" >/dev/null 2>&1; then
+  echo "Started the Unity build."
+else
+  echo "Couldn't start the build from here. Open the link below and press \"Re-run all jobs\" on the latest run, or ask Claude to push."
+fi
+cat <<EOF
+
+Watch it: https://github.com/$REPO/actions/workflows/unity-build.yml
+The first build takes 20 to 40 minutes. This codespace's GitHub sign-in is deleted now. (To also cancel it on
+GitHub's side: github.com > Settings > Applications > Authorized OAuth Apps > GitHub CLI > Revoke.)
+You can delete this codespace now if you don't want the Unity editor in it: github.com/codespaces
+EOF

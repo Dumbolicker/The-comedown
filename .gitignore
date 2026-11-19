@@ -1,0 +1,11 @@
+__pycache__/
+desktop/borrowed_time_desktop/src-tauri/target/
+.refcache/
+.claude/skills/overdrive/scripts/refpipe/target/
+desktop/borrowed_time_desktop/dist/vendor/
+
+# raw per-style renders from tests/shots_characters.py (the contact sheet in screenshots/b9 is kept)
+screenshots/characters/
+# raw renders from tests/shots_*.py at the top of screenshots/ (the contact sheets in the batch folders are kept)
+screenshots/*.png
+ci-shots/

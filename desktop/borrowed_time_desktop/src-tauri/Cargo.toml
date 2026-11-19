@@ -1,0 +1,25 @@
+[package]
+name = "borrowed-time"
+version = "0.4.0"
+description = "Borrowed Time: a 3D physics-chaos sandbox"
+edition = "2021"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+default = []
+# Steam build: achievements and cloud saves through Steamworks (cargo build --release --features steam)
+steam = ["dep:steamworks"]
+
+[dependencies]
+tauri = { version = "2", features = [] }
+steamworks = { version = "=0.13.1", optional = true }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

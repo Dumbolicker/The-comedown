@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Installs the Unity editor version this project uses (with the Unity CLI) and opens Borrowed Time in it on the desktop.
+#
+# Needs a Unity license in this codespace (Unity Hub: sign in, add the free Personal license) and a 4-core codespace.
+# The download is a few GB and the editor takes about 9 GB of disk. There's no graphics card in a codespace, so the
+# editor draws with the processor (Mesa's llvmpipe): it works, slowly. The builds from GitHub Actions run at full speed.
+#
+#   bt-unity-editor              install if needed, then open the project
+#   bt-unity-editor --install    only install
+#   bt-unity-editor --webgl      also add WebGL build support (about 2.5 GB more), to build the web version here
+set -euo pipefail
+ROOT="$(git -C "$(dirname "$(readlink -f "$0")")" rev-parse --show-toplevel)"
+PROJ="$ROOT/unity/BorrowedTime"
+VERSION="$(sed -n 's/^m_EditorVersion: *//p' "$PROJ/ProjectSettings/ProjectVersion.txt")"
+mode=open; mods=()
+for a in "$@"; do
+  case "$a" in
+    --install) mode=install ;;
+    --webgl) mods+=(--module webgl) ;;
+    *) echo "Unknown option: $a" >&2; exit 2 ;;
+  esac
+done
+
+command -v unity >/dev/null || bt-install-unity-cli
+editor_bin() {   # Hub's and the CLI's default place first, then wherever `unity editors` says it is
+  local b="$HOME/Unity/Hub/Editor/$VERSION/Editor/Unity" d
+  if [ -x "$b" ]; then echo "$b"; return 0; fi
+  d="$(unity editors 2>/dev/null | grep -F "$VERSION" | grep -o '/[^[:space:]]*' | head -n 1 || true)"
+  for b in "$d" "$d/Editor/Unity" "$d/Unity"; do [ -n "$d" ] && [ -f "$b" ] && [ -x "$b" ] && { echo "$b"; return 0; }; done
+  return 1
+}
+changeset() {   # Unity's release API knows the build id ("changeset") of each editor version
+  curl -fsS "https://services.api.unity.com/unity/editor/release/v1/releases?version=$VERSION&limit=1" | jq -r '
+    [.results[]? | (.shortRevision // (.unityHubDeepLink // "" | capture("/(?<c>[0-9a-f]{12})").c))] | map(select(.)) | .[0] // empty'
+}
+if [ "$(nproc)" -lt 4 ]; then
+  echo "Note: this codespace has $(nproc) processor cores. The Unity editor needs a 4-core codespace to be usable:"
+  echo "github.com/codespaces > ... next to this codespace > Change machine type > 4-core."
+fi
+
+if ! EDITOR_BIN="$(editor_bin)"; then
+  free_gb="$(df -BG --output=avail "$HOME" | tail -n 1 | tr -dc 0-9)"
+  if [ "${free_gb:-0}" -lt 12 ]; then echo "Installing Unity needs about 12 GB free; this codespace has ${free_gb} GB." >&2; exit 1; fi
+  echo "Installing Unity $VERSION with the Unity CLI. This downloads a few GB and takes 5 to 15 minutes."
+  cs="$(changeset || true)"
+  unity install "$VERSION" ${cs:+--changeset "$cs"} "${mods[@]}" || true
+  if ! editor_bin >/dev/null && [ -n "$cs" ]; then unity install "$VERSION" "${mods[@]}" || true; fi
+  EDITOR_BIN="$(editor_bin)" || { echo "Unity $VERSION didn't install. The messages above say why." >&2; exit 1; }
+elif [ "${#mods[@]}" -gt 0 ]; then
+  unity install-modules "$VERSION" "${mods[@]}" || true
+fi
+echo "Unity $VERSION: $EDITOR_BIN"
+[ "$mode" = install ] && exit 0
+
+if ! ls "$HOME"/.local/share/unity3d/Unity/Unity_lic.ulf "$HOME"/.config/unity3d/Unity/licenses/*.xml >/dev/null 2>&1; then
+  echo "There's no Unity license here yet. In Unity Hub on the desktop: sign in, then Preferences > Licenses > Add >"
+  echo "Get a free personal license. Then run bt-unity-editor again."
+  exit 1
+fi
+echo "Opening Borrowed Time in Unity on the desktop (run bt-desktop for the link). The first import takes a few"
+echo "minutes. The game scene opens by itself; press Play at the top. Editor log: /tmp/unity-editor.log"
+unset BROWSER
+setsid "$EDITOR_BIN" -projectPath "$PROJ" -force-glcore -logFile /tmp/unity-editor.log < /dev/null > /dev/null 2>&1 &

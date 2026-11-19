@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: new-dependency-audit
+expected_outcome: |
+  Chooses a Rust-based option where sensible (for example Rapier compiled to WASM), vets it before use (license, publisher, pinned exact version, integrity hash or SRI), keeps a fallback or explains load failure handling, and reports a short audit table with version, license, source and verdict.

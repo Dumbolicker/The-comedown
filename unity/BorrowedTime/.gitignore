@@ -1,0 +1,11 @@
+# Unity generates these; never commit them
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/Build/
+/Builds/
+/build/
+*.csproj
+*.sln

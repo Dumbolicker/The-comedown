@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: design-choice-renditions
+expected_outcome: |
+  Presents 2 to 4 distinct renditions of the entrance (with something viewable for each, like a screenshot, mock or URL toggle), states trade-offs, marks one as recommended, and asks the user to pick before committing a large change. Keeps the design original.

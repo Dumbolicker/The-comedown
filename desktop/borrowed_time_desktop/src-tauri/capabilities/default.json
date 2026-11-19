@@ -1,0 +1,6 @@
+{
+  "identifier": "default",
+  "description": "The game needs a window and nothing else from the OS.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
