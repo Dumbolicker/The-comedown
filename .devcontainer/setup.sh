@@ -4,6 +4,7 @@
 # Installs, from each vendor's own signed apt repository:
 #   - Unity Hub (hub.unity3d.com), the steps in Unity's "Install the Unity Hub on Linux" guide
 #   - Firefox (packages.mozilla.org): Ubuntu's own Firefox is a snap, and snaps can't run in a codespace
+# and the Unity CLI from Unity's release manifest, checksum-checked (bin/bt-install-unity-cli).
 # Then sets the desktop up: Firefox opens web links, Unity Hub opens unityhub:// sign-in links, a keyring holds Hub's
 # sign-in, and the desktop menu gets the Borrowed Time entries. Finally it starts Unity Hub on the desktop.
 set -euo pipefail
@@ -38,7 +39,7 @@ sudo apt-get install -y -q --no-install-recommends \
   unityhub firefox \
   libgl1 libgl1-mesa-dri libglu1-mesa mesa-utils libvulkan1 \
   libgtk-3-0t64 libnss3 libasound2t64 libxtst6 libxrandr2 libxcursor1 libxi6 libxinerama1 libcanberra-gtk3-module \
-  cpio p7zip-full xz-utils unzip desktop-file-utils
+  cpio p7zip-full xz-utils unzip desktop-file-utils jq
 sudo rm -rf /var/lib/apt/lists/*
 
 say "Machine id"
@@ -52,6 +53,9 @@ fi
 
 say "Linking the helper commands"
 for f in "$HERE"/bin/*; do sudo ln -sf "$f" "/usr/local/bin/$(basename "$f")"; done
+
+say "Unity CLI (installs Unity editors; Unity Hub 4 hands that job to it)"
+bash "$HERE/bin/bt-install-unity-cli" || echo "Couldn't install the Unity CLI just now. Later, run: bt-install-unity-cli"
 
 say "Desktop: default browser, the unityhub:// link handler, the menu"
 apps="$HOME/.local/share/applications"; mkdir -p "$apps"

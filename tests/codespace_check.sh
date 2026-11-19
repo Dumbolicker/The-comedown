@@ -19,7 +19,7 @@ windows() { xdotool search --onlyvisible --name . 2>/dev/null | while read -r w;
 if [ "${1:-}" = probe-cli ]; then   # print Unity's CLI installer (not run) and its release manifest, to read before using them
   d="$(mktemp -d)"; curl -fsSL https://unity.com/install.sh -o "$d/install.sh" -w 'final URL: %{url_effective}\n'
   n="$(wc -l < "$d/install.sh")"; sha256sum "$d/install.sh"; echo "lines: $n"
-  echo "----- install.sh lines 1-$((n-420))"; head -n "$((n-420))" "$d/install.sh"; echo "----- end of that part"
+  echo "----- install.sh lines 1-60"; head -n 60 "$d/install.sh"; echo "----- end of that part"
   cdn="$(grep -o -m 1 'https://[^"[:space:]]*/cli/' "$d/install.sh" || true)"; echo "CDN base: $cdn"
   for m in latest.json latest-beta.json; do echo "----- $m"; curl -fsSL "$cdn$m" || echo "(none)"; echo; done
   exit 0
@@ -28,7 +28,12 @@ fi
 if [ "${1:-}" = editor ]; then
   VERSION="$(sed -n 's/^m_EditorVersion: *//p' "$ROOT/unity/BorrowedTime/ProjectSettings/ProjectVersion.txt")"
   df -h "$HOME" | tail -n 1
+  check "the Unity CLI is installed and checksum-checked" bash -c 'command -v unity && unity --version'
+  for c in "--help" "install --help" "editors --help" "install-modules --help" "auth --help" "license --help"; do
+    echo "----- unity $c"; timeout 60 unity $c 2>&1 | head -n 45 | sed 's/^/      /'
+  done
   check "bt-unity-editor --install puts Unity $VERSION in place" timeout 2400 bt-unity-editor --install
+  echo "----- unity editors"; timeout 60 unity editors 2>&1 | head -n 20 | sed 's/^/      /'
   B="$HOME/Unity/Hub/Editor/$VERSION/Editor/Unity"
   check "the editor finds every library it links to" bash -c "[ -x '$B' ] && ! ldd '$B' | grep 'not found'"
   du -sh "$HOME/Unity/Hub/Editor" 2>/dev/null; df -h "$HOME" | tail -n 1

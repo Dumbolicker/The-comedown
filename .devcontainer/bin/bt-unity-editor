@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs the Unity editor version this project uses (through Unity Hub) and opens Borrowed Time in it on the desktop.
+# Installs the Unity editor version this project uses (with the Unity CLI) and opens Borrowed Time in it on the desktop.
 #
 # Needs a Unity license in this codespace (Unity Hub: sign in, add the free Personal license) and a 4-core codespace.
 # The download is a few GB and the editor takes about 9 GB of disk. There's no graphics card in a codespace, so the
@@ -21,15 +21,18 @@ for a in "$@"; do
   esac
 done
 
-editor_bin() { local b="$HOME/Unity/Hub/Editor/$VERSION/Editor/Unity"; [ -x "$b" ] && echo "$b"; }
-changeset() {   # Unity's release API knows the build id ("changeset") Hub needs for versions it doesn't list itself
-  curl -fsS "https://services.api.unity.com/unity/editor/release/v1/releases?version=$VERSION&limit=1" | python3 -I -c '
-import sys, json, re
-for r in json.load(sys.stdin).get("results", []):
-    c = r.get("shortRevision") or (re.findall(r"/([0-9a-f]{12})", r.get("unityHubDeepLink", "")) or [""])[0]
-    if c: print(c); break'
+command -v unity >/dev/null || bt-install-unity-cli
+editor_bin() {   # Hub's and the CLI's default place first, then wherever `unity editors` says it is
+  local b="$HOME/Unity/Hub/Editor/$VERSION/Editor/Unity" d
+  if [ -x "$b" ]; then echo "$b"; return 0; fi
+  d="$(unity editors 2>/dev/null | grep -F "$VERSION" | grep -o '/[^[:space:]]*' | head -n 1 || true)"
+  for b in "$d" "$d/Editor/Unity" "$d/Unity"; do [ -n "$d" ] && [ -f "$b" ] && [ -x "$b" ] && { echo "$b"; return 0; }; done
+  return 1
 }
-
+changeset() {   # Unity's release API knows the build id ("changeset") of each editor version
+  curl -fsS "https://services.api.unity.com/unity/editor/release/v1/releases?version=$VERSION&limit=1" | jq -r '
+    [.results[]? | (.shortRevision // (.unityHubDeepLink // "" | capture("/(?<c>[0-9a-f]{12})").c))] | map(select(.)) | .[0] // empty'
+}
 if [ "$(nproc)" -lt 4 ]; then
   echo "Note: this codespace has $(nproc) processor cores. The Unity editor needs a 4-core codespace to be usable:"
   echo "github.com/codespaces > ... next to this codespace > Change machine type > 4-core."
@@ -38,18 +41,13 @@ fi
 if ! EDITOR_BIN="$(editor_bin)"; then
   free_gb="$(df -BG --output=avail "$HOME" | tail -n 1 | tr -dc 0-9)"
   if [ "${free_gb:-0}" -lt 12 ]; then echo "Installing Unity needs about 12 GB free; this codespace has ${free_gb} GB." >&2; exit 1; fi
-  echo "Installing Unity $VERSION through Unity Hub. This downloads a few GB and takes 5 to 15 minutes."
-  unity-hub --headless install --version "$VERSION" "${mods[@]}" || true
-  if ! EDITOR_BIN="$(editor_bin)"; then
-    cs="$(changeset || true)"
-    if [ -n "$cs" ]; then
-      echo "Trying again with Unity $VERSION's changeset $cs."
-      unity-hub --headless install --version "$VERSION" --changeset "$cs" "${mods[@]}" || true
-    fi
-  fi
+  echo "Installing Unity $VERSION with the Unity CLI. This downloads a few GB and takes 5 to 15 minutes."
+  cs="$(changeset || true)"
+  unity install "$VERSION" ${cs:+--changeset "$cs"} "${mods[@]}" || true
+  if ! editor_bin >/dev/null && [ -n "$cs" ]; then unity install "$VERSION" "${mods[@]}" || true; fi
   EDITOR_BIN="$(editor_bin)" || { echo "Unity $VERSION didn't install. The messages above say why." >&2; exit 1; }
 elif [ "${#mods[@]}" -gt 0 ]; then
-  unity-hub --headless install-modules --version "$VERSION" "${mods[@]}" || true
+  unity install-modules "$VERSION" "${mods[@]}" || true
 fi
 echo "Unity $VERSION: $EDITOR_BIN"
 [ "$mode" = install ] && exit 0

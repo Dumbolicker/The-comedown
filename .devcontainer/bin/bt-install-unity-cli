@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Installs Unity's command-line tool, `unity`, into ~/.local/bin (and links it into /usr/local/bin).
+#
+# It does what Unity's own installer (unity.com/install.sh) does for the program itself: read Unity's release
+# manifest, download the Linux binary it names, and refuse it unless its SHA-256 matches the manifest. It leaves out
+# that installer's shell-config edits and its step that installs Unity's skills into AI coding tools.
+# Run it again to update.
+set -euo pipefail
+CDN="https://public-cdn.cloud.unity3d.com/hub/prod/cli/"
+case "$(uname -m)" in
+  x86_64|amd64) plat=linux-x64 ;;
+  aarch64|arm64) plat=linux-arm64 ;;
+  *) echo "The Unity CLI has no build for $(uname -m)." >&2; exit 1 ;;
+esac
+
+manifest="$(curl -fsSL "${CDN}latest.json" 2>/dev/null || curl -fsSL "${CDN}latest-beta.json")"
+version="$(jq -er '.version' <<<"$manifest")"
+file="$(jq -er --arg p "$plat" '.binaries[$p].filename' <<<"$manifest")"
+sha="$(jq -er --arg p "$plat" '.binaries[$p].sha256' <<<"$manifest")"
+
+bin="$HOME/.local/bin/unity"
+if [ -x "$bin" ] && [ "$(sha256sum "$bin" | cut -d' ' -f1)" = "$sha" ]; then
+  echo "Unity CLI $version is already installed: $bin"
+else
+  tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
+  echo "Downloading Unity CLI $version ($plat)..."
+  curl -fsSL "${CDN}${version}/${file}" -o "$tmp"
+  got="$(sha256sum "$tmp" | cut -d' ' -f1)"
+  if [ "$got" != "$sha" ]; then echo "Checksum mismatch: expected $sha, got $got. Nothing installed." >&2; exit 1; fi
+  install -D -m 0755 "$tmp" "$bin"
+  echo "Installed Unity CLI $version: $bin (SHA-256 checked)"
+fi
+sudo ln -sf "$bin" /usr/local/bin/unity
+
+# The receipt Unity's installer writes, so a running Unity Hub finds this CLI (same fields and order).
+mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/unityhub"
+printf '{\n  "path": "%s",\n  "version": "%s",\n  "layout": "xdg",\n  "installedAt": "%s"\n}\n' \
+  "$bin" "$version" "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" > "${XDG_CONFIG_HOME:-$HOME/.config}/unityhub/cli-install.json"
