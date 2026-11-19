@@ -27,11 +27,12 @@ and not as Unity_lic.ulf, which is the file GitHub's Unity builder reads. Tell C
 file anywhere); there's another way to set the build up.
 EOF
   else
+    if command -v unity >/dev/null; then echo "What the Unity CLI sees:"; unity license status 2>&1 | sed 's/^/  /' || true; echo; fi
     cat <<EOF
 There's no Unity license in this codespace yet.
   1. Open the desktop (run: bt-desktop) and Unity Hub on it.
   2. Sign in to your Unity account.
-  3. Preferences (gear icon) > Licenses > Add > Get a free personal license.
+  3. Add the free Personal license (Hub offers it after you sign in; or Preferences > Licenses > Add).
 Then run bt-license-to-github again.
 EOF
   fi

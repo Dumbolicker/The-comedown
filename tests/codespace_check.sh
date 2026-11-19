@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs inside the codespace's container on GitHub's machines (.github/workflows/codespace-check.yml).
 #   bash tests/codespace_check.sh          the desktop, Unity Hub, Firefox and the link handlers, with screenshots
-#   bash tests/codespace_check.sh editor   the optional Unity editor install (bt-unity-editor --install)
+#   bash tests/codespace_check.sh editor   the Unity CLI and the optional editor install (bt-unity-editor --install)
 # Screenshots go to ci-shots/ (the run's "codespace-screenshots" artifact); the text on each one is read back with OCR
 # and printed, so the log shows what was on the screen.
 set -uo pipefail
@@ -16,22 +16,11 @@ shot() {
 }
 windows() { xdotool search --onlyvisible --name . 2>/dev/null | while read -r w; do printf '      window: %s\n' "$(xdotool getwindowname "$w" 2>/dev/null)"; done | sort -u | head -n 30; }
 
-if [ "${1:-}" = probe-cli ]; then   # print Unity's CLI installer (not run) and its release manifest, to read before using them
-  d="$(mktemp -d)"; curl -fsSL https://unity.com/install.sh -o "$d/install.sh" -w 'final URL: %{url_effective}\n'
-  n="$(wc -l < "$d/install.sh")"; sha256sum "$d/install.sh"; echo "lines: $n"
-  echo "----- install.sh lines 1-60"; head -n 60 "$d/install.sh"; echo "----- end of that part"
-  cdn="$(grep -o -m 1 'https://[^"[:space:]]*/cli/' "$d/install.sh" || true)"; echo "CDN base: $cdn"
-  for m in latest.json latest-beta.json; do echo "----- $m"; curl -fsSL "$cdn$m" || echo "(none)"; echo; done
-  exit 0
-fi
-
 if [ "${1:-}" = editor ]; then
   VERSION="$(sed -n 's/^m_EditorVersion: *//p' "$ROOT/unity/BorrowedTime/ProjectSettings/ProjectVersion.txt")"
   df -h "$HOME" | tail -n 1
   check "the Unity CLI is installed and checksum-checked" bash -c 'command -v unity && unity --version'
-  for c in "--help" "install --help" "editors --help" "install-modules --help" "auth --help" "license --help"; do
-    echo "----- unity $c"; timeout 60 unity $c 2>&1 | head -n 45 | sed 's/^/      /'
-  done
+  check "the Unity CLI has the sign-in and license commands" bash -c 'unity auth --help | grep -q login && unity license --help | grep -q activate'
   check "bt-unity-editor --install puts Unity $VERSION in place" timeout 2400 bt-unity-editor --install
   echo "----- unity editors"; timeout 60 unity editors 2>&1 | head -n 20 | sed 's/^/      /'
   B="$HOME/Unity/Hub/Editor/$VERSION/Editor/Unity"

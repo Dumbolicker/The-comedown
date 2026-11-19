@@ -11,8 +11,9 @@ cat <<EOF
   $url
 
   1. Open that link. It's private to your GitHub account. (Or: Ports tab, "Desktop", the globe icon.)
-  2. In Unity Hub: Sign in. Firefox opens on the desktop for it; when it asks to open Unity Hub, say yes.
-  3. Hub: Preferences (gear) > Licenses > Add > Get a free personal license.
+  2. In Unity Hub: read Unity's terms and click Agree, then Sign in. Firefox opens on the desktop for it;
+     when Firefox asks to open Unity Hub, say yes.
+  3. Add the free Personal license (Hub offers it after you sign in; or Preferences > Licenses > Add).
   4. Back here, run:  bt-license-to-github     (puts the license into GitHub's secrets and starts the Unity build)
 
   Desktop menu: the button at the bottom left, or right-click the desktop.

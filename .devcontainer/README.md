@@ -32,11 +32,12 @@ Use it for two things:
    setup working; wait until it prints the desktop link.
 2. **Open the desktop.** In that terminal type `bt-desktop` and press Enter. It opens the desktop in a new tab.
    (Or open the **Ports** tab, find **Desktop**, and click the globe icon.) Unity Hub is already open on it.
-3. **Sign in to Unity.** In Unity Hub, click **Sign in**. Firefox opens on the desktop with Unity's sign-in page. Sign
-   in, or create a free Unity account there. (The first time, Firefox shows its own welcome screen over the page; click
-   through it.) When Firefox asks whether to open Unity Hub, choose **Open link**. Hub now shows you as signed in.
-4. **Get the free license.** In Hub: the gear icon (**Preferences**), **Licenses**, **Add**, **Get a free personal
-   license**, **Agree**.
+3. **Sign in to Unity.** Unity Hub first shows Unity's terms; read them and click **Agree** if you accept. Then click
+   **Sign in**. Firefox opens on the desktop with Unity's sign-in page. Sign in, or create a free Unity account there.
+   (The first time, Firefox shows its own welcome screen over the page; click through it.) When Firefox asks whether to
+   open Unity Hub, choose **Open link**. Hub now shows you as signed in.
+4. **Get the free license.** Hub offers the free **Personal** license once you're signed in. If it doesn't, it's under
+   the gear icon (**Preferences**), **Licenses**, **Add**, **Get a free personal license**.
 5. **Send it to GitHub.** Go back to the codespace tab (the one with the terminal, not the desktop) and run
    `bt-license-to-github`. It:
    - finds the license Hub just saved;
@@ -55,8 +56,8 @@ Use it for two things:
 - Use a **4-core** codespace. For a new one, choose the machine type under **Change options** (or the **...** menu)
   before creating it. For an existing one: github.com/codespaces, **...**, **Change machine type**.
 - Desktop menu, **Unity editor: install and open the game**, or in the terminal: `bt-unity-editor`. It installs the
-  editor version the project uses through Unity Hub, opens the project, and opens the game scene; press **Play**.
-- The editor download is a few GB and takes about 9 GB of the codespace's disk, which counts toward the 15 GB-months.
+  editor version the project uses with the Unity CLI, opens the project, and opens the game scene; press **Play**.
+- On GitHub's test machine the install took about 5 minutes and 8.1 GB of disk, which counts toward the 15 GB-months.
 - With no graphics card, the editor draws on the processor, so expect a low frame rate. The builds that GitHub makes
   run at normal speed.
 - Unity Personal's own terms apply (it's free under Unity's revenue limit).
@@ -83,18 +84,22 @@ Use it for two things:
 - **The setup stopped with an error:** run `bash .devcontainer/setup.sh` in the terminal to try again.
 - **`bt-license-to-github` says Hub saved `UnityEntitlementLicense.xml` instead:** tell Claude. Don't paste the file.
 - **Lost the desktop tab:** run `bt-desktop` again.
+- **Hub's sign-in won't work at all:** the Unity CLI is installed too. `unity auth login` signs in through Firefox on the
+  desktop, `unity license activate` adds a license, and `unity license status` shows what's active.
 
 ## How it's put together
 
 | File | What it does |
 | --- | --- |
 | `devcontainer.json` | Ubuntu 24.04 (pinned), the desktop (Fluxbox, TigerVNC, noVNC on port 6080) and the GitHub CLI |
-| `setup.sh` | Installs Unity Hub from Unity's apt repository and Firefox from Mozilla's, sets which app opens which link, writes the desktop menu, starts Hub |
+| `setup.sh` | Installs Unity Hub from Unity's apt repository, Firefox from Mozilla's and the Unity CLI, sets which app opens which link, writes the desktop menu, starts Hub |
 | `bin/unity-hub` | Starts Hub the way a container needs (no Chromium sandbox, the sign-in kept on the desktop, a keyring for it) |
 | `bin/bt-desktop` | Prints and opens the desktop link |
 | `bin/bt-license-to-github` | Sends the license, email and password to GitHub's secrets and restarts the build |
-| `bin/bt-unity-editor` | Installs the project's Unity version through Hub and opens the project |
+| `bin/bt-install-unity-cli` | Installs the Unity CLI (`unity`) from Unity's release manifest, checking its SHA-256 |
+| `bin/bt-unity-editor` | Installs the project's Unity version with the Unity CLI and opens the project |
 
 `.github/workflows/codespace-check.yml` builds this exact codespace on GitHub's machines whenever it changes, then
 runs `tests/codespace_check.sh`: the desktop page, Unity Hub's window, Firefox opening links, the unityhub:// sign-in
-handoff, and the editor install, with screenshots.
+handoff, the keyring, the Unity CLI, and the editor install, with screenshots. What it can't check is the part that
+needs your account: signing in and getting the license.
