@@ -34,6 +34,11 @@ jobs:
       - name: Desktop, Unity Hub, Firefox and link handlers
         run: npx --yes "$DEVCONTAINER_CLI" exec --workspace-folder . bash tests/codespace_check.sh
 
+      - name: Read Unity's CLI installer (printed, not run)
+        if: success() || failure()
+        continue-on-error: true
+        run: npx --yes "$DEVCONTAINER_CLI" exec --workspace-folder . bash tests/codespace_check.sh probe-cli
+
       - name: Optional Unity editor install
         if: success() || failure()
         continue-on-error: true
