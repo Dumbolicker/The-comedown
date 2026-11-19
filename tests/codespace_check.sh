@@ -16,10 +16,12 @@ shot() {
 }
 windows() { xdotool search --onlyvisible --name . 2>/dev/null | while read -r w; do printf '      window: %s\n' "$(xdotool getwindowname "$w" 2>/dev/null)"; done | sort -u | head -n 30; }
 
-if [ "${1:-}" = probe-cli ]; then   # print Unity's CLI installer (not run) and what apt offers, to read before using them
+if [ "${1:-}" = probe-cli ]; then   # print Unity's CLI installer (not run) and its release manifest, to read before using them
   d="$(mktemp -d)"; curl -fsSL https://unity.com/install.sh -o "$d/install.sh" -w 'final URL: %{url_effective}\n'
-  sha256sum "$d/install.sh"; wc -l "$d/install.sh"; echo "----- install.sh begin"; cat -v "$d/install.sh"; echo "----- install.sh end"
-  sudo apt-get update -q >/dev/null 2>&1; apt-cache search --names-only 'unity' | head -n 20; apt-cache policy unityhub | head -n 4
+  n="$(wc -l < "$d/install.sh")"; sha256sum "$d/install.sh"; echo "lines: $n"
+  echo "----- install.sh lines 1-$((n-420))"; head -n "$((n-420))" "$d/install.sh"; echo "----- end of that part"
+  cdn="$(grep -o -m 1 'https://[^"[:space:]]*/cli/' "$d/install.sh" || true)"; echo "CDN base: $cdn"
+  for m in latest.json latest-beta.json; do echo "----- $m"; curl -fsSL "$cdn$m" || echo "(none)"; echo; done
   exit 0
 fi
 
