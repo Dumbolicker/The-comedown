@@ -12,7 +12,7 @@ namespace BorrowedTime.EditorTools
     /// and builds it headlessly. GameCI calls Build() with -customBuildPath.</summary>
     public static class CiBuild
     {
-        const string ScenePath = "Assets/Scenes/Main.unity";
+        public const string ScenePath = "Assets/Scenes/Main.unity";
 
         [MenuItem("Borrowed Time/Prepare Project")]
         public static void Prepare()
