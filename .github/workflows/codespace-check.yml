@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, claude/game-refinement-9ofmk8]
-    paths: ['.devcontainer/**', 'tests/codespace_check.sh', '.github/workflows/codespace-check.yml']
+    paths: ['.devcontainer/**', '!.devcontainer/README.md', 'tests/codespace_check.sh', '.github/workflows/codespace-check.yml']
 
 permissions:
   contents: read

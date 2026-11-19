@@ -57,7 +57,8 @@ Use it for two things:
   before creating it. For an existing one: github.com/codespaces, **...**, **Change machine type**.
 - Desktop menu, **Unity editor: install and open the game**, or in the terminal: `bt-unity-editor`. It installs the
   editor version the project uses with the Unity CLI, opens the project, and opens the game scene; press **Play**.
-- On GitHub's test machine the install took about 5 minutes and 8.1 GB of disk, which counts toward the 15 GB-months.
+- On GitHub's test machines the install took 5 to 16 minutes (the download speed varies) and 8.1 GB of disk, which
+  counts toward the 15 GB-months.
 - With no graphics card, the editor draws on the processor, so expect a low frame rate. The builds that GitHub makes
   run at normal speed.
 - Unity Personal's own terms apply (it's free under Unity's revenue limit).
