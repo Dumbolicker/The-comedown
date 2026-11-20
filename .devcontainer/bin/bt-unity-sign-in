@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Signs the Unity CLI in to your Unity account, with Unity's sign-in page in Firefox on this codespace's desktop.
+#
+# Unity's sign-in sends the browser back to 127.0.0.1 on the machine that asked, so the page has to open here on the
+# desktop. A codespace terminal's BROWSER would open it in your own browser tab instead, where the return trip can't
+# reach the codespace. Open the desktop tab to finish (bt-desktop prints its link).
+# Arguments go to `unity auth login`.
+set -euo pipefail
+export DISPLAY="${DISPLAY:-:1}" DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-autolaunch:}"
+unset BROWSER
+# The CLI keeps the sign-in in the desktop's keyring; this unlocks it (or creates it) with an empty password.
+printf '' | gnome-keyring-daemon --unlock --components=secrets >/dev/null 2>&1 || true
+echo "Unity's sign-in page is opening in Firefox on the desktop. Finish it there (bt-desktop prints the desktop link)."
+exec unity auth login "$@"

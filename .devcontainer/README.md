@@ -1,7 +1,8 @@
 # A free computer in your browser (GitHub Codespaces)
 
 This repository's **codespace** is a Linux computer on GitHub's servers that you open in a browser tab. It has a
-desktop with **Unity Hub** and **Firefox** on it, plus the whole project. You don't install anything on your own device.
+desktop with **Unity Hub** and **Firefox** on it, the **Unity CLI**, **Claude Code**, and the whole project. You don't
+install anything on your own device.
 It works in any browser. A computer, Chromebook or tablet is easiest; a phone works, but the screen is cramped.
 
 Use it for two things:
@@ -10,6 +11,7 @@ Use it for two things:
    computer": the codespace is that computer.
 2. **Optional:** opening the game in the real Unity editor (needs the bigger 4-core machine, and it's slow, because
    there's no graphics card).
+3. **Optional:** letting Claude Code work on the game here, on a computer that can sign in to Unity (below).
 
 ## What's free
 
@@ -63,6 +65,19 @@ Use it for two things:
   run at normal speed.
 - Unity Personal's own terms apply (it's free under Unity's revenue limit).
 
+## Let Claude Code set up Unity here (optional)
+
+Unity's own setup prompt ("Install the Unity CLI... then use the new-unity-project skill") needs an AI tool on a
+computer that can sign in to Unity. Unity's sign-in comes back to the computer that started it, which a chat or a
+cloud agent without a browser can't receive; this codespace can.
+
+1. Create the codespace (step 1 above). A **4-core** machine is better if the editor will run.
+2. In the terminal, run `claude` and sign in to your Claude account (it shows a link; open it and approve).
+3. Paste Unity's prompt, or ask for what you want. Claude reads this repository's `CLAUDE.md`, which tells it how
+   sign-in works here.
+4. When Claude says Unity's sign-in page is open, switch to the desktop tab (`bt-desktop` prints the link) and sign in
+   there. Claude can't do that part for you, and shouldn't: type your Unity password only on Unity's page.
+
 ## On a phone
 
 - Open the codespaces.new link in your browser, not in the GitHub app. If the page looks squashed, switch the browser to
@@ -92,15 +107,17 @@ Use it for two things:
 
 | File | What it does |
 | --- | --- |
-| `devcontainer.json` | Ubuntu 24.04 (pinned), the desktop (Fluxbox, TigerVNC, noVNC on port 6080) and the GitHub CLI |
+| `devcontainer.json` | Ubuntu 24.04 (pinned), the desktop (Fluxbox, TigerVNC, noVNC on port 6080), the GitHub CLI, Node and Claude Code |
 | `setup.sh` | Installs Unity Hub from Unity's apt repository, Firefox from Mozilla's and the Unity CLI, sets which app opens which link, writes the desktop menu, starts Hub |
 | `bin/unity-hub` | Starts Hub the way a container needs (no Chromium sandbox, the sign-in kept on the desktop, a keyring for it) |
 | `bin/bt-desktop` | Prints and opens the desktop link |
 | `bin/bt-license-to-github` | Sends the license, email and password to GitHub's secrets and restarts the build |
 | `bin/bt-install-unity-cli` | Installs the Unity CLI (`unity`) from Unity's release manifest, checking its SHA-256 |
+| `bin/bt-unity-sign-in` | Signs the Unity CLI in, with Unity's page in Firefox on the desktop so the sign-in can come back |
 | `bin/bt-unity-editor` | Installs the project's Unity version with the Unity CLI and opens the project |
 
 `.github/workflows/codespace-check.yml` builds this exact codespace on GitHub's machines whenever it changes, then
 runs `tests/codespace_check.sh`: the desktop page, Unity Hub's window, Firefox opening links, the unityhub:// sign-in
-handoff, the keyring, the Unity CLI, and the editor install, with screenshots. What it can't check is the part that
+handoff, the keyring, the Unity CLI and its sign-in page opening on the desktop, Claude Code, and the editor install,
+with screenshots. What it can't check is the part that
 needs your account: signing in and getting the license.
