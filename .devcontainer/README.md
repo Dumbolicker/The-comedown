@@ -68,15 +68,14 @@ Use it for two things:
 ## Let Claude Code set up Unity here (optional)
 
 Unity's own setup prompt ("Install the Unity CLI... then use the new-unity-project skill") needs an AI tool on a
-computer that can sign in to Unity. Unity's sign-in comes back to the computer that started it, which a chat or a
-cloud agent without a browser can't receive; this codespace can.
+computer where the Unity editor can run. This codespace is one, with Claude Code already installed.
 
 1. Create the codespace (step 1 above). A **4-core** machine is better if the editor will run.
 2. In the terminal, run `claude` and sign in to your Claude account (it shows a link; open it and approve).
 3. Paste Unity's prompt, or ask for what you want. Claude reads this repository's `CLAUDE.md`, which tells it how
    sign-in works here.
-4. When Claude says Unity's sign-in page is open, switch to the desktop tab (`bt-desktop` prints the link) and sign in
-   there. Claude can't do that part for you, and shouldn't: type your Unity password only on Unity's page.
+4. When Claude says Unity's sign-in page is open, sign in there: in the desktop tab (`bt-desktop` prints its link), or
+   by opening the sign-in link Claude shows on any device. Type your Unity password only on Unity's page.
 
 ## On a phone
 
@@ -113,11 +112,11 @@ cloud agent without a browser can't receive; this codespace can.
 | `bin/bt-desktop` | Prints and opens the desktop link |
 | `bin/bt-license-to-github` | Sends the license, email and password to GitHub's secrets and restarts the build |
 | `bin/bt-install-unity-cli` | Installs the Unity CLI (`unity`) from Unity's release manifest, checking its SHA-256 |
-| `bin/bt-unity-sign-in` | Signs the Unity CLI in, with Unity's page in Firefox on the desktop so the sign-in can come back |
+| `bin/bt-unity-sign-in` | Signs the Unity CLI in: unlocks the desktop's keyring and opens Unity's page in Firefox on the desktop |
 | `bin/bt-unity-editor` | Installs the project's Unity version with the Unity CLI and opens the project |
 
 `.github/workflows/codespace-check.yml` builds this exact codespace on GitHub's machines whenever it changes, then
 runs `tests/codespace_check.sh`: the desktop page, Unity Hub's window, Firefox opening links, the unityhub:// sign-in
-handoff, the keyring, the Unity CLI and its sign-in page opening on the desktop, Claude Code, and the editor install,
+handoff, the keyring, the Unity CLI and its sign-in page and link, Claude Code, and the editor install,
 with screenshots. What it can't check is the part that
 needs your account: signing in and getting the license.

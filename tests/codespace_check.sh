@@ -66,7 +66,7 @@ check "a unityhub:// link reaches Unity Hub" grep -q 'unityhub://' /tmp/unity-hu
 check "Unity Hub is still running" pgrep -f "$HUBBIN"
 check "the keyring's secret service answers" bash -c 'busctl --user list 2>/dev/null | grep -q org.freedesktop.secrets || dbus-send --session --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames | grep -q org.freedesktop.secrets'
 
-# Unity CLI sign-in: Unity sends the browser back to 127.0.0.1 here, so the page must open in Firefox on this desktop.
+# Unity CLI sign-in: the page should open in Firefox on this desktop, and the CLI should print a link for any device.
 fake="$(mktemp)"; printf '#!/bin/sh\necho "$@" >> /tmp/fake-browser.log\n' > "$fake"; chmod +x "$fake"; : > /tmp/fake-browser.log
 pkill -f firefox; sleep 2
 (BROWSER="$fake" timeout 20 unity auth login < /dev/null > /tmp/auth-browser.txt 2>&1 || true)
@@ -77,9 +77,7 @@ for _ in $(seq 30); do xdotool search --onlyvisible --class firefox >/dev/null 2
 sleep 12
 check "bt-unity-sign-in opens Unity's sign-in page in Firefox on the desktop" bash -c 'xdotool search --onlyvisible --class firefox | while read -r w; do xdotool getwindowname "$w"; done | grep -qi unity'
 windows; shot sign-in
-redirect="$(cat /tmp/auth.txt /tmp/auth-browser.txt /tmp/fake-browser.log 2>/dev/null | grep -o 'redirect_uri=[^&[:space:]]*' | head -n 1 | sed 's/%3A/:/gI; s#%2F#/#gI')"
-echo "      Unity sends the browser back to: ${redirect#redirect_uri=}"
-check "the CLI waits on 127.0.0.1 for the sign-in to come back" bash -c 'ss -ltn | grep -q "127.0.0.1:"'
+check "the sign-in prints a link to open on any device, then waits" bash -c 'grep -q "Sign-in URL" /tmp/auth.txt && grep -qi "waiting" /tmp/auth.txt'
 sed 's#https://[^[:space:]]*#<link>#g' /tmp/auth.txt | head -n 6 | sed 's/^/      sign-in said: /'
 pkill -f 'unity auth login'; pkill -f firefox
 check "Claude Code is installed" bash -c 'claude --version'
