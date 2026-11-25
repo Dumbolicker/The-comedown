@@ -59,7 +59,12 @@ Logic cost per frame on the test machine: about 0.4â€“0.7 ms walking around, 2â€
 
 ## Engine path
 
-You chose Unity, so the Unity project lives in `unity/` and builds in the cloud with GameCI. The web build stays the instant-play version: one link on phones and in Discord, and the Tauri shell for Steam. Rust stays where it pays off: Rapier physics through WebAssembly in the web build, and the Tauri shell with Steamworks. In Unity, Rust can join later as a native plugin if a system needs it.
+**Own engine (started 25 Nov 2026):** `engine/` is Borrowed Time's own engine in Rust: Rapier physics at a fixed 60 Hz,
+an active ragdoll, breakable walls and a wgpu renderer with soft shadows. It's clean room: no other game's code. Its
+7 tests and a headless demo pass, and it compiles for WebAssembly. Next come a window and a browser canvas, then the
+game's own systems. See `engine/README.md`.
+
+**Unity:** you chose Unity, so the Unity project lives in `unity/` and builds in the cloud with GameCI. The web build stays the instant-play version: one link on phones and in Discord, and the Tauri shell for Steam. Rust stays where it pays off: Rapier physics through WebAssembly in the web build, and the Tauri shell with Steamworks. In Unity, Rust can join later as a native plugin if a system needs it.
 
 ## Milestones
 
