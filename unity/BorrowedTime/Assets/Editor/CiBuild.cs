@@ -39,6 +39,12 @@ namespace BorrowedTime.EditorTools
             PlayerSettings.productName = "Borrowed Time";
             PlayerSettings.companyName = "Borrowed Time";
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled; // plays from any static host, GitHub Pages included
+            // The game builds its whole world from code at runtime (CreatePrimitive, AddComponent), so nothing in a scene
+            // tells the build which engine classes are used. Stripping them broke the web build (colliders and other
+            // classes "doesn't exist" / "Could not produce class"), so keep the engine whole and strip C# only lightly.
+            PlayerSettings.stripEngineCode = false;
+            PlayerSettings.SetManagedStrippingLevel(UnityEditor.Build.NamedBuildTarget.WebGL, ManagedStrippingLevel.Minimal);
+            PlayerSettings.SetManagedStrippingLevel(UnityEditor.Build.NamedBuildTarget.Standalone, ManagedStrippingLevel.Minimal);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }

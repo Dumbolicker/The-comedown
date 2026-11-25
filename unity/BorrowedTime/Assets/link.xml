@@ -1,0 +1,11 @@
+<!-- Web (WebGL) builds strip engine classes the code never names. GameObject.CreatePrimitive adds a capsule,
+     sphere, box or mesh collider from native code, so these classes have to stay in the build, or every primitive
+     logs "Can't add component because class ... doesn't exist". -->
+<linker>
+  <assembly fullname="UnityEngine.PhysicsModule">
+    <type fullname="UnityEngine.CapsuleCollider" preserve="all"/>
+    <type fullname="UnityEngine.SphereCollider" preserve="all"/>
+    <type fullname="UnityEngine.BoxCollider" preserve="all"/>
+    <type fullname="UnityEngine.MeshCollider" preserve="all"/>
+  </assembly>
+</linker>

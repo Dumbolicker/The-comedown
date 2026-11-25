@@ -4,10 +4,12 @@ Serves the build folder on 127.0.0.1, waits for Unity to start, then holds W (wa
 and saves screenshots/unity_webgl_<n>.png. Prints the browser console's errors and the frame rate Unity reports.
 
 Usage: python tests/unity_webgl_shot.py <build-dir> [seconds-to-wait-for-load]
+(BT_CHROMIUM=/path/to/chrome picks the browser, like the other tests.)
 """
 import asyncio
 import functools
 import http.server
+import os
 import pathlib
 import sys
 import threading
@@ -18,11 +20,16 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'screenshots'
 
 
+class Handler(http.server.SimpleHTTPRequestHandler):
+    extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map,
+                      '.wasm': 'application/wasm', '.js': 'application/javascript', '.data': 'application/octet-stream'}
+
+    def log_message(self, *args):
+        pass
+
+
 def serve(directory):
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(directory))
-    handler.extensions_map.update({'.wasm': 'application/wasm', '.js': 'application/javascript', '.data': 'application/octet-stream'})
-    handler.log_message = lambda *a: None
-    httpd = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
+    httpd = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Handler, directory=str(directory)))
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
 
@@ -37,7 +44,8 @@ async def main():
     url = f'http://127.0.0.1:{httpd.server_address[1]}/index.html'
     logs, errors = [], []
     async with async_playwright() as p:
-        browser = await p.chromium.launch(args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'])
+        browser = await p.chromium.launch(executable_path=os.environ.get('BT_CHROMIUM') or None,
+                                          args=['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'])
         page = await (await browser.new_context(viewport={'width': 1280, 'height': 720})).new_page()
         page.on('console', lambda m: (errors if m.type == 'error' else logs).append(m.text))
         page.on('pageerror', lambda e: errors.append(str(e)))
@@ -64,8 +72,12 @@ async def main():
         await page.wait_for_timeout(2500)
         await page.keyboard.up('w')
         await page.screenshot(path=str(OUT / 'unity_webgl_3.png'))
-        for t in errors[:12]:
-            print('error:', t[:300])
+        counts = {}
+        for t in errors:
+            key = t.strip().splitlines()[0][:160] if t.strip() else t
+            counts[key] = counts.get(key, 0) + 1
+        for key, n in sorted(counts.items(), key=lambda kv: -kv[1])[:12]:
+            print(f'error x{n}:', key)
         for t in [t for t in logs if 'fps' in t.lower() or 'Borrowed Time' in t][:6]:
             print('log:', t[:200])
         await browser.close()
