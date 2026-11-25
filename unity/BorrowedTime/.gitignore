@@ -1,11 +1,16 @@
-# Unity generates these; never commit them
-/Library/
-/Temp/
-/Obj/
-/Logs/
-/UserSettings/
-/Build/
-/Builds/
-/build/
+# Unity's generated folders (rebuilt on every open and build)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
 *.csproj
 *.sln
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+.vs/
+.idea/
