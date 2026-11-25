@@ -30,21 +30,30 @@ namespace BorrowedTime.EditorTools
             });
             if (AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/BT_Sky.mat") == null)
                 AssetDatabase.CreateAsset(new Material(Shader.Find("Skybox/Procedural")), "Assets/Resources/BT_Sky.mat");
-            if (!File.Exists(ScenePath))
+            // The boot scene holds one object with the Game component. The game still builds everything else from code,
+            // but a scene that uses a script is how a build learns to keep the engine parts that run scripts: with an
+            // empty scene the web build dropped them ("Could not produce class with ID 115", null references).
+            var scene = File.Exists(ScenePath)
+                ? EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single)
+                : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            if (UnityEngine.Object.FindAnyObjectByType<Game>() == null)
             {
-                var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                new GameObject("Borrowed Time").AddComponent<Game>();
                 EditorSceneManager.SaveScene(scene, ScenePath);
             }
+            else if (!File.Exists(ScenePath)) EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
             PlayerSettings.productName = "Borrowed Time";
             PlayerSettings.companyName = "Borrowed Time";
             PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled; // plays from any static host, GitHub Pages included
-            // The game builds its whole world from code at runtime (CreatePrimitive, AddComponent), so nothing in a scene
-            // tells the build which engine classes are used. Stripping them broke the web build (colliders and other
-            // classes "doesn't exist" / "Could not produce class"), so keep the engine whole and strip C# only lightly.
-            PlayerSettings.stripEngineCode = false;
-            PlayerSettings.SetManagedStrippingLevel(UnityEditor.Build.NamedBuildTarget.WebGL, ManagedStrippingLevel.Minimal);
-            PlayerSettings.SetManagedStrippingLevel(UnityEditor.Build.NamedBuildTarget.Standalone, ManagedStrippingLevel.Minimal);
+            // Strip engine code the game doesn't use. The scene's Game object (above) and Assets/link.xml (the colliders
+            // CreatePrimitive adds) tell the build what that is. The web build also asks for the smallest code.
+            PlayerSettings.stripEngineCode = true;
+            PlayerSettings.SetManagedStrippingLevel(UnityEditor.Build.NamedBuildTarget.WebGL, ManagedStrippingLevel.Low);
+            PlayerSettings.SetManagedStrippingLevel(UnityEditor.Build.NamedBuildTarget.Standalone, ManagedStrippingLevel.Low);
+#if UNITY_WEBGL
+            UnityEditor.WebGL.UserBuildSettings.codeOptimization = UnityEditor.WebGL.WasmCodeOptimization.DiskSize;
+#endif
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
